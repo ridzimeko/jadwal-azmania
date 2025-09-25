@@ -12,6 +12,7 @@
         "filament/infolists": "^4.0",
         "filament/notifications": "^4.0",
         "filament/schemas": "^4.0",
+        "filament/support": "^4.0",
         "filament/tables": "^4.0",
         "filament/widgets": "^4.0",
         "laravel/fortify": "^1.30",
