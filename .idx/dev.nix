@@ -21,6 +21,14 @@
     "shufo.vscode-blade-formatter"
     "vscode-icons-team.vscode-icons"
   ];
+
+services = {
+    mysql = {
+        enable = true;
+        package = pkgs.mysql80;
+    };
+};
+
   idx.previews = {
     # previews = {
     #   web = {

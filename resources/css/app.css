@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@import '../../vendor/livewire/flux/dist/flux.css';
+
 @import '../../vendor/filament/support/resources/css/index.css';
 @import '../../vendor/filament/actions/resources/css/index.css';
 @import '../../vendor/filament/forms/resources/css/index.css';
@@ -18,6 +20,10 @@
         'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
+
+    --color-purple-dark: #532D52;
+    --color-primary: #902C8E;
 }
 
 @variant dark (&:where(.dark, .dark *));
+
