@@ -23,6 +23,8 @@
 
     --color-purple-dark: #532D52;
     --color-primary: #902C8E;
+    --color-secondary: #E9BD62;
+    --color-accent-light: #FAF4FA;
 }
 
 @variant dark (&:where(.dark, .dark *));

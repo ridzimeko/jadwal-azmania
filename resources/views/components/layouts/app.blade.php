@@ -20,7 +20,14 @@
     </head>
 
     <body class="antialiased">
-        {{ $slot }}
+        <div>
+           <div class="flex bg-gray-100 gap-8">
+           <x-sidebar />
+           <main>
+           {{ $slot }}
+           </main>
+           </div>
+        </div>
 
         @filamentScripts
         @vite('resources/js/app.js')
