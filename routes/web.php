@@ -12,7 +12,9 @@ Route::get('/', function () {
 //     ->middleware(['auth', 'verified'])
 //     ->name('dashboard');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware([
+    // 'auth'
+    ])->group(function () {
     Route::redirect('settings', 'settings/profile');
 
     Volt::route('settings/profile', 'settings.profile')->name('profile.edit');
@@ -20,8 +22,8 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/appearance', 'settings.appearance')->name('appearance.edit');
 
     Route::group(['prefix' => '/jadwal'], function() {
-        Volt::route('smp', 'jadwal.smp')->name('jadwal.smp');
-        Volt::route('ma', 'jadwal.ma')->name('jadwal.ma');
+        Volt::route('smp', 'jadwal.smp.index')->name('jadwal.smp');
+        Volt::route('ma', 'jadwal.ma.index')->name('jadwal.ma');
     });
 
 
