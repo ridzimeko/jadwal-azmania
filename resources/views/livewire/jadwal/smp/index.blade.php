@@ -1,17 +1,19 @@
-<?php
-
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
-use Livewire\Volt\Component;
-use function Livewire\Volt\{state};
-
-?>
-
+@php
+    use Filament\Tables\Columns\TextColumn;
+@endphp
 
 <div>
-    <x-datatable
-        title="Jadwal Pelajaran SMP"
-        description="Data jadwal pelajaran untuk tingkat SMP"
-    />
+    @livewire('datatable.index', [
+        'title'=> "Jadwal Pelajaran SMP",
+        'description' => "Manajemen jadwal Pelajaran untuk tingkat MA",
+        'columns' => [
+            TextColumn::make('no')->label('No'),
+            TextColumn::make('class')->label('Kelas'),
+            TextColumn::make('day')->label('Hari'),
+            TextColumn::make('hour_start')->label('Jam Mulai'),
+            TextColumn::make('hour_end')->label('Jam Selesai'),
+            TextColumn::make('lesson')->label('Mata Pelajaran'),
+            TextColumn::make('teacher')->label('Guru Pengajar'),
+        ]
+    ])
 </div>
-

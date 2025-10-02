@@ -40,7 +40,7 @@
     ];
 @endphp
 
-<aside class="w-64 h-screen bg-white shadow flex flex-col">
+<aside class="w-64 h-screen bg-white shadow flex flex-col sticky top-0 left-0">
     <!-- Logo -->
     <div class="p-4 flex items-center justify-center gap-4">
         <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-16">
