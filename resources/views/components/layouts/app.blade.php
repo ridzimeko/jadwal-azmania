@@ -31,6 +31,7 @@
     </div>
 
     @filamentScripts
+    @fluxScripts
     @vite('resources/js/app.js')
 </body>
 

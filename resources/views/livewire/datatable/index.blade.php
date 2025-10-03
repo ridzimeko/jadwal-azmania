@@ -1,3 +1,4 @@
+
 <?php
 
 use Filament\Actions\Action;
@@ -19,15 +20,33 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
 
     public $title;
     public $description;
-    public $canImportExcel = true;
+    public $action_buttons;
     public $query = null;
     public array $columns = [];
 
     public function table(Table $table): Table
     {
         return $table
-            ->records(fn() => [])
-            ->columns(collect($this->columns)->map(fn($col) => TextColumn::make($col['field'])->label($col['name']))->toArray())
+            ->records(fn() => [
+                ['no' => 'Budi', 'mapel' => 'Matematika'],
+                ['no' => 'Siti', 'mapel' => 'Bahasa Inggris'],
+            ])
+            ->columns(collect($this->columns)->map(function ($col) {
+                $column = TextColumn::make($col['field'])
+                    ->label($col['name']);
+
+                // Kalau ada config searchable
+                if (!empty($col['searchable']) && $col['searchable'] === true) {
+                    $column->searchable();
+                }
+
+                // Kalau ada config sortable
+                if (!empty($col['sortable']) && $col['sortable'] === true) {
+                    $column->sortable();
+                }
+
+                return $column;
+            })->toArray())
             ->recordActions([
                 Action::make('edit')
                     ->iconButton()
@@ -44,31 +63,14 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     ->requiresConfirmation()
                     ->action(fn($record) => $record->delete()),
             ])
-            ->bulkActions([BulkAction::make('dummy')->label('Hapus Data yang Dipilih')->color('danger')->action(fn($records) => null)]);
+            ->toolbarActions([BulkAction::make('dummy')->label('Hapus Data yang Dipilih')->color('danger')->action(fn($records) => null)]);
     }
 };
 
 ?>
 
 
-<div class="p-6 flex flex-col gap-6 w-full bg-white rounded-lg">
-    <header class="flex justify-between gap-4">
-        <div class="flex flex-col gap-2">
-            <h2 class="text-3xl font-bold">{{ $title }}</h2>
-            @if ($description)
-                <p class="text-gray-400">{{ $description }}</p>
-            @endif
-        </div>
-
-        <div>
-            @if ($canImportExcel)
-                <flux:button icon="document" class="!bg-az-green !text-white">Import dari Excel</flux:button>
-            @endif
-            <flux:button icon="plus" class="!bg-primary !text-white">Tambah Data</flux:button>
-            <flux:button icon="arrow-down-tray">Unduh Data</flux:button>
-        </div>
-    </header>
-
+<div>
     <div class="flex justify-between bg-neutral-50 rounded-md w-full py-3 px-4">
         <flux:input icon="magnifying-glass" placeholder="Cari Data" class="max-w-[320px]" />
     </div>
