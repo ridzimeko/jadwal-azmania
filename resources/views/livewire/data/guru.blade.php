@@ -21,7 +21,6 @@ new class extends Component {
             <flux:modal.trigger name="add-data">
                 <flux:button icon="plus" class="!bg-primary !text-white">Tambah Data</flux:button>
             </flux:modal.trigger>
-            <flux:button icon="arrow-down-tray">Unduh Data</flux:button>
         </x-slot>
     </x-card-heading>
 
