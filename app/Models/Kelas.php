@@ -11,4 +11,6 @@ class Kelas extends Model
     use HasFactory;
 
     protected $table = 'kelas';
+
+    public $timestamps = false;
 }

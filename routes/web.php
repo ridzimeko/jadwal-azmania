@@ -4,15 +4,15 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use Livewire\Volt\Volt;
 
-Route::get('/', function () {
-    return view('dashboard');
-})->name('dashboard');
-
 // Route::view('dashboard', 'dashboard')
 //     ->middleware(['auth', 'verified'])
 //     ->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/', function () {
+        return view('dashboard');
+    })->name('dashboard');
+
     Route::redirect('settings', 'settings/profile');
 
     Volt::route('settings/profile', 'settings.profile')->name('profile.edit');
@@ -20,8 +20,13 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/appearance', 'settings.appearance')->name('appearance.edit');
 
     Route::group(['prefix' => '/jadwal'], function() {
-        Volt::route('smp', 'jadwal.smp.index')->name('jadwal.smp');
-        Volt::route('ma', 'jadwal.ma.index')->name('jadwal.ma');
+        Volt::route('{tingkat}', 'jadwal.index')
+            ->where('tingkat', 'smp|ma')
+            ->name('jadwal.index');
+
+        Volt::route('{tingkat}/edit', 'jadwal.edit')
+            ->where('tingkat', 'smp|ma')
+            ->name('jadwal.edit');
     });
 
 

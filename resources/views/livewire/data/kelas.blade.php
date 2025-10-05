@@ -7,7 +7,7 @@ new class extends Component {
     protected  $columnDefs = [
         ['name' => 'No', 'field' => 'no'],
         ['name' => 'Kode Kelas', 'field' => 'kode_kelas'],
-        ['name' => 'Kelas', 'field' => 'kelas'],
+        ['name' => 'Kelas', 'field' => 'nama_kelas'],
     ];
 };
 ?>
@@ -22,7 +22,7 @@ new class extends Component {
     </x-card-heading>
 
     {{-- Datatable --}}
-    <livewire:datatable.index :columns="$this->columnDefs" />
+    <livewire:datatable.index :columns="$this->columnDefs" :model="\App\Models\Kelas::class" />
 
     {{-- Add Data Modal --}}
     <flux:modal name="add-data" class="md:w-96">

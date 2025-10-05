@@ -1,13 +1,12 @@
 <?php
 
-use Flux\Flux;
 use Livewire\Volt\Component;
 
 new class extends Component {
     protected $columnDefs = [
         ['name' => 'No', 'field' => 'no'],
         ['name' => 'NIP', 'field' => 'nip'],
-        ['name' => 'Nama Guru', 'field' => 'guru']
+        ['name' => 'Nama Guru', 'field' => 'nama_guru']
     ];
 };
 ?>
@@ -25,7 +24,7 @@ new class extends Component {
     </x-card-heading>
 
     {{-- Datatable --}}
-    <livewire:datatable.index :columns="$this->columnDefs" />
+    <livewire:datatable.index :columns="$this->columnDefs" :model="\App\Models\Guru::class" />
 
     {{-- Import Excel Modal --}}
     <livewire:excel-import-modal context="guru" />

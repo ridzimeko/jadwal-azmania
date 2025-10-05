@@ -11,4 +11,6 @@ class Guru extends Model
     use HasFactory;
 
     protected $table = 'guru';
+
+    public $timestamps = false;
 }

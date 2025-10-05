@@ -21,16 +21,13 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     public $title;
     public $description;
     public $action_buttons;
-    public $query = null;
+    public $model;
     public array $columns = [];
 
     public function table(Table $table): Table
     {
         return $table
-            ->records(fn() => [
-                ['no' => 'Budi', 'mapel' => 'Matematika'],
-                ['no' => 'Siti', 'mapel' => 'Bahasa Inggris'],
-            ])
+            ->query(fn() => $this->model::query())
             ->columns(collect($this->columns)->map(function ($col) {
                 $column = TextColumn::make($col['field'])
                     ->label($col['name']);
@@ -53,7 +50,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     ->icon('heroicon-o-pencil')
                     ->color('warning')
                     ->extraAttributes(['class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1'])
-                    ->url(fn($record) => route('jadwal.ma', $record)),
+                    ->url(fn($record) => '#'),
 
                 Action::make('delete')
                     ->iconButton()

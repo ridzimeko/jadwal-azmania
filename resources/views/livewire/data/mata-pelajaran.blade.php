@@ -7,7 +7,7 @@ new class extends Component {
     protected $columnDefs = [
         ['name' => 'No', 'field' => 'no'],
         ['name' => 'Kode Mapel', 'field' => 'kode_mapel'],
-        ['name' => 'Mata Pelajaran', 'field' => 'mapel'],
+        ['name' => 'Mata Pelajaran', 'field' => 'nama_mapel'],
     ];
 };
 ?>
@@ -25,7 +25,7 @@ new class extends Component {
     </x-card-heading>
 
     {{-- Datatable --}}
-    <livewire:datatable.index :columns="$this->columnDefs" />
+    <livewire:datatable.index :columns="$this->columnDefs" :model="\App\Models\MataPelajaran::class" />
 
     {{-- Import Excel Modal --}}
     <livewire:excel-import-modal context="mapel" />

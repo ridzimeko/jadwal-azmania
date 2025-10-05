@@ -11,4 +11,6 @@ class MataPelajaran extends Model
     use HasFactory;
 
     protected $table = 'mata_pelajaran';
+
+    public $timestamps = false;
 }

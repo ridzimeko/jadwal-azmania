@@ -11,11 +11,13 @@
             'submenu' => [
                 [
                     'label' => 'SMP',
-                    'route' => 'jadwal.smp',
+                    'route' => 'jadwal.index',
+                    'params' => ['tingkat' => 'smp'],
                 ],
                 [
                     'label' => 'MA',
-                    'route' => 'jadwal.ma',
+                    'route' => 'jadwal.index',
+                    'params' => ['tingkat' => 'ma']
                 ],
             ],
         ],
@@ -71,7 +73,7 @@
                             @foreach ($menu['submenu'] as $sub)
                                 @if (Route::has($sub['route']))
                                     <li>
-                                        <a href="{{ route($sub['route']) }}"
+                                        <a href="{{ route($sub['route'], $sub['params'] ?? []) }}"
                                             class="block px-2 py-2 rounded-md text-sm
                                                   {{ request()->routeIs($sub['route'])
                                                       ? 'bg-primary text-white'
