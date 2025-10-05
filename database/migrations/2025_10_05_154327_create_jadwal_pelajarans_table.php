@@ -14,13 +14,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jadwal_pelajarans', function (Blueprint $table) {
+        Schema::create('jadwal_pelajaran', function (Blueprint $table) {
             $table->id();
-            $table->time('hari');
+            $table->enum('hari', ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']);
             $table->time('jam_mulai');
             $table->time('jam_selesai');
             $table->foreignIdFor(Kelas::class)->constrained()->onDelete('cascade');
-            $table->foreignIdFor(Guru::class)->nullable()->constrained()->onDelete('cascade');
+            $table->foreignIdFor(Guru::class)->constrained()->onDelete('cascade');
             $table->foreignIdFor(MataPelajaran::class)->constrained()->onDelete('cascade');
             $table->timestamps();
         });

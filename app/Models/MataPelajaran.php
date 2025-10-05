@@ -9,4 +9,6 @@ class MataPelajaran extends Model
 {
     /** @use HasFactory<\Database\Factories\MataPelajaranFactory> */
     use HasFactory;
+
+    protected $table = 'mata_pelajaran';
 }

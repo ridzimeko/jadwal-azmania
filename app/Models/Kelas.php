@@ -9,4 +9,6 @@ class Kelas extends Model
 {
     /** @use HasFactory<\Database\Factories\KelasFactory> */
     use HasFactory;
+
+    protected $table = 'kelas';
 }

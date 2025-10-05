@@ -9,4 +9,6 @@ class JadwalPelajaran extends Model
 {
     /** @use HasFactory<\Database\Factories\JadwalPelajaranFactory> */
     use HasFactory;
+
+    protected $table = 'jadwal_pelajaran';
 }
