@@ -1,4 +1,3 @@
-
 <?php
 
 use Filament\Actions\Action;
@@ -28,22 +27,28 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     {
         return $table
             ->query(fn() => $this->model::query())
-            ->columns(collect($this->columns)->map(function ($col) {
-                $column = TextColumn::make($col['field'])
-                    ->label($col['name']);
+            ->columns(
+                collect([
+                    // Tambahkan kolom nomor urut paling awal
+                    TextColumn::make('index')->label('No')->rowIndex()->sortable(false)->searchable(false),
+                ])
+                    ->merge(
+                        collect($this->columns)->map(function ($col) {
+                            $column = TextColumn::make($col['field'])->label($col['name']);
 
-                // Kalau ada config searchable
-                if (!empty($col['searchable']) && $col['searchable'] === true) {
-                    $column->searchable();
-                }
+                            if (!empty($col['searchable']) && $col['searchable'] === true) {
+                                $column->searchable();
+                            }
 
-                // Kalau ada config sortable
-                if (!empty($col['sortable']) && $col['sortable'] === true) {
-                    $column->sortable();
-                }
+                            if (!empty($col['sortable']) && $col['sortable'] === true) {
+                                $column->sortable();
+                            }
 
-                return $column;
-            })->toArray())
+                            return $column;
+                        }),
+                    )
+                    ->toArray(),
+            )
             ->recordActions([
                 Action::make('edit')
                     ->iconButton()

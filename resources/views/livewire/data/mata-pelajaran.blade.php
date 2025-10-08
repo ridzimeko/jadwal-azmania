@@ -5,7 +5,6 @@ use Livewire\Volt\Component;
 
 new class extends Component {
     protected $columnDefs = [
-        ['name' => 'No', 'field' => 'no'],
         ['name' => 'Kode Mapel', 'field' => 'kode_mapel'],
         ['name' => 'Mata Pelajaran', 'field' => 'nama_mapel'],
     ];

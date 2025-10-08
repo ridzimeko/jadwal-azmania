@@ -11,4 +11,35 @@ class JadwalPelajaran extends Model
     use HasFactory;
 
     protected $table = 'jadwal_pelajaran';
+
+    public function getKelasNamaAttribute()
+    {
+        return $this->kelas ? $this->kelas->nama_kelas : '-';
+    }
+
+
+    public function getGuruNamaAttribute()
+    {
+        return $this->guru?->nama_guru ?? '-';
+    }
+
+    public function getMapelNamaAttribute()
+    {
+        return $this->mataPelajaran?->nama_mapel ?? '-';
+    }
+
+    public function kelas()
+    {
+        return $this->belongsTo(Kelas::class);
+    }
+
+    public function guru()
+    {
+        return $this->belongsTo(Guru::class);
+    }
+
+    public function mataPelajaran()
+    {
+        return $this->belongsTo(MataPelajaran::class);
+    }
 }

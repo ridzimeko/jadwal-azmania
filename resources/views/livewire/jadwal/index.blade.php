@@ -4,13 +4,13 @@ use Livewire\Volt\Component;
 
 new class extends Component {
     protected $columnDefs = [
-        ['name' => 'No', 'field' => 'no'],
-        ['name' => 'Kelas', 'field' => 'kelas'],
+        // ['name' => 'No', 'field' => 'no'],
+        ['name' => 'Kelas', 'field' => 'kelas_nama'],
         ['name' => 'Hari', 'field' => 'hari'],
         ['name' => 'Jam Mulai', 'field' => 'jam_mulai'],
         ['name' => 'Jam Selesai', 'field' => 'jam_selesai'],
-        ['name' => 'Mata Pelajaran', 'field' => 'mapel'],
-        ['name' => 'Guru Pengajar', 'field' => 'guru'],
+        ['name' => 'Mata Pelajaran', 'field' => 'mapel_nama'],
+        ['name' => 'Guru Pengajar', 'field' => 'guru_nama'],
     ];
 
     public $tingkat;

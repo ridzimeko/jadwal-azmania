@@ -117,16 +117,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 autocomplete="username" :placeholder="__('Username')" />
             <div x-data="{ show: false }">
                 <flux:input wire:model="password" :label="__('Password')" x-bind:type="show ? 'text' : 'password'"
-                    size="lg" required autocomplete="current-password" :placeholder="__('Password')">
-
-                    <x-slot name="iconTrailing">
-                        <flux:button size="sm" variant="subtle" icon="eye-slash" x-show="show" class="-mr-1"
-                            type="button" x-on:click="show = false" />
-
-                            <flux:button size="sm" variant="subtle" icon="eye" x-show="!show" class="-mr-1"
-                            type="button" x-on:click="show = true" />
-                    </x-slot>
-                </flux:input>
+                    size="lg" required autocomplete="current-password" :placeholder="__('Password')" viewable />
             </div>
             <flux:button type="submit" wire:action="login" class="!bg-primary !text-white w-fit mt-4 !px-6">
         </form>
