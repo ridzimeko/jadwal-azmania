@@ -1,6 +1,7 @@
 <?php
 
 use Flux\Flux;
+use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
 new class extends Component {
@@ -8,15 +9,47 @@ new class extends Component {
         ['name' => 'Kode Kelas', 'field' => 'kode_kelas'],
         ['name' => 'Kelas', 'field' => 'nama_kelas'],
     ];
+
+    public ?array $formData = null;
+    public bool $isEdit = false;
+
+    #[On('openAddModal')]
+    public function openAddModal()
+    {
+        $this->isEdit = false;
+        $this->formData = [
+            'kode_kelas' => '',
+            'nama_kelas' => '',
+        ];
+        Flux::modal('kelas-modal')->show();
+    }
+
+    #[On('openEditModal')]
+    public function openEditModal($record)
+    {
+        $this->isEdit = true;
+        $this->formData = $record;
+        Flux::modal('kelas-modal')->show();
+    }
+
+    public function save()
+    {
+        if ($this->isEdit) {
+            \App\Models\Kelas::find($this->formData['id'])->update($this->formData);
+        } else {
+            \App\Models\Kelas::create($this->formData);
+        }
+
+        Flux::modal('kelas-modal')->close();
+        $this->dispatch('refreshTable');
+    }
 };
 ?>
 
 <div class="dash-card">
     <x-card-heading title="Data Kelas">
         <x-slot name="action_buttons">
-            <flux:modal.trigger name="add-data">
-                <flux:button icon="plus" class="!bg-primary !text-white">Tambah Data</flux:button>
-            </flux:modal.trigger>
+            <flux:button @click="$wire.openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data</flux:button>
         </x-slot>
     </x-card-heading>
 
@@ -24,17 +57,21 @@ new class extends Component {
     <livewire:datatable.index :columns="$this->columnDefs" :model="\App\Models\Kelas::class" />
 
     {{-- Add Data Modal --}}
-    <flux:modal name="add-data" class="md:w-96">
-        <div class="space-y-4">
-            <div>
-                <flux:heading size="lg">Tambah Data Kelas</flux:heading>
+    <flux:modal name="kelas-modal" class="md:w-96">
+        <form wire:submit.prevent="save">
+            <div class="space-y-4">
+                <div>
+                    <flux:heading size="lg">
+                        {{ $isEdit ? 'Ubah Data Kelas' : 'Tambah Data Kelas' }}
+                    </flux:heading>
+                </div>
+                <flux:input wire:model.defer="formData.kode_kelas" label="Kode Kelas" placeholder="Kode Kelas" />
+                <flux:input wire:model.defer="formData.nama_kelas" label="Nama Kelas" placeholder="Nama Kelas" />
+                <div class="flex">
+                    <flux:spacer />
+                    <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>
+                </div>
             </div>
-            <flux:input label="Kode Kelas" placeholder="Kode Kelas" />
-            <flux:input label="Nama Kelas" placeholder="Nama Kelas" />
-            <div class="flex">
-                <flux:spacer />
-                <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>
-            </div>
-        </div>
+        </form>
     </flux:modal>
 </div>

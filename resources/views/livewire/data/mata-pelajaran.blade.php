@@ -1,6 +1,7 @@
 <?php
 
 use Flux\Flux;
+use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
 new class extends Component {
@@ -8,6 +9,40 @@ new class extends Component {
         ['name' => 'Kode Mapel', 'field' => 'kode_mapel'],
         ['name' => 'Mata Pelajaran', 'field' => 'nama_mapel'],
     ];
+
+    public ?array $formData = null;
+    public bool $isEdit = false;
+
+    #[On('openAddModal')]
+    public function openAddModal()
+    {
+        $this->isEdit = false;
+        $this->formData = [
+            'kode_mapel' => '',
+            'nama_mapel' => '',
+        ];
+        Flux::modal('mapel-modal')->show();
+    }
+
+    #[On('openEditModal')]
+    public function openEditModal($record)
+    {
+        $this->isEdit = true;
+        $this->formData = $record;
+        Flux::modal('mapel-modal')->show();
+    }
+
+    public function save()
+    {
+        if ($this->isEdit) {
+            \App\Models\MataPelajaran::find($this->formData['id'])->update($this->formData);
+        } else {
+            \App\Models\MataPelajaran::create($this->formData);
+        }
+
+        Flux::modal('mapel-modal')->close();
+        $this->dispatch('refreshTable');
+    }
 };
 ?>
 
@@ -17,9 +52,7 @@ new class extends Component {
             <flux:modal.trigger name="import-excel">
                 <flux:button icon="file-excel" class="!bg-az-green !text-white">Import dari Excel</flux:button>
             </flux:modal.trigger>
-            <flux:modal.trigger name="add-data">
-                <flux:button icon="plus" class="!bg-primary !text-white">Tambah Data</flux:button>
-            </flux:modal.trigger>
+            <flux:button @click="$wire.openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data</flux:button>
         </x-slot>
     </x-card-heading>
 
@@ -30,17 +63,21 @@ new class extends Component {
     <livewire:excel-import-modal context="mapel" />
 
     {{-- Add Data Modal --}}
-    <flux:modal name="add-data" class="md:w-96">
-        <div class="space-y-4">
-            <div>
-                <flux:heading size="lg">Tambah Data Mata Pelajaran</flux:heading>
+    <flux:modal name="mapel-modal" class="md:w-96">
+        <form wire:submit.prevent="save">
+            <div class="space-y-4">
+                <div>
+                    <flux:heading size="lg">
+                        {{ $isEdit ? 'Ubah Data Mata Pelajaran' : 'Tambah Data Mata Pelajaran' }}
+                    </flux:heading>
+                </div>
+                <flux:input wire:model.defer="formData.kode_mapel" label="Kode Mapel" placeholder="Kode Mapel" />
+                <flux:input wire:model.defer="formData.nama_mapel" label="Nama Mapel" placeholder="Nama Mapel" />
+                <div class="flex">
+                    <flux:spacer />
+                    <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>
+                </div>
             </div>
-            <flux:input label="Kode Mapel" placeholder="Kode Mapel" />
-            <flux:input label="Nama Mapel" placeholder="Nama Mapel" />
-            <div class="flex">
-                <flux:spacer />
-                <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>
-            </div>
-        </div>
+        </form>
     </flux:modal>
 </div>

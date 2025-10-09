@@ -10,23 +10,77 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
-new class extends Component implements HasActions, HasSchemas, HasTable {
+new class extends Component implements HasActions, HasSchemas, HasTable
+{
     use InteractsWithActions;
     use InteractsWithSchemas;
     use InteractsWithTable;
 
-    public $title;
-    public $description;
-    public $action_buttons;
     public $model;
     public array $columns = [];
 
+    #[On('refreshTable')]
+    public function refresh()
+    {
+        $this->dispatch('$refresh');
+    }
+
     public function table(Table $table): Table
     {
+        $actions = [];
+        $defaultActions = [
+            Action::make('edit')
+                ->iconButton()
+                ->icon('heroicon-o-pencil')
+                ->color('warning')
+                ->extraAttributes([
+                    'class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1',
+                ])
+                ->action(function ($record) {
+                    $this->dispatch('openEditModal', $record->toArray());
+                }),
+            Action::make('delete')
+                ->iconButton()
+                ->icon('heroicon-o-trash')
+                ->color('danger')
+                ->extraAttributes(['class' => 'bg-red-600 hover:bg-red-700 text-white !px-2'])
+                ->requiresConfirmation()
+                ->action(fn($record) => $record->delete()),
+        ];
+
+        // table actions
+        if (request()->routeIs('data.*')) {
+            $actions = [
+                Action::make('edit')
+                    ->iconButton()
+                    ->icon('heroicon-o-pencil')
+                    ->color('warning')
+                    ->extraAttributes([
+                        'class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1',
+                    ])
+                    ->action(function ($record) {
+                        $this->dispatch('openEditModal', $record->toArray());
+                    })
+            ];
+        } elseif (request()->routeIs('jadwal.*')) {
+            $actions = [
+                Action::make('edit')
+                    ->iconButton()
+                    ->icon('heroicon-o-pencil')
+                    ->color('warning')
+                    ->extraAttributes(['class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1'])
+                    ->url(fn($record) => route('jadwal.edit', [
+                        'tingkat' => request()->route('tingkat'),
+                        'id_jadwal' => $record->id,
+                    ])),
+            ];
+        }
+
         return $table
-            ->query(fn() => $this->model::query())
+            ->query(fn() => $this->model::query()->orderByDesc('id'))
             ->columns(
                 collect([
                     // Tambahkan kolom nomor urut paling awal
@@ -36,11 +90,11 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                         collect($this->columns)->map(function ($col) {
                             $column = TextColumn::make($col['field'])->label($col['name']);
 
-                            if (!empty($col['searchable']) && $col['searchable'] === true) {
+                            if (! empty($col['searchable']) && $col['searchable'] === true) {
                                 $column->searchable();
                             }
 
-                            if (!empty($col['sortable']) && $col['sortable'] === true) {
+                            if (! empty($col['sortable']) && $col['sortable'] === true) {
                                 $column->sortable();
                             }
 
@@ -49,22 +103,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     )
                     ->toArray(),
             )
-            ->recordActions([
-                Action::make('edit')
-                    ->iconButton()
-                    ->icon('heroicon-o-pencil')
-                    ->color('warning')
-                    ->extraAttributes(['class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1'])
-                    ->url(fn($record) => '#'),
-
-                Action::make('delete')
-                    ->iconButton()
-                    ->icon('heroicon-o-trash')
-                    ->color('danger')
-                    ->extraAttributes(['class' => 'bg-red-600 hover:bg-red-700 text-white !px-2'])
-                    ->requiresConfirmation()
-                    ->action(fn($record) => $record->delete()),
-            ])
+            ->recordActions(array_merge($defaultActions))
             ->toolbarActions([BulkAction::make('dummy')->label('Hapus Data yang Dipilih')->color('danger')->action(fn($records) => null)]);
     }
 };
