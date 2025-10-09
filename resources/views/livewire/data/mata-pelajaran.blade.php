@@ -1,6 +1,7 @@
 <?php
 
 use Flux\Flux;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
@@ -12,6 +13,37 @@ new class extends Component {
 
     public ?array $formData = null;
     public bool $isEdit = false;
+
+    protected function rules(): array
+    {
+        return [
+            'formData.kode_mapel' => [
+                'required',
+                'string',
+                'max:12',
+                Rule::unique('mata_pelajaran', 'kode_mapel')->ignore($this->formData['id']),
+            ],
+            'formData.nama_mapel' => [
+                'required',
+                'string',
+                'max:40',
+            ],
+        ];
+    }
+
+    protected function messages(): array
+    {
+        return [
+            'formData.kode_mapel.required' => 'Kode mata pelajaran wajib diisi.',
+            'formData.kode_mapel.string' => 'Kode mata pelajaran harus berupa teks.',
+            'formData.kode_mapel.max' => 'Kode mata pelajaran tidak boleh lebih dari 12 karakter.',
+            'formData.kode_mapel.unique' => 'Kode mata pelajaran sudah terdaftar, gunakan kode lain.',
+
+            'formData.nama_mapel.required' => 'Nama mata pelajaran wajib diisi.',
+            'formData.nama_mapel.string' => 'Nama mata pelajaran harus berupa teks.',
+            'formData.nama_mapel.max' => 'Nama mata pelajaran tidak boleh lebih dari 40 karakter.',
+        ];
+    }
 
     #[On('openAddModal')]
     public function openAddModal()
@@ -34,6 +66,8 @@ new class extends Component {
 
     public function save()
     {
+        $this->validate();
+
         if ($this->isEdit) {
             \App\Models\MataPelajaran::find($this->formData['id'])->update($this->formData);
         } else {

@@ -1,6 +1,7 @@
 <?php
 
 use Flux\Flux;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
@@ -9,6 +10,25 @@ new class extends Component {
 
     public ?array $formData = null;
     public bool $isEdit = false;
+
+    protected function rules(): array
+    {
+        return [
+            'formData.nip' => ['required', 'digits_between:8,20',  Rule::unique('guru', 'nip')->ignore($this->formData['id'] ?? null)],
+            'formData.nama_guru' => ['required', 'string', 'max:40'],
+        ];
+    }
+
+    protected function messages(): array
+    {
+        return [
+            'formData.nip.required' => 'NIP wajib diisi.',
+            'formData.nip.digits_between' => 'NIP harus terdiri dari 8 hingga 20 angka.',
+            'formData.nip.unique' => 'NIP ini sudah digunakan oleh guru lain.',
+            'formData.nama_guru.required' => 'Nama guru wajib diisi.',
+            'formData.nama_guru.max' => 'Nama guru tidak boleh lebih dari 40 karakter.',
+        ];
+    }
 
     #[On('openAddModal')]
     public function openAddModal()
@@ -31,6 +51,8 @@ new class extends Component {
 
     public function save()
     {
+        $this->validate();
+
         if ($this->isEdit) {
             \App\Models\Guru::find($this->formData['id'])->update($this->formData);
         } else {
