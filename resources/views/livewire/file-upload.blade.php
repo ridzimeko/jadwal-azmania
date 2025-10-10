@@ -21,8 +21,8 @@ new class extends Component {
             'file' => 'required|file|mimes:' . $this->getMimes() . '|max:' . $this->maxSize, // 2MB max
         ]);
 
-        // $path = $this->file->store('uploads');
-        $path = "test-file.xlsx";
+        $path = $this->file->store('uploads');
+        // $path = "test-file.xlsx";
 
         // kasih event sukses
         $this->dispatch('upload-success', path: $path);

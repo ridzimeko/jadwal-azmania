@@ -2,13 +2,13 @@
 
 namespace App\Imports;
 
-use App\Models\Guru;
+use App\Models\MataPelajaran;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class GuruImport implements ToModel, WithHeadingRow, SkipsOnError
+class MapelImport implements ToModel, WithHeadingRow, SkipsOnError
 {
     /**
     * @param array $row
@@ -20,10 +20,9 @@ class GuruImport implements ToModel, WithHeadingRow, SkipsOnError
 
     public function model(array $row)
     {
-        // dd($row);
-        return new Guru([
-            'nip' => $row['nip'],
-            'nama_guru' => $row['nama_guru'],
+        return new MataPelajaran([
+            'kode_mapel' => $row['kode_mapel'],
+            'nama_mapel' => $row['mata_pelajaran'],
         ]);
     }
 }
