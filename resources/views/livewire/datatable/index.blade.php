@@ -13,8 +13,7 @@ use Filament\Tables\Table;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
-new class extends Component implements HasActions, HasSchemas, HasTable
-{
+new class extends Component implements HasActions, HasSchemas, HasTable {
     use InteractsWithActions;
     use InteractsWithSchemas;
     use InteractsWithTable;
@@ -63,7 +62,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable
                     ])
                     ->action(function ($record) {
                         $this->dispatch('openEditModal', $record->toArray());
-                    })
+                    }),
             ];
         } elseif (request()->routeIs('jadwal.*')) {
             $actions = [
@@ -72,10 +71,12 @@ new class extends Component implements HasActions, HasSchemas, HasTable
                     ->icon('heroicon-o-pencil')
                     ->color('warning')
                     ->extraAttributes(['class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1'])
-                    ->url(fn($record) => route('jadwal.edit', [
-                        'tingkat' => request()->route('tingkat'),
-                        'id_jadwal' => $record->id,
-                    ])),
+                    ->url(
+                        fn($record) => route('jadwal.edit', [
+                            'tingkat' => request()->route('tingkat'),
+                            'id_jadwal' => $record->id,
+                        ]),
+                    ),
             ];
         }
 
@@ -90,11 +91,11 @@ new class extends Component implements HasActions, HasSchemas, HasTable
                         collect($this->columns)->map(function ($col) {
                             $column = TextColumn::make($col['field'])->label($col['name']);
 
-                            if (! empty($col['searchable']) && $col['searchable'] === true) {
+                            if (!empty($col['searchable']) && $col['searchable'] === true) {
                                 $column->searchable();
                             }
 
-                            if (! empty($col['sortable']) && $col['sortable'] === true) {
+                            if (!empty($col['sortable']) && $col['sortable'] === true) {
                                 $column->sortable();
                             }
 
@@ -104,7 +105,18 @@ new class extends Component implements HasActions, HasSchemas, HasTable
                     ->toArray(),
             )
             ->recordActions(array_merge($defaultActions))
-            ->toolbarActions([BulkAction::make('dummy')->label('Hapus Data yang Dipilih')->color('danger')->action(fn($records) => null)]);
+            ->toolbarActions([
+                BulkAction::make('deleteSelected')
+                    ->label('Hapus Data yang Dipilih')
+                    ->icon('heroicon-o-trash') // ikon trash 🗑️
+                    ->color('danger')
+                    ->requiresConfirmation() // muncul modal konfirmasi
+                    ->action(function ($records) {
+                        $records->each->delete(); // hapus semua data yang dipilih
+                        $this->dispatch('notify', message: 'Data berhasil dihapus!');
+                    })
+                    ->deselectRecordsAfterCompletion(),
+            ]);
     }
 };
 

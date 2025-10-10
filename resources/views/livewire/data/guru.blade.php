@@ -8,7 +8,10 @@ use Livewire\Volt\Component;
 new class extends Component {
     protected $columnDefs = [['name' => 'NIP', 'field' => 'nip'], ['name' => 'Nama Guru', 'field' => 'nama_guru']];
 
-    public ?array $formData = null;
+    public array $formData = [
+        'nama_guru' => '',
+        'nip' => '',
+    ];
     public bool $isEdit = false;
 
     protected function rules(): array
@@ -78,9 +81,6 @@ new class extends Component {
     {{-- Datatable --}}
     <livewire:datatable.index :columns="$this->columnDefs" :model="\App\Models\Guru::class" />
 
-    {{-- Import Excel Modal --}}
-    <livewire:excel-import-modal context="guru" />
-
     {{-- Add Data Modal --}}
     <flux:modal name="guru-modal" class="md:w-96">
         <form wire:submit.prevent="save">
@@ -99,4 +99,7 @@ new class extends Component {
             </div>
         </form>
     </flux:modal>
+
+     {{-- Import Excel Modal --}}
+     <livewire:excel-import-modal context="guru" />
 </div>

@@ -11,7 +11,10 @@ new class extends Component {
         ['name' => 'Mata Pelajaran', 'field' => 'nama_mapel'],
     ];
 
-    public ?array $formData = null;
+    public array $formData = [
+        'kode_mapel' => '',
+        'nama_mapel' => '',
+    ];
     public bool $isEdit = false;
 
     protected function rules(): array
@@ -21,7 +24,7 @@ new class extends Component {
                 'required',
                 'string',
                 'max:12',
-                Rule::unique('mata_pelajaran', 'kode_mapel')->ignore($this->formData['id']),
+                Rule::unique('mata_pelajaran', 'kode_mapel')->ignore($this->formData['id'] ?? null),
             ],
             'formData.nama_mapel' => [
                 'required',
@@ -93,9 +96,6 @@ new class extends Component {
     {{-- Datatable --}}
     <livewire:datatable.index :columns="$this->columnDefs" :model="\App\Models\MataPelajaran::class" />
 
-    {{-- Import Excel Modal --}}
-    <livewire:excel-import-modal context="mapel" />
-
     {{-- Add Data Modal --}}
     <flux:modal name="mapel-modal" class="md:w-96">
         <form wire:submit.prevent="save">
@@ -114,4 +114,7 @@ new class extends Component {
             </div>
         </form>
     </flux:modal>
+
+     {{-- Import Excel Modal --}}
+     <livewire:excel-import-modal context="mapel" />
 </div>
