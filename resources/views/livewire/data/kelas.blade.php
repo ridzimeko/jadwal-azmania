@@ -88,7 +88,7 @@ new class extends Component {
     </x-card-heading>
 
     {{-- Datatable --}}
-    <livewire:datatable.index :columns="$this->columnDefs" :model="\App\Models\Kelas::class" />
+    <livewire:datatable.index actionType="data" :columns="$this->columnDefs" :model="\App\Models\Kelas::class" />
 
     {{-- Add Data Modal --}}
     <flux:modal name="kelas-modal" class="md:w-96">

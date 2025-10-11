@@ -79,7 +79,7 @@ new class extends Component {
     </x-card-heading>
 
     {{-- Datatable --}}
-    <livewire:datatable.index :columns="$this->columnDefs" :model="\App\Models\Guru::class" />
+    <livewire:datatable.index actionType="data" :columns="$this->columnDefs" :model="\App\Models\Guru::class" />
 
     {{-- Add Data Modal --}}
     <flux:modal name="guru-modal" class="md:w-96">

@@ -29,12 +29,13 @@ Route::middleware(['auth'])->group(function () {
             ->name('jadwal.edit');
     });
 
-
     Route::group(['prefix' => '/data'], function() {
         Volt::route('mata-pelajaran', 'data.mata-pelajaran')->name('data.mata-pelajaran');
         Volt::route('guru', 'data.guru')->name('data.guru');
         Volt::route('kelas', 'data.kelas')->name('data.kelas');
     });
+
+    Volt::route('atur-admin', 'atur-admin.index')->name('atur-admin');
 
     // Volt::route('settings/two-factor', 'settings.two-factor')
     //     ->middleware(

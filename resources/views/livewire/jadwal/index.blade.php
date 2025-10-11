@@ -34,7 +34,7 @@ new class extends Component {
     </x-card-heading>
 
     {{-- Datatable --}}
-    <livewire:datatable.index :columns="$this->columnDefs" :model="\App\Models\JadwalPelajaran::class" />
+    <livewire:datatable.index actionType="jadwal" :columns="$this->columnDefs" :model="\App\Models\JadwalPelajaran::class" />
 
     {{-- Import Excel Modal --}}
     <livewire:excel-import-modal context="jadwal{{ strtoupper($tingkat) }}" />

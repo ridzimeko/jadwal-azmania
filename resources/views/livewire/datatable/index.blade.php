@@ -19,6 +19,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     use InteractsWithTable;
 
     public $model;
+    public $actionType;
     public array $columns = [];
 
     #[On('refreshTable')]
@@ -31,16 +32,6 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     {
         $actions = [];
         $defaultActions = [
-            Action::make('edit')
-                ->iconButton()
-                ->icon('heroicon-o-pencil')
-                ->color('warning')
-                ->extraAttributes([
-                    'class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1',
-                ])
-                ->action(function ($record) {
-                    $this->dispatch('openEditModal', $record->toArray());
-                }),
             Action::make('delete')
                 ->iconButton()
                 ->icon('heroicon-o-trash')
@@ -49,6 +40,41 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                 ->requiresConfirmation()
                 ->action(fn($record) => $record->delete()),
         ];
+
+        $editActions = match ($this->actionType) {
+            'jadwal' => [
+                Action::make('edit')
+                    ->iconButton()
+                    ->icon('heroicon-o-pencil')
+                    ->color('warning')
+                    ->extraAttributes(['class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1'])
+                    ->url(fn($record) => url("/jadwal/{$record->tingkat}/{$record->id}/edit")),
+            ],
+            'data' => [
+                Action::make('edit')
+                    ->iconButton()
+                    ->icon('heroicon-o-pencil')
+                    ->color('warning')
+                    ->extraAttributes(['class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1'])
+                    ->action(fn($record) => $this->dispatch('openEditModal', $record->toArray())),
+            ],
+            'admin' => [
+                Action::make('updatePassword')
+                    ->iconButton()
+                    ->icon('heroicon-o-key')
+                    ->color('info')
+                    ->extraAttributes(['class' => 'bg-blue-600 hover:bg-blue-700 text-white !px-2 mr-1'])
+                    ->action(fn($record) => $this->dispatch('openUpdatePasswordModal', $record->toArray())),
+
+                Action::make('editData')
+                    ->iconButton()
+                    ->icon('heroicon-o-pencil')
+                    ->color('warning')
+                    ->extraAttributes(['class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1'])
+                    ->action(fn($record) => $this->dispatch('openEditModal', $record->toArray())),
+            ],
+            default => [],
+        };
 
         // table actions
         if (request()->routeIs('data.*')) {
@@ -104,7 +130,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     )
                     ->toArray(),
             )
-            ->recordActions(array_merge($defaultActions))
+            ->recordActions(array_merge($editActions, $defaultActions))
             ->toolbarActions([
                 BulkAction::make('deleteSelected')
                     ->label('Hapus Data yang Dipilih')
