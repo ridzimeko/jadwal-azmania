@@ -23,13 +23,25 @@ new class extends Component {
 ?>
 
 <div class="dash-card">
-    <x-card-heading title="Jadwal Pelajaran {{ strtoupper($tingkat) }}" description="Manajemen jadwal Pelajaran untuk tingkat {{ strtoupper($tingkat) }}">
+    <x-card-heading title="Jadwal Pelajaran {{ strtoupper($tingkat) }}"
+        description="Manajemen jadwal Pelajaran untuk tingkat {{ strtoupper($tingkat) }}">
         <x-slot name="action_buttons">
             <flux:modal.trigger name="import-excel">
                 <flux:button icon="file-excel" class="!bg-az-green !text-white">Import dari Excel</flux:button>
             </flux:modal.trigger>
-            <flux:button icon="plus" :href="route('jadwal.edit', $this->tingkat)" class="!bg-primary !text-white">Tambah Data</flux:button>
-            <flux:button icon="arrow-down-tray">Unduh Data</flux:button>
+            <flux:button icon="plus" :href="route('jadwal.edit', $this->tingkat)" class="!bg-primary !text-white">
+                Tambah Data</flux:button>
+            <flux:dropdown align="end">
+                <flux:button icon="arrow-down-tray" icon:trailing="chevron-down">
+                    Unduh Data
+                </flux:button>
+
+                <flux:menu>
+                    <flux:menu.item icon="file-pdf">PDF</flux:menu.item>
+                    <flux:menu.separator />
+                    <flux:menu.item icon="file-excel">Excel</flux:menu.item>
+                </flux:menu>
+            </flux:dropdown>
         </x-slot>
     </x-card-heading>
 
@@ -37,5 +49,5 @@ new class extends Component {
     <livewire:datatable.index actionType="jadwal" :columns="$this->columnDefs" :model="\App\Models\JadwalPelajaran::class" />
 
     {{-- Import Excel Modal --}}
-    <livewire:excel-import-modal context="jadwal{{ strtoupper($tingkat) }}" />
+    <livewire:excel-import-modal context="jadwal" />
 </div>

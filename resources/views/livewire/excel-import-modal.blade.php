@@ -69,7 +69,7 @@ new class extends Component {
                 <div class="space-y-1 mb-6">
                     <flux:heading size="lg">Import Data</flux:heading>
                     <flux:text class="whitespace-normal">Silakan unduh berkas
-                        <flux:badge as="button" color="green" icon="file-excel" size="sm">Template Excel
+                        <flux:badge as="button" x-on:click="window.location.href='{{ route('download.template', $this->context) }}'" color="green" icon="file-excel" size="sm">Template Excel
                         </flux:badge> untuk melakukan import data.
                     </flux:text>
                 </div>

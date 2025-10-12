@@ -37,6 +37,18 @@ Route::middleware(['auth'])->group(function () {
 
     Volt::route('atur-admin', 'atur-admin.index')->name('atur-admin');
 
+    Route::get('/download/template/{type}', function ($type) {
+        $filename = "template_{$type}.xlsx";
+        $path = public_path("templates/{$filename}");
+
+        if (!file_exists($path)) {
+            abort(404, 'Template tidak ditemukan.');
+        }
+
+        return response()->download($path, $filename);
+    })->name('download.template');
+
+
     // Volt::route('settings/two-factor', 'settings.two-factor')
     //     ->middleware(
     //         when(
