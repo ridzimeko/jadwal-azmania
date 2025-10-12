@@ -77,6 +77,10 @@ new class extends Component {
             \App\Models\MataPelajaran::create($this->formData);
         }
 
+        Notification::make()
+        ->title('Mata Pelajaran Tersimpan')
+        ->success()
+        ->send();
         Flux::modal('mapel-modal')->close();
         $this->dispatch('refreshTable');
     }

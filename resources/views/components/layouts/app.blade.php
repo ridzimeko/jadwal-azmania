@@ -30,6 +30,8 @@
         </div>
     </div>
 
+    @livewire('notifications')
+
     @filamentScripts
     @fluxScripts
     @vite('resources/js/app.js')

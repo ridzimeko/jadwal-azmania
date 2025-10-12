@@ -1,5 +1,6 @@
 <?php
 
+use Filament\Notifications\Notification;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
@@ -62,6 +63,10 @@ new class extends Component {
             \App\Models\Guru::create($this->formData);
         }
 
+        Notification::make()
+        ->title('Data Guru Tersimpan')
+        ->success()
+        ->send();
         Flux::modal('guru-modal')->close();
         $this->dispatch('refreshTable');
     }

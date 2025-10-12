@@ -2,8 +2,8 @@
 
 use App\Imports\GuruImport;
 use App\Imports\JadwalPelajaranImport;
-use App\Imports\KelasImport;
 use App\Imports\MapelImport;
+use Filament\Notifications\Notification;
 use Livewire\Volt\Component;
 use Flux\Flux;
 use Maatwebsite\Excel\Facades\Excel;
@@ -32,24 +32,33 @@ new class extends Component {
     {
         Excel::import(new GuruImport(), $path);
 
+        Notification::make()
+        ->title('Data guru berhasil di unggah!')
+        ->success()
+        ->send();
         $this->dispatch('refreshTable');
-        $this->dispatch('notify', message: 'Data guru berhasil di unggah!');
     }
 
     private function importMapel($path)
     {
         Excel::import(new MapelImport(), $path);
 
+        Notification::make()
+        ->title('Data Mata Pelajaran berhasil di unggah!')
+        ->success()
+        ->send();
         $this->dispatch('refreshTable');
-        $this->dispatch('notify', message: 'Data Mata Pelajaran berhasil di unggah!');
     }
 
     private function importJadwal($path)
     {
         Excel::import(new JadwalPelajaranImport(), $path);
 
+        Notification::make()
+        ->title('Jadwal Pelajaran berhasil di unggah!')
+        ->success()
+        ->send();
         $this->dispatch('refreshTable');
-        $this->dispatch('notify', message: 'Data Jadwal Pelajaran berhasil di unggah!');
     }
 }; ?>
 

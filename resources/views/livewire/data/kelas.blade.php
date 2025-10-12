@@ -1,5 +1,6 @@
 <?php
 
+use Filament\Notifications\Notification;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
@@ -74,6 +75,10 @@ new class extends Component {
             \App\Models\Kelas::create($this->formData);
         }
 
+        Notification::make()
+        ->title('Data Kelas Tersimpan')
+        ->success()
+        ->send();
         Flux::modal('kelas-modal')->close();
         $this->dispatch('refreshTable');
     }
