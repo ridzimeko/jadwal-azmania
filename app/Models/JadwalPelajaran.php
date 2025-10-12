@@ -12,11 +12,15 @@ class JadwalPelajaran extends Model
 
     protected $table = 'jadwal_pelajaran';
 
+    public function scopeOrderByHari($query)
+    {
+        return $query->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')");
+    }
+
     public function getKelasNamaAttribute()
     {
         return $this->kelas ? $this->kelas->nama_kelas : '-';
     }
-
 
     public function getGuruNamaAttribute()
     {

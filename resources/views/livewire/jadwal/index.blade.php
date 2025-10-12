@@ -37,9 +37,9 @@ new class extends Component {
                 </flux:button>
 
                 <flux:menu>
-                    <flux:menu.item icon="file-pdf">PDF</flux:menu.item>
+                    <flux:menu.item x-on:click="window.location='{{ route('export.jadwal', ['type' => 'pdf']) }}'" icon="file-pdf">PDF</flux:menu.item>
                     <flux:menu.separator />
-                    <flux:menu.item icon="file-excel">Excel</flux:menu.item>
+                    <flux:menu.item x-on:click="window.location='{{ route('export.jadwal', ['type' => 'excel']) }}'" icon="file-excel">Excel</flux:menu.item>
                 </flux:menu>
             </flux:dropdown>
         </x-slot>

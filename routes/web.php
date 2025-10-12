@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\Controllers\ExportController;
 use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
 use Livewire\Volt\Volt;
 
 // Route::view('dashboard', 'dashboard')
@@ -47,6 +47,8 @@ Route::middleware(['auth'])->group(function () {
 
         return response()->download($path, $filename);
     })->name('download.template');
+
+    Route::get('/export/jadwal', [ExportController::class, 'exportJadwal'])->name('export.jadwal');
 
 
     // Volt::route('settings/two-factor', 'settings.two-factor')
