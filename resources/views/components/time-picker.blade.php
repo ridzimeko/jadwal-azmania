@@ -7,24 +7,24 @@ x-data="{
         let num = parseInt(val.replace(/[^0-9]/g, '').slice(0, 2), 10);
         if (isNaN(num)) num = 0;
         if (num > max) num = max;
-        return String(num).padStart(2, '0');
+        return num.toString().padStart(2, '0');
     },
     init() {
         if (this.livewireValue && this.livewireValue.includes(':')) {
             [this.h, this.m] = this.livewireValue.split(':');
         }
-
-        this.$watch('h', () => this.syncValue());
-        this.$watch('m', () => this.syncValue());
+        this.$watch('h', () => {
+            this.livewireValue = `${this.h}:${this.m}`;
+        });
+        this.$watch('m', () => {
+            this.livewireValue = `${this.h}:${this.m}`;
+        });
         this.$watch('livewireValue', (val) => {
             if (val && val.includes(':')) {
                 [this.h, this.m] = val.split(':');
             }
         });
     },
-    syncValue() {
-        this.livewireValue = `${this.formatPart(this.h, 23)}:${this.formatPart(this.m, 59)}`;
-    }
 }"
 x-modelable="livewireValue"
 class="flex items-center w-full max-w-[300px] rounded-lg shadow-sm border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition duration-150"

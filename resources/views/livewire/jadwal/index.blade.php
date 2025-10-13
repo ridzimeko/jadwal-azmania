@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
 use Filament\Notifications\Notification;
 use Flux\Flux;
@@ -40,8 +41,8 @@ new class extends Component {
             'formData.jam_mulai' => 'required|date_format:H:i',
             'formData.jam_selesai' => 'required|date_format:H:i|after:formData.jam_mulai',
             'formData.kelas_id' => 'required|exists:kelas,id',
-            'formData.mata_pelajaran_id' => 'required|exists:mata_pelajarans,id',
-            'formData.guru_id' => 'required|exists:gurus,id',
+            'formData.mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
+            'formData.guru_id' => 'required|exists:guru,id',
         ];
     }
 
@@ -149,18 +150,18 @@ new class extends Component {
             </flux:heading>
             <flux:field>
                 <flux:label>Nama Mata Pelajaran</flux:label>
-                <x-select name="mapel" wire:model="formData.mata_pelajaran_id" :options="App\Models\MataPelajaran::all()
+                <x-select name="formData.mata_pelajaran_id" wire:model="formData.mata_pelajaran_id" :options="App\Models\MataPelajaran::all()
                     ->map(fn($g) => ['value' => $g->id, 'label' => $g->nama_mapel])
                     ->toArray()" placeholder="Pilih mata pelajaran..." />
-                <flux:error name="mapel" />
+                <flux:error name="formData.mata_pelajaran_id" />
             </flux:field>
 
             <flux:field>
                 <flux:label>Kelas</flux:label>
-                <x-select name="kelas" wire:model="formData.kelas_id" :options="$this->getKelas()
+                <x-select name="formData.kelas_id" wire:model="formData.kelas_id" :options="$this->getKelas()
                     ->map(fn($g) => ['value' => $g->id, 'label' => $g->nama_kelas])
                     ->toArray()" placeholder="Pilih kelas..." />
-                <flux:error name="kelas" />
+                <flux:error name="formData.kelas_id" />
             </flux:field>
 
             <flux:field>
@@ -172,31 +173,31 @@ new class extends Component {
                 ->toArray();
                 @endphp
 
-                <x-select name="hari" wire:model="formData.hari" :search="false" :options="$hariOptions"
+                <x-select name="formData.hari" wire:model="formData.hari" :search="false" :options="$hariOptions"
                     placeholder="Pilih hari..." />
-                <flux:error name="hari" />
+                <flux:error name="formData.hari" />
             </flux:field>
 
             <div class="flex flex-row items-center gap-6 w-full">
                 <flux:field class="min-w-[200px]">
                     <flux:label>Jam Mulai</flux:label>
-                    <x-time-picker wire:model="formData.jam_mulai" class="w-full" />
-                    <flux:error name="jam_mulai" />
+                    <x-time-picker name="formData.jam_mulai" wire:model="formData.jam_mulai" class="w-full" />
+                    <flux:error name="formData.jam_mulai" />
                 </flux:field>
 
                 <flux:field class="min-w-[200px]">
                     <flux:label>Jam Selesai</flux:label>
-                    <x-time-picker name="jam_selesai" wire:model="formData.jam_selesai" class="w-full" />
-                    <flux:error name="jam_selesai" />
+                    <x-time-picker name="formData.jam_selesai" wire:model="formData.jam_selesai" class="w-full" />
+                    <flux:error name="formData.jam_selesai" />
                 </flux:field>
             </div>
 
             <flux:field>
                 <flux:label>Guru Pengajar</flux:label>
-                <x-select name="guru_pengajar" wire:model="formData.guru_id" :options="App\Models\Guru::all()
+                <x-select name="formData.guru_id" wire:model="formData.guru_id" :options="App\Models\Guru::all()
                     ->map(fn($g) => ['value' => $g->id, 'label' => $g->nama_guru])
                     ->toArray()" placeholder="Pilih guru..." />
-                <flux:error name="guru_pengajar" />
+                <flux:error name="formData.guru_id" />
             </flux:field>
 
             <div class="flex mt-8">

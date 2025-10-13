@@ -2,6 +2,7 @@
 
 use App\Models\JadwalPelajaran; // Pastikan model JadwalPelajaran di-import
 use App\Models\Kelas;
+use Filament\Actions\Action;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
@@ -14,10 +15,14 @@ new class extends Component
     protected $hari;
 
     #[Computed]
-    public function getJadwal() {
+    public function getJadwal($id = null) {
         $query = JadwalPelajaran::with(['guru', 'mataPelajaran', 'kelas'])
             ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
             ->orderBy('jam_mulai');
+
+        if ($id) {
+            return $query->where('id', $id)->get();
+        }
 
         // Filter berdasarkan hari jika ada parameter
         if ($this->hari) {
@@ -41,6 +46,14 @@ new class extends Component
     public function refresh()
     {
         $this->dispatch('$refresh');
+    }
+
+    public function deleteAction(): Action
+    {
+        return Action::make('delete')
+            ->color('danger')
+            ->requiresConfirmation();
+            // ->action(fn () => $this->getJadwal($id)->delete());
     }
 }
 
