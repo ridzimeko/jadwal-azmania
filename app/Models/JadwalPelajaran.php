@@ -10,6 +10,15 @@ class JadwalPelajaran extends Model
     /** @use HasFactory<\Database\Factories\JadwalPelajaranFactory> */
     use HasFactory;
 
+    protected $fillable = [
+        'hari',
+        'jam_mulai',
+        'jam_selesai',
+        'kelas_id',
+        'mata_pelajaran_id',
+        'guru_id',
+    ];
+
     protected $table = 'jadwal_pelajaran';
 
     public function scopeOrderByHari($query)

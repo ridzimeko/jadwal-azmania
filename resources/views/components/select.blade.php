@@ -1,6 +1,5 @@
 @props([
     'options' => [], // array: [['value' => 1, 'label' => 'Budi'], ...]
-    'wireModel' => null,
     'placeholder' => 'Pilih item...',
     'searchPlaceholder' => 'Cari...',
     'search' => true,
@@ -11,18 +10,34 @@
         open: false,
         search: '',
         selectedLabel: '',
+        value: @entangle($attributes->wire('model')), // sinkron ke wire:model
+        options: {{ json_encode($options) }},
+        init() {
+            // Set label sesuai value awal dari wire:model
+            this.setSelectedLabel();
+
+            // Kalau wire:model berubah dari Livewire, update label
+            this.$watch('value', () => {
+                this.setSelectedLabel();
+            });
+        },
         get filteredOptions() {
-            if (this.search === '') return {{ json_encode($options) }};
-            return {{ json_encode($options) }}.filter(o => o.label.toLowerCase().includes(this.search.toLowerCase()));
+            if (this.search === '') return this.options;
+            return this.options.filter(o =>
+                o.label.toLowerCase().includes(this.search.toLowerCase())
+            );
         },
         select(value, label) {
+            this.value = value;
             this.selectedLabel = label;
-            @if ($wireModel)
-                $wire.set('{{ $wireModel }}', value);
-            @endif
             this.open = false;
+        },
+        setSelectedLabel() {
+            const found = this.options.find(o => o.value == this.value);
+            this.selectedLabel = found ? found.label : '';
         }
     }"
+    x-modelable="value"
     {{ $attributes->merge(['class' => 'relative w-full']) }}
 >
     <!-- Trigger -->
