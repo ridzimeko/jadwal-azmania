@@ -108,6 +108,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
 
         return $table
             ->query(fn() => $this->model::query()->orderByDesc('id'))
+            ->searchable()
             ->columns(
                 collect([
                     // Tambahkan kolom nomor urut paling awal
@@ -117,7 +118,9 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                         collect($this->columns)->map(function ($col) {
                             $column = TextColumn::make($col['field'])->label($col['name']);
 
-                            if (!empty($col['searchable']) && $col['searchable'] === true) {
+                            if (!empty($col['searchable']) && $col['searchable'] === false) {
+                                $column->searchable(false);
+                            } else {
                                 $column->searchable();
                             }
 
@@ -155,9 +158,9 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
 
 
 <div>
-    <div class="flex justify-between bg-neutral-50 rounded-md w-full py-3 px-4">
+    <!-- <div class="flex justify-between bg-neutral-50 rounded-md w-full py-3 px-4">
         <flux:input icon="magnifying-glass" placeholder="Cari Data" class="max-w-[320px]" />
-    </div>
+    </div> -->
 
     {{ $this->table }}
 </div>
