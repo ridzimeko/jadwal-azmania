@@ -23,6 +23,9 @@
             <flux:sidebar.item href="/data/guru">Guru</flux:sidebar.item>
             <flux:sidebar.item href="/data/kelas">Kelas</flux:sidebar.item>
         </flux:sidebar.group>
+        @if(auth()->user()->role === 'superadmin')
+            <flux:sidebar.item icon="users" href="/atur-admin">Kelola Admin</flux:sidebar.item>
+        @endif
     </flux:sidebar.nav>
 
     <flux:sidebar.spacer />
@@ -33,7 +36,12 @@
         <flux:menu>
             <flux:menu.item icon="cog-6-tooth" href="/pengaturan/akun">Pengaturan Akun</flux:menu.item>
             <flux:menu.separator />
-            <flux:menu.item icon="arrow-right-start-on-rectangle">Logout</flux:menu.item>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <flux:menu.item type="submit" variant="danger" icon="arrow-right-start-on-rectangle">
+                    Logout
+                </flux:menu.item>
+            </form>
         </flux:menu>
     </flux:dropdown>
 </flux:sidebar>

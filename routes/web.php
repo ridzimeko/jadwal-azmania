@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ExportController;
+use App\Http\Middleware\RoleMiddleware;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -35,7 +36,9 @@ Route::middleware(['auth'])->group(function () {
         Volt::route('kelas', 'data.kelas')->name('data.kelas');
     });
 
-    Volt::route('atur-admin', 'atur-admin.index')->name('atur-admin');
+    Volt::route('atur-admin', 'atur-admin.index')
+    ->name('atur-admin')
+    ->middleware(RoleMiddleware::class . ':superadmin');
 
     Route::get('/download/template/{type}', function ($type) {
         $filename = "template_{$type}.xlsx";

@@ -125,6 +125,11 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                                 $column->sortable();
                             }
 
+                            // 🔥 Format readable khusus untuk updated_at
+                            if ($col['field'] === 'updated_at') {
+                                $column->formatStateUsing(fn($state) => \Carbon\Carbon::parse($state)->translatedFormat('d F Y H:i'));
+                            }
+
                             return $column;
                         }),
                     )
