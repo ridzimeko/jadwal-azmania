@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -24,6 +25,12 @@ class JadwalPelajaran extends Model
     public function scopeOrderByHari($query)
     {
         return $query->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')");
+    }
+
+    public function scopeHariIni($query)
+    {
+        $hariSekarang = Carbon::now()->translatedFormat('l');
+        return $query->where('hari', $hariSekarang);
     }
 
     public function getKelasNamaAttribute()

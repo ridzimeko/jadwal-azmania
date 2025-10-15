@@ -21,6 +21,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     public $model;
     public $actionType;
     public array $columns = [];
+    public string $scope = '';
 
     #[On('refreshTable')]
     public function refresh()
@@ -106,8 +107,17 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
             ];
         }
 
-        return $table
-            ->query(fn() => $this->model::query()->orderByDesc('id'))
+        $mTable = $table
+            ->query(function () {
+                $query = $this->model::query()->orderByDesc('id');
+
+                if (property_exists($this, 'scope') && $this->scope && method_exists($this->model, 'scope' . ucfirst($this->scope))) {
+                    $scope = $this->scope;
+                    $query->$scope();
+                }
+
+                return $query;
+            })
             ->searchable()
             ->columns(
                 collect([
@@ -138,7 +148,6 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     )
                     ->toArray(),
             )
-            ->recordActions(array_merge($editActions, $defaultActions))
             ->toolbarActions([
                 BulkAction::make('deleteSelected')
                     ->label('Hapus Data yang Dipilih')
@@ -151,6 +160,12 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     })
                     ->deselectRecordsAfterCompletion(),
             ]);
+
+        if ($this->actionType) {
+            $mTable->recordActions(array_merge($editActions, $defaultActions));
+        }
+
+        return $mTable;
     }
 };
 
