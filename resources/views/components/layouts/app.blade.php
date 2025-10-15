@@ -35,7 +35,12 @@
                     <flux:menu>
                         <flux:menu.item icon="cog-6-tooth" href="/akun">Pengaturan Akun</flux:menu.item>
                         <flux:menu.separator />
-                        <flux:menu.item icon="arrow-right-start-on-rectangle">Logout</flux:menu.item>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <flux:menu.item type="submit" variant="danger" icon="arrow-right-start-on-rectangle">
+                                Logout
+                            </flux:menu.item>
+                        </form>
                     </flux:menu>
                 </flux:dropdown>
             </flux:header>

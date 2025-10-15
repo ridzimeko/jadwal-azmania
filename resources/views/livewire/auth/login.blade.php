@@ -101,11 +101,12 @@ new #[Layout('components.layouts.auth')] class extends Component {
 }; ?>
 
 <div class="min-h-screen flex flex-row">
-    <aside class="flex flex-col justify-end bg-purple-dark w-[520px] py-6 px-8">
+    <aside class="relative hidden md:flex flex-col justify-end bg-purple-dark w-[520px] py-6 pb-20 px-8">
         <div class="flex flex-col gap-4">
             <img src="/images/logo.png" alt="Logo Pondok Pesantren Azmania Ponorogo" class="w-[100px] h-auto">
             <h1 class="text-5xl font-bold text-white max-w-[420px]">Sistem Jadwal Pondok Azmania Ponorogo</h1>
         </div>
+        <div class="rounded-full size-[360px] border-white border-[5px] absolute -bottom-64 -right-32"></div>
     </aside>
     <aside class="flex flex-col justify-center pl-20 pr-10">
         <div class="mb-6">
@@ -119,7 +120,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 <flux:input wire:model="password" :label="__('Password')" x-bind:type="show ? 'text' : 'password'"
                     size="lg" required autocomplete="current-password" :placeholder="__('Password')" viewable />
             </div>
-            <flux:button type="submit" wire:action="login" class="!bg-primary !text-white w-fit mt-4 !px-6">
+            <flux:button type="submit" wire:action="login" class="!bg-primary !px-8 !py-5 !text-white w-fit mt-4">
         </form>
         Login
         </flux:button>
