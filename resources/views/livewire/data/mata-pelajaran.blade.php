@@ -1,5 +1,6 @@
 <?php
 
+use Filament\Notifications\Notification;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
