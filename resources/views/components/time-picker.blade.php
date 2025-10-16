@@ -23,6 +23,7 @@ x-data="{
             if (val && val.includes(':')) {
                 [this.h, this.m] = val.split(':');
             }
+            this.livewireValue = `${this.h}:${this.m}`;
         });
     },
 }"
