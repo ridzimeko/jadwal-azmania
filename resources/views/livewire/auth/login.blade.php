@@ -101,7 +101,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
 }; ?>
 
 <div class="min-h-screen flex flex-row">
-    <aside class="relative hidden md:flex flex-col justify-end bg-purple-dark w-[520px] py-6 pb-20 px-8">
+    <aside class="relative hidden md:flex flex-col justify-end bg-purple-dark w-[520px] py-6 pb-20 px-8 overflow-clip">
         <div class="flex flex-col gap-4">
             <img src="/images/logo.png" alt="Logo Pondok Pesantren Azmania Ponorogo" class="w-[100px] h-auto">
             <h1 class="text-5xl font-bold text-white max-w-[420px]">Sistem Jadwal Pondok Azmania Ponorogo</h1>
