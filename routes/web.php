@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExportController;
 use App\Http\Middleware\RoleMiddleware;
+use App\Livewire\PdfExport;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -50,8 +51,7 @@ Route::middleware(['auth'])->group(function () {
         return response()->download($path, $filename);
     })->name('download.template');
 
-    Route::get('/export/jadwal', [ExportController::class, 'exportJadwal'])->name('export.jadwal');
-
+    Route::get('/export/jadwal', [ExportController::class, 'exportPdf'])->name('export.jadwal');
 
     // Volt::route('settings/two-factor', 'settings.two-factor')
     //     ->middleware(

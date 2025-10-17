@@ -4,6 +4,7 @@ use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Tables\Columns\TextColumn;
@@ -38,7 +39,14 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                 ->color('danger')
                 ->extraAttributes(['class' => 'bg-red-600 hover:bg-red-700 text-white !px-2'])
                 ->requiresConfirmation()
-                ->action(fn($record) => $record->delete()),
+                ->action(function ($record) {
+                    $record->delete();
+                    Notification::make()
+                        ->title('Data berhasil dihapus!')
+                        ->success()
+                        ->send();
+                    $this->dispatch('refreshTable');
+                }),
         ];
 
         $editActions = match ($this->actionType) {

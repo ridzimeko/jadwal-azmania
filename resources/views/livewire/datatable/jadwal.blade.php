@@ -31,7 +31,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
         $this->tingkat = $tingkat;
     }
 
-    #[On('refreshTable')]
+    #[On('refreshJadwalTable')]
     public function refresh()
     {
         $this->dispatch('$refresh');
@@ -43,6 +43,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
             //filter tingkat
             $query = JadwalPelajaran::query()
                 ->with(['kelas', 'mataPelajaran', 'guru'])
+                ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
                 ->whereRelation('kelas', 'tingkat', '=', $this->tingkat);
             return $query;
         })
@@ -50,12 +51,14 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
             ->columns([
                 // Tambahkan kolom nomor urut paling awal
                 TextColumn::make('index')->label('No')->rowIndex()->sortable(false)->searchable(false),
-                TextColumn::make('kelas.nama_kelas')->label('Kelas')->searchable(false),
-                TextColumn::make('hari')->label('Hari')->searchable(false),
-                TextColumn::make('jam_mulai')->label('Jam Mulai')->sortable(true)->searchable(false),
-                TextColumn::make('jam_selesai')->label('Jam Selesai')->sortable(true)->searchable(false),
-                TextColumn::make('mataPelajaran.nama_mapel')->label('Mata Pelajaran')->searchable(false),
-                TextColumn::make('guru.nama_guru')->label('Guru Pengajar')->searchable(false),
+                TextColumn::make('kelas.nama_kelas')->label('Kelas')->searchable(true),
+                TextColumn::make('hari')->label('Hari')->searchable(true),
+                TextColumn::make('jam')
+                    ->label('Jam')
+                    ->getStateUsing(fn($record) => "{$record->jam_mulai} - {$record->jam_selesai}")
+                    ->searchable(true),
+                TextColumn::make('mataPelajaran.nama_mapel')->label('Mata Pelajaran')->searchable(true),
+                TextColumn::make('guru.nama_guru')->label('Guru Pengajar')->searchable(true),
             ])
             ->recordActions([
                 Action::make('edit')
@@ -70,7 +73,14 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     ->color('danger')
                     ->extraAttributes(['class' => 'bg-red-600 hover:bg-red-700 text-white !px-2'])
                     ->requiresConfirmation()
-                    ->action(fn($record) => $record->delete()),
+                    ->action(function ($record) {
+                        $record->delete();
+                        Notification::make()
+                            ->title('Data berhasil dihapus!')
+                            ->success()
+                            ->send();
+                        $this->dispatch('refreshJadwalTable');
+                    }),
             ])
             ->filters([
                 SelectFilter::make('hari')
@@ -84,7 +94,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     ]),
                 SelectFilter::make('kelas.nama_kelas')
                     ->label('Kelas')
-                    ->relationship('kelas', 'nama_kelas', fn (Builder $query) => $query->where('tingkat', $this->tingkat))
+                    ->relationship('kelas', 'nama_kelas', fn(Builder $query) => $query->where('tingkat', $this->tingkat))
             ])
             ->toolbarActions([
                 BulkAction::make('deleteSelected')
