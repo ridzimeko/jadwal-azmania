@@ -1,119 +1,111 @@
 <?php
 
-use App\Models\JadwalPelajaran; // Pastikan model JadwalPelajaran di-import
+use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
-new class extends Component
-{
-    public string $tingkat = 'SMP'; // bisa di-pass lewat route
-    public $kelasList;
-    public $jadwal;
-    protected $hari;
+new class extends Component implements HasActions, HasSchemas, HasTable {
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+    use InteractsWithTable;
 
-    #[Computed]
-    public function getJadwal($id = null) {
-        $query = JadwalPelajaran::with(['guru', 'mataPelajaran', 'kelas'])
-            ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
-            ->orderBy('jam_mulai');
+    public $tingkat;
 
-        if ($id) {
-            return $query->where('id', $id)->get();
-        }
-
-        // Filter berdasarkan hari jika ada parameter
-        if ($this->hari) {
-            $query->where('hari', $this->hari);
-        }
-
-        $jadwal = $query->get();
-
-        // Grup berdasarkan hari dan jam_mulai + jam_selesai
-        return $jadwal->groupBy(['hari', function ($item) {
-            return $item->jam_mulai . ' - ' . $item->jam_selesai;
-        }]);
+    public function mount($tingkat = null)
+    {
+        $this->tingkat = $tingkat;
     }
 
-    #[Computed]
-    public function getKelas() {
-        return Kelas::where('tingkat', $this->tingkat)->orderBy('nama_kelas')->get();
-    }
-
-    #[On('refreshJadwalTable')]
+    #[On('refreshTable')]
     public function refresh()
     {
         $this->dispatch('$refresh');
     }
 
-    public function deleteAction(): Action
+    public function table(Table $table): Table
     {
-        return Action::make('delete')
-            ->color('danger')
-            ->requiresConfirmation();
-            // ->action(fn () => $this->getJadwal($id)->delete());
+        return $table->query(function () {
+            //filter tingkat
+            $query = JadwalPelajaran::query()
+                ->with(['kelas', 'mataPelajaran', 'guru'])
+                ->whereRelation('kelas', 'tingkat', '=', $this->tingkat);
+            return $query;
+        })
+            ->searchable()
+            ->columns([
+                // Tambahkan kolom nomor urut paling awal
+                TextColumn::make('index')->label('No')->rowIndex()->sortable(false)->searchable(false),
+                TextColumn::make('kelas.nama_kelas')->label('Kelas')->searchable(false),
+                TextColumn::make('hari')->label('Hari')->searchable(false),
+                TextColumn::make('jam_mulai')->label('Jam Mulai')->sortable(true)->searchable(false),
+                TextColumn::make('jam_selesai')->label('Jam Selesai')->sortable(true)->searchable(false),
+                TextColumn::make('mataPelajaran.nama_mapel')->label('Mata Pelajaran')->searchable(false),
+                TextColumn::make('guru.nama_guru')->label('Guru Pengajar')->searchable(false),
+            ])
+            ->recordActions([
+                Action::make('edit')
+                    ->iconButton()
+                    ->icon('heroicon-o-pencil')
+                    ->color('warning')
+                    ->extraAttributes(['class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1'])
+                    ->action(fn($record) => $this->dispatch('openEditJadwal', $record->toArray())),
+                Action::make('delete')
+                    ->iconButton()
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->extraAttributes(['class' => 'bg-red-600 hover:bg-red-700 text-white !px-2'])
+                    ->requiresConfirmation()
+                    ->action(fn($record) => $record->delete()),
+            ])
+            ->filters([
+                SelectFilter::make('hari')
+                    ->options([
+                        'senin' => 'Senin',
+                        'selasa' => 'Selasa',
+                        'rabu' => 'Rabu',
+                        'kamis' => 'Kamis',
+                        'jumat' => 'Jumat',
+                        'sabtu' => 'Sabtu'
+                    ]),
+                SelectFilter::make('kelas.nama_kelas')
+                    ->label('Kelas')
+                    ->relationship('kelas', 'nama_kelas', fn (Builder $query) => $query->where('tingkat', $this->tingkat))
+            ])
+            ->toolbarActions([
+                BulkAction::make('deleteSelected')
+                    ->label('Hapus Data yang Dipilih')
+                    ->icon('heroicon-o-trash') // ikon trash 🗑️
+                    ->color('danger')
+                    ->requiresConfirmation() // muncul modal konfirmasi
+                    ->action(function ($records) {
+                        $records->each->delete(); // hapus semua data yang dipilih
+                        Notification::make()
+                            ->title('Data berhasil dihapus!')
+                            ->success()
+                            ->send();
+                    })
+                    ->deselectRecordsAfterCompletion(),
+            ]);
     }
-}
+};
 
 ?>
 
-<div class="overflow-x-auto">
-<table class="min-w-full border border-gray-300 text-sm">
-        <thead class="bg-gray-100">
-            <tr>
-                <th class="px-4 py-2 border text-center">No</th>
-
-                @if(!$this->hari)
-                    <th class="px-4 py-2 border text-center">Hari</th>
-                @endif
-
-                <th class="px-4 py-2 border text-center">Jam</th>
-
-                @foreach($this->getKelas() as $kelas)
-                    <th class="px-4 py-2 border text-center">{{ $kelas->nama_kelas }}</th>
-                @endforeach
-            </tr>
-        </thead>
-        <tbody>
-            @php $no = 1; @endphp
-            @foreach($this->getJadwal() as $hariKey => $jadwalHari)
-                @foreach($jadwalHari as $jamLabel => $items)
-                    <tr>
-                        <td class="px-4 py-2 border text-center">{{ $no++ }}</td>
-
-                        @if(!$this->hari)
-                            <td class="px-4 py-2 border text-center">{{ $hariKey }}</td>
-                        @endif
-
-                        <td class="px-4 py-2 border text-center">{{ $jamLabel }}</td>
-
-                        @foreach($this->getKelas() as $kelas)
-                            @php
-                                $item = $items->firstWhere('kelas_id', $kelas->id);
-                                $jam_mapel = array_map('trim', explode('-', $jamLabel));
-                            @endphp
-                            <td class="px-4 py-2 border text-center cursor-pointer hover:bg-yellow-100 transition"
-                                wire:click="$dispatch('openEditJadwal', { record: @js($item ?? [
-                                    'hari' => $hariKey,
-                                    'jam_mulai' => $jam_mapel[0] ?? null,
-                                    'jam_selesai' => $jam_mapel[1] ?? null,
-                                    'kelas_id' => $kelas->id,
-                                    'mata_pelajaran_id' => null,
-                                    'guru_id' => null
-                                ])})">
-                                @if($item)
-                                    <div class="font-semibold">{{ $item->mataPelajaran->nama_mapel }}</div>
-                                    <div class="text-xs text-gray-600">{{ $item->guru->nama_guru }}</div>
-                                @else
-                                    <span class="text-gray-400 italic">-</span>
-                                @endif
-                            </td>
-                        @endforeach
-                    </tr>
-                @endforeach
-            @endforeach
-        </tbody>
-    </table>
+<div>
+    {{ $this->table }}
 </div>

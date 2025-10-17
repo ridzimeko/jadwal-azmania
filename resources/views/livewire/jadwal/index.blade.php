@@ -3,6 +3,7 @@
 use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
 use Filament\Notifications\Notification;
+use Filament\Tables\Filters\SelectFilter;
 use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -19,6 +20,7 @@ new class extends Component {
     ];
 
     public $tingkat;
+    public $hariOptions;
     public ?array $formData = [
         'hari' => '',
         'jam_mulai' => '',
@@ -27,11 +29,15 @@ new class extends Component {
         'mata_pelajaran_id' => '',
         'guru_id' => ''
     ];
+    public ?array $filterActions;
     public bool $isEdit = false;
 
     public function mount($tingkat)
     {
         $this->tingkat = $tingkat;
+        $this->hariOptions = collect(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'])
+            ->map(fn($hari) => ['label' => $hari, 'value' => $hari])
+            ->toArray();
     }
 
     protected function rules(): array
@@ -71,7 +77,8 @@ new class extends Component {
     }
 
     #[Computed()]
-    public function getKelas() {
+    public function getKelas()
+    {
         return Kelas::where('tingkat', $this->tingkat)->orderBy('nama_kelas')->get();
     }
 
@@ -142,6 +149,34 @@ new class extends Component {
         </x-slot>
     </x-card-heading>
 
+    <div x-data="{ activeTab: 'tabel' }">
+        <flux:tabs variant="segmented">
+            <flux:tab
+                icon="list-bullet"
+                x-on:click="activeTab = 'tabel'"
+                x-bind:data-selected="activeTab === 'tabel'"
+                >
+                Tabel
+            </flux:tab>
+            <flux:tab
+                icon="calendar-days"
+                x-on:click="activeTab = 'timeline'"
+                x-bind:data-selected="activeTab === 'timeline'"
+                >
+                Timeline
+            </flux:tab>
+        </flux:tabs>
+
+        <div class="mt-4">
+            <div x-show="activeTab === 'tabel'">
+                <livewire:datatable.jadwal :tingkat="$tingkat" />
+            </div>
+            <div x-show="activeTab === 'timeline'">
+                <livewire:datatable.jadwal-matrix :tingkat="$tingkat" />
+            </div>
+        </div>
+    </div>
+
     {{-- Add Data Modal --}}
     <flux:modal name="jadwal-modal" class="md:w-[720px]">
         <form wire:submit.prevent="save" class="flex flex-col gap-3 max-w-[768px]">
@@ -166,14 +201,7 @@ new class extends Component {
 
             <flux:field>
                 <flux:label>Hari</flux:label>
-
-                @php
-                $hariOptions = collect(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'])
-                ->map(fn($hari) => ['label' => $hari, 'value' => $hari])
-                ->toArray();
-                @endphp
-
-                <x-select name="formData.hari" wire:model="formData.hari" :search="false" :options="$hariOptions"
+                <x-select name="formData.hari" wire:model="formData.hari" :search="false" :options="$this->hariOptions"
                     placeholder="Pilih hari..." />
                 <flux:error name="formData.hari" />
             </flux:field>
@@ -206,9 +234,6 @@ new class extends Component {
             </div>
         </form>
     </flux:modal>
-
-    {{-- Datatable --}}
-    <livewire:datatable.jadwal tingkat="{{ $tingkat }}" />
 
     {{-- Import Excel Modal --}}
     <livewire:excel-import-modal context="jadwal" />

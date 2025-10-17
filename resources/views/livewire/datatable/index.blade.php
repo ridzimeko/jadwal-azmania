@@ -31,7 +31,6 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
 
     public function table(Table $table): Table
     {
-        $actions = [];
         $defaultActions = [
             Action::make('delete')
                 ->iconButton()
@@ -43,14 +42,6 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
         ];
 
         $editActions = match ($this->actionType) {
-            'jadwal' => [
-                Action::make('edit')
-                    ->iconButton()
-                    ->icon('heroicon-o-pencil')
-                    ->color('warning')
-                    ->extraAttributes(['class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1'])
-                    ->url(fn($record) => url("/jadwal/{$record->tingkat}/{$record->id}/edit")),
-            ],
             'data' => [
                 Action::make('edit')
                     ->iconButton()
@@ -76,36 +67,6 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
             ],
             default => [],
         };
-
-        // table actions
-        if (request()->routeIs('data.*')) {
-            $actions = [
-                Action::make('edit')
-                    ->iconButton()
-                    ->icon('heroicon-o-pencil')
-                    ->color('warning')
-                    ->extraAttributes([
-                        'class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1',
-                    ])
-                    ->action(function ($record) {
-                        $this->dispatch('openEditModal', $record->toArray());
-                    }),
-            ];
-        } elseif (request()->routeIs('jadwal.*')) {
-            $actions = [
-                Action::make('edit')
-                    ->iconButton()
-                    ->icon('heroicon-o-pencil')
-                    ->color('warning')
-                    ->extraAttributes(['class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1'])
-                    ->url(
-                        fn($record) => route('jadwal.edit', [
-                            'tingkat' => request()->route('tingkat'),
-                            'id_jadwal' => $record->id,
-                        ]),
-                    ),
-            ];
-        }
 
         $mTable = $table
             ->query(function () {
