@@ -111,12 +111,15 @@
         }
 
         th {
-            background: #f0f0f0;
+            background-color: #902C8E;
+            color: #ffffff;
             font-weight: bold;
+            border: 1px solid #666;
         }
 
-        tr:nth-child(even) td {
-            background: #fafafa;
+        th#hari {
+            background-color: #fee685;
+            color: #000000;
         }
 
         h2 {
@@ -155,11 +158,12 @@
     </div>
 
     @foreach ($jadwalPerHari as $hari => $jadwal)
-        <div>
-            <p class="subtitle">Hari: {{ $hari }}</p>
-
+        <div style="margin-bottom: 16px;">
             <table>
                 <thead>
+                    <tr>
+                        <th id="hari" colspan="{{ 2 + $kelasList->count() }}">{{ $hari ?? 'wkwkwk' }}</th>
+                    </tr>
                     <tr>
                         <th style="width: 40px;">No</th>
                         <th style="width: 75px;">Jam</th>

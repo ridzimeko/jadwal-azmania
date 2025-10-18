@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\JadwalExport;
+use App\Exports\JadwalPelajaranExport;
 use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -39,7 +39,7 @@ class ExportController extends Controller
 
         // dd($tingkat);
 
-        $pdf = Pdf::loadView('pdf.jadwal', [
+        $pdf = Pdf::loadView('exports.jadwal-pelajaran-pdf', [
             'tingkat' => $tingkat,
             'kelasList' => $kelasList,
             'jadwalPerHari' => $jadwalPerHari
@@ -54,35 +54,8 @@ class ExportController extends Controller
         // ]);
     }
 
-    public function exportJadwal(Request $request)
+    public function exportExcel(Request $request)
     {
-        $type = $request->query('type', 'excel'); // default excel
-        $hari = 'Senin';
-        $tingkat = $request->query('type', 'smp');
-
-        if ($type === 'pdf') {
-            $pdf = Pdf::loadView('livewire.datatable.jadwal-matrix');
-
-            return response()->streamDownload(
-                fn() => print($pdf->output()),
-                'laporan-bulanan.pdf'
-            );
-            // // Render view jadwal.blade.php
-            // $html = Livewire::mount('datatable.jadwal-matrix', compact(''));
-            // dd($html);
-            // // $html = view('exports.jadwal', compact('tingkat'))->render();
-
-            // $mpdf = new Mpdf([
-            //     'format' => [210, 330],
-            //     'orientation' => 'L',
-            //     'default_font_size' => 10,
-            //     'default_font' => 'dejavusans',
-            // ]);
-
-            // $mpdf->WriteHTML($html);
-            // return $mpdf->Output('Jadwal Pelajaran.pdf', 'I'); // tampil di browser
-        }
-
-        return Excel::download(new JadwalExport, 'jadwal.xlsx');
+        return Excel::download(new JadwalPelajaranExport, 'jadwal.xlsx');
     }
 }

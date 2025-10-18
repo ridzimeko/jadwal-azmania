@@ -51,7 +51,8 @@ Route::middleware(['auth'])->group(function () {
         return response()->download($path, $filename);
     })->name('download.template');
 
-    Route::get('/export/jadwal', [ExportController::class, 'exportPdf'])->name('export.jadwal');
+    Route::get('/export/jadwal/pdf', [ExportController::class, 'exportPdf'])->name('export-jadwal.pdf');
+    Route::get('/export/jadwal/excel', [ExportController::class, 'exportExcel'])->name('export-jadwal.excel');
 
     // Volt::route('settings/two-factor', 'settings.two-factor')
     //     ->middleware(
