@@ -260,10 +260,12 @@ new class extends Component implements HasActions, HasSchemas {
             </flux:field>
 
             <div class="flex mt-8">
-                <flux:button variant="primary" color="red" icon="trash" x-on:click="() => {
-                    $flux.modals().close()
-                    $wire.mountAction('delete', { jadwal: '{{ $this->formData['id'] ?? null }}' })
-                }">Hapus</flux:button>
+                @if ($this->isEdit)
+                    <flux:button variant="primary" color="red" icon="trash" x-on:click="() => {
+                        $flux.modals().close()
+                        $wire.mountAction('delete', { jadwal: '{{ $this->formData['id'] ?? null }}' })
+                    }">Hapus</flux:button>
+                @endif
                 <flux:spacer />
                 <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>
             </div>

@@ -1,4 +1,4 @@
-<flux:sidebar sticky collapsible="mobile" class="bg-white border-zinc-200 group !data-current:bg-primary">
+<flux:sidebar sticky collapsible="mobile" class="bg-white border-zinc-200 group !data-current:bg-primary shrink-0">
     <flux:sidebar.header>
 
         <div class="flex items-center gap-4 pointer-events-none">
