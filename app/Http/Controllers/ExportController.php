@@ -56,6 +56,7 @@ class ExportController extends Controller
 
     public function exportExcel(Request $request)
     {
-        return Excel::download(new JadwalPelajaranExport, 'jadwal.xlsx');
+        $tingkat = $request->query('tingkat', 'SMP');
+        return Excel::download(new JadwalPelajaranExport($tingkat), 'jadwal.xlsx');
     }
 }

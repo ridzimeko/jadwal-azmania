@@ -1,17 +1,24 @@
 <?php
 
+use Filament\Forms\Components\ColorPicker;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Schemas\Schema;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
-new class extends Component {
+new class extends Component implements HasSchemas {
+    use InteractsWithSchemas;
+
     protected $columnDefs = [['name' => 'NIP', 'field' => 'nip'], ['name' => 'Nama Guru', 'field' => 'nama_guru']];
 
     public array $formData = [
         'nama_guru' => '',
         'nip' => '',
+        'warna' => ''
     ];
     public bool $isEdit = false;
 
@@ -20,6 +27,7 @@ new class extends Component {
         return [
             'formData.nip' => ['required', 'digits_between:8,20',  Rule::unique('guru', 'nip')->ignore($this->formData['id'] ?? null)],
             'formData.nama_guru' => ['required', 'string', 'max:40'],
+            'formData.warna' => ['hex_color']
         ];
     }
 
@@ -31,7 +39,16 @@ new class extends Component {
             'formData.nip.unique' => 'NIP ini sudah digunakan oleh guru lain.',
             'formData.nama_guru.required' => 'Nama guru wajib diisi.',
             'formData.nama_guru.max' => 'Nama guru tidak boleh lebih dari 40 karakter.',
+            'formData.warna.hex_color' => 'Warna harus dalam format heksadesimal.'
         ];
+    }
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                ColorPicker::make('formData.warna')->label('Warna')->placeholder('Pilih warna untuk jadwal')->regex('/^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})\b$/')
+            ]);
     }
 
     #[On('openAddModal')]
@@ -64,9 +81,9 @@ new class extends Component {
         }
 
         Notification::make()
-        ->title('Data Guru Tersimpan')
-        ->success()
-        ->send();
+            ->title('Data Guru Tersimpan')
+            ->success()
+            ->send();
         Flux::modal('guru-modal')->close();
         $this->dispatch('refreshTable');
     }
@@ -97,6 +114,7 @@ new class extends Component {
                 </div>
                 <flux:input wire:model.defer="formData.nip" label="NIP" placeholder="NIP" />
                 <flux:input wire:model.defer="formData.nama_guru" label="Nama Guru" placeholder="Nama Guru" />
+                {{ $this->form }}
                 <div class="flex">
                     <flux:spacer />
                     <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>
@@ -105,6 +123,6 @@ new class extends Component {
         </form>
     </flux:modal>
 
-     {{-- Import Excel Modal --}}
-     <livewire:excel-import-modal context="guru" />
+    {{-- Import Excel Modal --}}
+    <livewire:excel-import-modal context="guru" />
 </div>

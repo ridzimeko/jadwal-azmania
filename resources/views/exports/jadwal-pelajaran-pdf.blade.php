@@ -181,11 +181,13 @@
                             @foreach ($kelasList as $kelas)
                                 @php
                                     $item = $items->firstWhere('kelas_id', $kelas->id);
+                                    $bg = $item->guru->warna ?? '#ffffff';
+                                    $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                 @endphp
-                                <td>
+                                <td style="background-color: {{ $bg }}; color: {{ $text }}">
                                     @if ($item)
                                         <div><strong>{{ $item->mataPelajaran->nama_mapel }}</strong></div>
-                                        <div style="font-size: 11px;">{{ $item->guru->nama_guru }}</div>
+                                        <div style="font-size: 12px;">{{ $item->guru->nama_guru }}</div>
                                     @else
                                         <span style="color: #999;">-</span>
                                     @endif

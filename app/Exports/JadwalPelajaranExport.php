@@ -15,7 +15,7 @@ class JadwalPelajaranExport implements FromView, WithTitle, WithDrawings
 {
     protected $tingkat;
 
-    public function __construct($tingkat = 'SMP')
+    public function __construct(string $tingkat)
     {
         $this->tingkat = $tingkat;
     }

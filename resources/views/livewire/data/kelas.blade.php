@@ -7,10 +7,7 @@ use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
 new class extends Component {
-    protected  $columnDefs = [
-        ['name' => 'Kode Kelas', 'field' => 'kode_kelas'],
-        ['name' => 'Kelas', 'field' => 'nama_kelas'],
-    ];
+    protected $columnDefs = [['name' => 'Kode Kelas', 'field' => 'kode_kelas'], ['name' => 'Tingkat', 'field' => 'tingkat'], ['name' => 'Kelas', 'field' => 'nama_kelas']];
 
     public ?array $formData = null;
     public bool $isEdit = false;
@@ -18,17 +15,8 @@ new class extends Component {
     protected function rules(): array
     {
         return [
-            'formData.kode_kelas' => [
-                'required',
-                'string',
-                'max:12',
-                Rule::unique('kelas', 'kode_kelas')->ignore($this->formData['id'] ?? null),
-            ],
-            'formData.nama_kelas' => [
-                'required',
-                'string',
-                'max:15',
-            ],
+            'formData.kode_kelas' => ['required', 'string', 'max:12', Rule::unique('kelas', 'kode_kelas')->ignore($this->formData['id'] ?? null)],
+            'formData.nama_kelas' => ['required', 'string', 'max:15'],
         ];
     }
 
@@ -53,6 +41,7 @@ new class extends Component {
         $this->formData = [
             'kode_kelas' => '',
             'nama_kelas' => '',
+            'tingkat' => '',
         ];
         Flux::modal('kelas-modal')->show();
     }
@@ -70,15 +59,16 @@ new class extends Component {
         $this->validate();
 
         if ($this->isEdit) {
-            \App\Models\Kelas::find($this->formData['id'])->update($this->formData);
+            \App\Models\Kelas::find($this->formData['id'])->update([
+                'kode_kelas' => $this->formData['kode_kelas'],
+                'nama_kelas' => $this->formData['nama_kelas'],
+                'tingkat' => strtoupper($this->formData['tingkat']),
+            ]);
         } else {
             \App\Models\Kelas::create($this->formData);
         }
 
-        Notification::make()
-        ->title('Data Kelas Tersimpan')
-        ->success()
-        ->send();
+        Notification::make()->title('Data Kelas Tersimpan')->success()->send();
         Flux::modal('kelas-modal')->close();
         $this->dispatch('refreshTable');
     }
@@ -88,7 +78,8 @@ new class extends Component {
 <div class="dash-card">
     <x-card-heading title="Data Kelas">
         <x-slot name="action_buttons">
-            <flux:button @click="$wire.openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data</flux:button>
+            <flux:button @click="$wire.openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data
+            </flux:button>
         </x-slot>
     </x-card-heading>
 
@@ -105,6 +96,17 @@ new class extends Component {
                     </flux:heading>
                 </div>
                 <flux:input wire:model.defer="formData.kode_kelas" label="Kode Kelas" placeholder="Kode Kelas" />
+                <flux:field>
+                    <flux:label>Tingkat</flux:label>
+
+                    @php
+                        $tingkatOptions = [['label' => 'SMP', 'value' => 'SMP'], ['label' => 'MA', 'value' => 'MA']];
+                    @endphp
+
+                    <x-select wire:model="formData.tingkat" :search="false" :options="$tingkatOptions"
+                        placeholder="Pilih Tingkat" />
+                    <flux:error name="formData.role" />
+                </flux:field>
                 <flux:input wire:model.defer="formData.nama_kelas" label="Nama Kelas" placeholder="Nama Kelas" />
                 <div class="flex">
                     <flux:spacer />

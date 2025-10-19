@@ -58,7 +58,12 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     ->getStateUsing(fn($record) => "{$record->jam_mulai} - {$record->jam_selesai}")
                     ->searchable(true),
                 TextColumn::make('mataPelajaran.nama_mapel')->label('Mata Pelajaran')->searchable(true),
-                TextColumn::make('guru.nama_guru')->label('Guru Pengajar')->searchable(true),
+                TextColumn::make('guru.nama_guru')->label('Guru Pengajar')->searchable(true)
+                    ->formatStateUsing(function ($state, $record) {
+                        $borderColor = $record->guru->warna ?? 'transparent';
+                        return "<div style='border-bottom: 2px solid {$borderColor}; width: fit-content'>{$state}</div>";
+                    })
+                    ->html(),
             ])
             ->recordActions([
                 Action::make('edit')

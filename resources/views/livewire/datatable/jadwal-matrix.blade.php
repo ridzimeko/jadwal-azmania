@@ -101,7 +101,12 @@ new class extends Component {
                             {{-- Jika kolom ada data --}}
                             @if ($kelasItems->count() > 0)
                                 @foreach ($kelasItems as $item)
-                                    <div class="mb-2 p-1 rounded cursor-pointer hover:bg-yellow-100 transition"
+                                    @php
+                                        $bg = $item->guru->warna ?? '#ffffff';
+                                        $text = \App\Helpers\ColorHelper::getTextColor($bg);
+                                    @endphp
+                                    <div class="mb-2 p-2 rounded cursor-pointer hover:bg-yellow-100 transition"
+                                        style="background-color: {{ $bg }}; color: {{ $text }}"
                                         wire:click="$dispatch('openEditJadwal', { record: @js([
                                             'id' => $item->id,
                                             'hari' => $item->hari,
@@ -112,7 +117,7 @@ new class extends Component {
                                             'guru_id' => $item->guru_id,
                                         ]) })">
                                         <div class="font-semibold">{{ $item->mataPelajaran->nama_mapel }}</div>
-                                        <div class="text-xs text-gray-600">{{ $item->guru->nama_guru }}</div>
+                                        <div class="text-xs">{{ $item->guru->nama_guru }}</div>
                                     </div>
                                     @if (!$loop->last)
                                         <hr class="my-1 border-gray-200">

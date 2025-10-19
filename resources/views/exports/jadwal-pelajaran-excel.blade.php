@@ -52,8 +52,12 @@
                     <td style="{{ $styleTd }}">{{ $no++ }}</td>
                     <td style="{{ $styleTd }}">{{ $jamLabel }}</td>
                     @foreach ($kelasList as $kelas)
-                        @php $item = $items->firstWhere('kelas_id', $kelas->id); @endphp
-                        <td style="{{ $styleTd }} font-weight: 400;">
+                        @php
+                        $item = $items->firstWhere('kelas_id', $kelas->id);
+                        $bg = $item->guru->warna ?? '#ffffff';
+                        $text = \App\Helpers\ColorHelper::getTextColor($bg);
+                        @endphp
+                        <td bgcolor="{{ $bg }}" style="{{ $styleTd }} font-weight: 400; color: {{ $text }};">
                             @if ($item)
                                 {{ $item->mataPelajaran->nama_mapel }}<br>
                                 {{ $item->guru->nama_guru }}

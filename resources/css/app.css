@@ -46,3 +46,7 @@
 [data-flux-sidebar-item][data-current] {
     @apply bg-primary text-white border-0
 }
+
+.fi-fo-color-picker-preview {
+    @apply border-neutral-400
+}
