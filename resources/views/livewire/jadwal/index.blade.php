@@ -2,14 +2,21 @@
 
 use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Notifications\Notification;
-use Filament\Tables\Filters\SelectFilter;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
-new class extends Component {
+new class extends Component implements HasActions, HasSchemas {
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+
     protected $columnDefs = [
         ['name' => 'Kelas', 'field' => 'kelas_nama'],
         ['name' => 'Hari', 'field' => 'hari'],
@@ -123,6 +130,28 @@ new class extends Component {
         Flux::modal('jadwal-modal')->close();
         $this->dispatch('refreshJadwalTable');
     }
+
+    public function deleteAction(): Action
+    {
+        return Action::make('delete')
+            ->label('Hapus')
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalHeading('Hapus Jadwal')
+            ->modalDescription("Apakah anda yakin ingin menghapus data ini?")
+            ->action(function (array $arguments) {
+                $post = JadwalPelajaran::find($arguments['jadwal']);
+
+                $post?->delete();
+
+                Notification::make()
+                ->title('Jadwal berhasil dihapus')
+                ->success()
+                ->send();
+                Flux::modal('jadwal-modal')->close();
+                $this->dispatch('refreshJadwalTable');
+        });
+    }
 };
 ?>
 
@@ -177,6 +206,8 @@ new class extends Component {
         </div>
     </div>
 
+    <x-filament-actions::modals />
+
     {{-- Add Data Modal --}}
     <flux:modal name="jadwal-modal" class="md:w-[720px]">
         <form wire:submit.prevent="save" class="flex flex-col gap-3 max-w-[768px]">
@@ -229,6 +260,10 @@ new class extends Component {
             </flux:field>
 
             <div class="flex mt-8">
+                <flux:button variant="primary" color="red" icon="trash" x-on:click="() => {
+                    $flux.modals().close()
+                    $wire.mountAction('delete', { jadwal: '{{ $this->formData['id'] ?? null }}' })
+                }">Hapus</flux:button>
                 <flux:spacer />
                 <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>
             </div>

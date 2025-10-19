@@ -53,12 +53,6 @@ new class extends Component {
     {
         $this->dispatch('$refresh');
     }
-
-    public function deleteAction(): Action
-    {
-        return Action::make('delete')->color('danger')->requiresConfirmation();
-        // ->action(fn () => $this->getJadwal($id)->delete());
-    }
 };
 
 ?>
