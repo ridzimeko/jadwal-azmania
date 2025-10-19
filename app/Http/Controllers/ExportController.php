@@ -13,7 +13,7 @@ class ExportController extends Controller
 {
     public function exportPdf(Request $request)
     {
-        $tingkat = $request->query('tingkat', 'SMP');
+        $tingkat = strtoupper($request->query('tingkat', 'SMP'));
         $kelasList = Kelas::where('tingkat', $tingkat)
             ->orderBy('nama_kelas')
             ->get();
@@ -56,7 +56,7 @@ class ExportController extends Controller
 
     public function exportExcel(Request $request)
     {
-        $tingkat = $request->query('tingkat', 'SMP');
+        $tingkat = strtoupper($request->query('tingkat', 'SMP'));
         return Excel::download(new JadwalPelajaranExport($tingkat), 'jadwal.xlsx');
     }
 }

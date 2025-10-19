@@ -44,6 +44,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
             $query = JadwalPelajaran::query()
                 ->with(['kelas', 'mataPelajaran', 'guru'])
                 ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
+                ->orderBy('jam_mulai')
                 ->whereRelation('kelas', 'tingkat', '=', $this->tingkat);
             return $query;
         })

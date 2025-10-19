@@ -150,7 +150,7 @@
         </div>
         <div class="kop-info">
             <h1>PONDOK PESANTREN AZMANIA</h1>
-            <h2>{{ $tingkat === 'SMP' ? 'SEKOLAH MENENGAH PERTAMA' : 'MADRASAH ALIYAH' }} PONOROGO</h2>
+            <h2>{{ $tingkat == 'SMP' ? 'SEKOLAH MENENGAH PERTAMA' : 'MADRASAH ALIYAH' }} PONOROGO</h2>
             <p>Jl. Azmania No. 2, Kel. Ronowijayan, Kec. Siman, Kab. Ponorogo, Telp. (0352) 3576660</p>
             <p>Email: azmaniapo@gmail.com Website: www.azmania.sch.id</p>
             <p>NPSN. 69956471, Akreditasi : A</p>

@@ -9,26 +9,26 @@
         <td rowspan="5">
             {{-- <img src="{{ public_path('images/logo.png') }}" width="80"> --}}
         </td>
-        <td colspan="{{ 2 + $kelasList->count() }}" style="text-align:center; font-weight:bold; font-size:16px;">
+        <td colspan="{{ 1 + $kelasList->count() }}" style="text-align:center; font-weight:bold; font-size:16px;">
             PONDOK PESANTREN AZMANIA
         </td>
     </tr>
     <tr>
-        <td colspan="{{ 2 + $kelasList->count() }}" style="text-align:center;">
-            {{ $tingkat === 'SMP' ? 'SEKOLAH MENENGAH PERTAMA' : 'MADRASAH ALIYAH' }} PONOROGO
+        <td colspan="{{ 1 + $kelasList->count() }}" style="text-align:center;">
+            {{ $tingkat == 'SMP' ? 'SEKOLAH MENENGAH PERTAMA' : 'MADRASAH ALIYAH' }} PONOROGO
         </td>
     </tr>
     <tr>
-        <td colspan="{{ 2 + $kelasList->count() }}" style="text-align:center;">
+        <td colspan="{{ 1 + $kelasList->count() }}" style="text-align:center;">
             Jl. Azmania No. 2, Kel. Ronowijayan, Kec. Siman, Kab. Ponorogo
         </td>
     </tr>
     <tr>
-        <td colspan="{{ 2 + $kelasList->count() }}" style="text-align:center;">
+        <td colspan="{{ 1 + $kelasList->count() }}" style="text-align:center;">
             Email: azmaniapo@gmail.com | Website: www.azmania.sch.id
         </td>
     </tr>
-    <tr><td colspan="{{ 2 + $kelasList->count() }}">&nbsp;</td></tr>
+    <tr><td colspan="{{ 1 + $kelasList->count() }}">&nbsp;</td></tr>
 </table>
 
 @foreach ($jadwalPerHari as $hari => $jadwal)
