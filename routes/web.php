@@ -28,6 +28,9 @@ Route::middleware(['auth'])->group(function () {
         Volt::route('{tingkat}/edit', 'jadwal.edit')
             ->where('tingkat', 'smp|ma')
             ->name('jadwal.edit');
+
+        Volt::route('tetap', 'jadwal.tetap')
+        ->name('jadwal.tetap');
     });
 
     Route::group(['prefix' => '/data'], function() {

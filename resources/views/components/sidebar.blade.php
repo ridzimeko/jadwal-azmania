@@ -16,6 +16,7 @@
         <flux:sidebar.group expandable icon="book" heading="Jadwal" class="grid">
             <flux:sidebar.item href="/jadwal/smp">SMP</flux:sidebar.item>
             <flux:sidebar.item href="/jadwal/ma">MA</flux:sidebar.item>
+            <flux:sidebar.item href="/jadwal/tetap">Kegiatan Tetap</flux:sidebar.item>
         </flux:sidebar.group>
 
         <flux:sidebar.group expandable icon="pencil-square" heading="Data" class="grid">
