@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -31,6 +32,31 @@ class JadwalPelajaran extends Model
     {
         $hariSekarang = Carbon::now()->translatedFormat('l');
         return $query->where('hari', $hariSekarang);
+    }
+
+    public function scopeWithBentrok($query)
+    {
+        return $query->addSelect([
+            'is_bentrok' => self::query()
+                ->selectRaw('COUNT(*) > 1')
+                ->from('jadwal_pelajaran as j2')
+                ->where(function ($q) {
+                    $q
+                        // Bentrok guru: guru sama, hari sama, jam tumpang tindih
+                        ->whereColumn('j2.guru_id', 'jadwal_pelajaran.guru_id')
+                        ->whereColumn('j2.hari', 'jadwal_pelajaran.hari')
+                        ->whereColumn('j2.jam_mulai', '<', 'jadwal_pelajaran.jam_selesai')
+                        ->whereColumn('j2.jam_selesai', '>', 'jadwal_pelajaran.jam_mulai');
+                })
+                ->orWhere(function ($q) {
+                    $q
+                        // Mapel double: mapel sama, kelas sama, jam tumpang tindih
+                        ->whereColumn('j2.kelas_id', 'jadwal_pelajaran.kelas_id')
+                        ->whereColumn('j2.hari', 'jadwal_pelajaran.hari')
+                        ->whereColumn('j2.jam_mulai', '<', 'jadwal_pelajaran.jam_selesai')
+                        ->whereColumn('j2.jam_selesai', '>', 'jadwal_pelajaran.jam_mulai');
+                })
+        ]);
     }
 
     public function getKelasNamaAttribute()

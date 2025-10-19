@@ -17,6 +17,7 @@ new class extends Component {
     public function getJadwal($id = null)
     {
         $query = JadwalPelajaran::with(['guru', 'mataPelajaran', 'kelas'])
+            ->withBentrok()
             ->whereRelation('kelas', 'tingkat', $this->tingkat)
             ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
             ->orderBy('jam_mulai');
@@ -30,15 +31,15 @@ new class extends Component {
             $query->where('hari', $this->hari);
         }
 
-        $jadwal = $query->get();
-
-        // Grup berdasarkan hari dan jam_mulai + jam_selesai
-        return $jadwal->groupBy([
+        $jadwal = $query->get()->groupBy([
             'hari',
             function ($item) {
                 return $item->jam_mulai . ' - ' . $item->jam_selesai;
             },
         ]);
+
+        // Grup berdasarkan hari dan jam_mulai + jam_selesai
+        return $jadwal;
     }
 
     #[Computed]
@@ -97,7 +98,7 @@ new class extends Component {
                             $jam_mapel = array_map('trim', explode('-', $jamLabel));
                         @endphp
 
-                        <td class="px-4 py-2 border text-center align-top">
+                        <td class="px-4 py-2 border text-center align-top {{ $kelasItems->first()?->is_bentrok ? 'bg-red-100 text-red-700' : '' }}">
                             {{-- Jika kolom ada data --}}
                             @if ($kelasItems->count() > 0)
                                 @foreach ($kelasItems as $item)

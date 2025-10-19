@@ -43,11 +43,18 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
             //filter tingkat
             $query = JadwalPelajaran::query()
                 ->with(['kelas', 'mataPelajaran', 'guru'])
+                ->withBentrok()
+                ->whereRelation('kelas', 'tingkat', '=', $this->tingkat)
+                ->orderByDesc('is_bentrok') // Bentrok di atas
                 ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
-                ->orderBy('jam_mulai')
-                ->whereRelation('kelas', 'tingkat', '=', $this->tingkat);
+                ->orderBy('jam_mulai');
             return $query;
         })
+            ->recordClasses(
+                fn(JadwalPelajaran $record) => $record->is_bentrok
+                    ? 'bg-red-100 text-red-700 font-semibold dark:bg-red-900/20'
+                    : ''
+            )
             ->searchable()
             ->columns([
                 // Tambahkan kolom nomor urut paling awal
