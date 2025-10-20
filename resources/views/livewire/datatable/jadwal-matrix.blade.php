@@ -2,16 +2,21 @@
 
 use App\Models\JadwalPelajaran; // Pastikan model JadwalPelajaran di-import
 use App\Models\Kelas;
-use Filament\Actions\Action;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
 new class extends Component {
     public string $tingkat = 'SMP'; // bisa di-pass lewat route
+    #[Locked]
     public $kelasList;
     public $jadwal;
     public $hari;
+
+    public function mount() {
+        $this->kelasList = Kelas::where('tingkat', $this->tingkat)->orderBy('nama_kelas')->get();
+    }
 
     #[Computed]
     public function getJadwal($id = null)
@@ -42,12 +47,6 @@ new class extends Component {
         return $jadwal;
     }
 
-    #[Computed]
-    public function getKelas()
-    {
-        return Kelas::where('tingkat', $this->tingkat)->orderBy('nama_kelas')->get();
-    }
-
     #[On('refreshJadwalTable')]
     public function refresh()
     {
@@ -66,10 +65,10 @@ new class extends Component {
                 <th class="px-4 py-2 border text-center">Hari</th>
             @endif
 
-            <th class="px-4 py-2 border text-center">Jam</th>
+            <th class="px-4 py-2 border text-center w-[160px]">Jam</th>
 
-            @foreach ($this->getKelas() as $kelas)
-                <th class="px-4 py-2 border text-center">{{ $kelas->nama_kelas }}</th>
+            @foreach ($this->kelasList as $kelas)
+                <th class="px-4 py-2 border text-center w-[160px]">{{ $kelas->nama_kelas }}</th>
             @endforeach
         </tr>
     </thead>
@@ -86,7 +85,7 @@ new class extends Component {
 
                     <td class="px-4 py-2 border text-center">{{ $jamLabel }}</td>
 
-                    @foreach ($this->getKelas() as $kelas)
+                    @foreach ($this->kelasList as $kelas)
                         @php
                             $kelasItems = $items->where('kelas_id', $kelas->id);
                             $jam_mapel = array_map('trim', explode('-', $jamLabel));

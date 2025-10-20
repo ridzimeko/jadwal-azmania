@@ -20,10 +20,10 @@ class GuruImport implements ToModel, WithHeadingRow, SkipsOnError
 
     public function model(array $row)
     {
-        // dd($row);
         return new Guru([
             'nip' => $row['nip'],
             'nama_guru' => $row['nama_guru'],
+            'warna' => $row['warna'] ?? '#ffffff',
         ]);
     }
 }

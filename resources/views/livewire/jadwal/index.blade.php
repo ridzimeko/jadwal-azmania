@@ -108,6 +108,8 @@ new class extends Component implements HasActions, HasSchemas {
     {
         if ($record['id'] ?? null) {
             $this->isEdit = true;
+        } else {
+            $this->isEdit = false;
         }
         $this->formData = $record;
         Flux::modal('jadwal-modal')->show();
