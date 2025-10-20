@@ -1,5 +1,6 @@
 <?php
 
+use App\Helpers\JadwalHelper;
 use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
 use Filament\Actions\Action;
@@ -13,19 +14,15 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
+use function App\Providers\jadwal_available;
+
 new class extends Component implements HasActions, HasSchemas {
     use InteractsWithActions;
     use InteractsWithSchemas;
 
-    protected $columnDefs = [
-        ['name' => 'Kelas', 'field' => 'kelas_nama'],
-        ['name' => 'Hari', 'field' => 'hari'],
-        ['name' => 'Jam Mulai', 'field' => 'jam_mulai'],
-        ['name' => 'Jam Selesai', 'field' => 'jam_selesai'],
-        ['name' => 'Mata Pelajaran', 'field' => 'mapel_nama'],
-        ['name' => 'Guru Pengajar', 'field' => 'guru_nama'],
-    ];
+    protected $columnDefs = [['name' => 'Kelas', 'field' => 'kelas_nama'], ['name' => 'Hari', 'field' => 'hari'], ['name' => 'Jam Mulai', 'field' => 'jam_mulai'], ['name' => 'Jam Selesai', 'field' => 'jam_selesai'], ['name' => 'Mata Pelajaran', 'field' => 'mapel_nama'], ['name' => 'Guru Pengajar', 'field' => 'guru_nama']];
 
+    public $errorMsg;
     public $tingkat;
     public $hariOptions;
     public ?array $formData = [
@@ -34,7 +31,7 @@ new class extends Component implements HasActions, HasSchemas {
         'jam_selesai' => '',
         'kelas_id' => '',
         'mata_pelajaran_id' => '',
-        'guru_id' => ''
+        'guru_id' => '',
     ];
     public ?array $filterActions;
     public bool $isEdit = false;
@@ -83,7 +80,7 @@ new class extends Component implements HasActions, HasSchemas {
         ];
     }
 
-    #[Computed()]
+    #[Computed]
     public function getKelas()
     {
         return Kelas::where('tingkat', $this->tingkat)->orderBy('nama_kelas')->get();
@@ -92,13 +89,14 @@ new class extends Component implements HasActions, HasSchemas {
     public function openAddJadwalModal()
     {
         $this->isEdit = false;
+        $this->errorMsg = '';
         $this->formData = [
             'hari' => '',
             'jam_mulai' => '',
             'jam_selesai' => '',
             'kelas_id' => '',
             'mata_pelajaran_id' => '',
-            'guru_id' => ''
+            'guru_id' => '',
         ];
         Flux::modal('jadwal-modal')->show();
     }
@@ -111,6 +109,7 @@ new class extends Component implements HasActions, HasSchemas {
         } else {
             $this->isEdit = false;
         }
+        $this->errorMsg = '';
         $this->formData = $record;
         Flux::modal('jadwal-modal')->show();
     }
@@ -119,16 +118,20 @@ new class extends Component implements HasActions, HasSchemas {
     {
         $this->validate();
 
+        $jadwal = JadwalHelper::isAvailable($this->formData, $this->formData['id'] ?? null);
+        if (!$jadwal['available']) {
+            $this->errorMsg = 'Jadwal terjadi bentrok dengan kelas: ' . $jadwal['bentrok']->pluck('kelas')->join(', ');
+            return;
+        }
+
         if ($this->isEdit) {
             \App\Models\JadwalPelajaran::find($this->formData['id'])->update($this->formData);
         } else {
             \App\Models\JadwalPelajaran::create($this->formData);
         }
 
-        Notification::make()
-            ->title('Jadwal Berhasil Tersimpan')
-            ->success()
-            ->send();
+        $this->errorMsg = '';
+        Notification::make()->title('Jadwal Berhasil Tersimpan')->success()->send();
         Flux::modal('jadwal-modal')->close();
         $this->dispatch('refreshJadwalTable');
     }
@@ -140,19 +143,16 @@ new class extends Component implements HasActions, HasSchemas {
             ->color('danger')
             ->requiresConfirmation()
             ->modalHeading('Hapus Jadwal')
-            ->modalDescription("Apakah anda yakin ingin menghapus data ini?")
+            ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
             ->action(function (array $arguments) {
                 $post = JadwalPelajaran::find($arguments['jadwal']);
 
                 $post?->delete();
 
-                Notification::make()
-                ->title('Jadwal berhasil dihapus')
-                ->success()
-                ->send();
+                Notification::make()->title('Jadwal berhasil dihapus')->success()->send();
                 Flux::modal('jadwal-modal')->close();
                 $this->dispatch('refreshJadwalTable');
-        });
+            });
     }
 };
 ?>
@@ -172,9 +172,13 @@ new class extends Component implements HasActions, HasSchemas {
                 </flux:button>
 
                 <flux:menu>
-                    <flux:menu.item x-on:click="window.location='{{ route('export-jadwal.pdf', ['tingkat' => $this->tingkat]) }}'" icon="file-pdf">PDF</flux:menu.item>
+                    <flux:menu.item
+                        x-on:click="window.location='{{ route('export-jadwal.pdf', ['tingkat' => $this->tingkat]) }}'"
+                        icon="file-pdf">PDF</flux:menu.item>
                     <flux:menu.separator />
-                    <flux:menu.item x-on:click="window.location='{{ route('export-jadwal.excel', ['tingkat' => $this->tingkat]) }}'" icon="file-excel">Excel</flux:menu.item>
+                    <flux:menu.item
+                        x-on:click="window.location='{{ route('export-jadwal.excel', ['tingkat' => $this->tingkat]) }}'"
+                        icon="file-excel">Excel</flux:menu.item>
                 </flux:menu>
             </flux:dropdown>
         </x-slot>
@@ -182,18 +186,12 @@ new class extends Component implements HasActions, HasSchemas {
 
     <div x-data="{ activeTab: 'tabel' }">
         <flux:tabs variant="segmented">
-            <flux:tab
-                icon="list-bullet"
-                x-on:click="activeTab = 'tabel'"
-                x-bind:data-selected="activeTab === 'tabel'"
-                >
+            <flux:tab icon="list-bullet" x-on:click="activeTab = 'tabel'"
+                x-bind:data-selected="activeTab === 'tabel'">
                 Tabel
             </flux:tab>
-            <flux:tab
-                icon="calendar-days"
-                x-on:click="activeTab = 'timeline'"
-                x-bind:data-selected="activeTab === 'timeline'"
-                >
+            <flux:tab icon="calendar-days" x-on:click="activeTab = 'timeline'"
+                x-bind:data-selected="activeTab === 'timeline'">
                 Timeline
             </flux:tab>
         </flux:tabs>
@@ -211,24 +209,29 @@ new class extends Component implements HasActions, HasSchemas {
     <x-filament-actions::modals />
 
     {{-- Add Data Modal --}}
-    <flux:modal name="jadwal-modal" class="md:w-[720px]">
+    <flux:modal name="jadwal-modal" class="md:w-[520px] z-[30]" variant="flyout">
         <form wire:submit.prevent="save" class="flex flex-col gap-3 max-w-[768px]">
             <flux:heading size="lg">
                 {{ $isEdit ? 'Ubah Data Jadwal' : 'Tambah Data Jadwal' }}
             </flux:heading>
+
+            @if($this->errorMsg)
+                <flux:callout variant="danger" icon="x-circle" :heading="$this->errorMsg" />
+            @endif
+
             <flux:field>
                 <flux:label>Nama Mata Pelajaran</flux:label>
                 <x-select name="formData.mata_pelajaran_id" wire:model="formData.mata_pelajaran_id" :options="App\Models\MataPelajaran::all()
                     ->map(fn($g) => ['value' => $g->id, 'label' => $g->nama_mapel])
-                    ->toArray()" placeholder="Pilih mata pelajaran..." />
+                    ->toArray()"
+                    placeholder="Pilih mata pelajaran..." />
                 <flux:error name="formData.mata_pelajaran_id" />
             </flux:field>
 
             <flux:field>
                 <flux:label>Kelas</flux:label>
-                <x-select name="formData.kelas_id" wire:model="formData.kelas_id" :options="$this->getKelas()
-                    ->map(fn($g) => ['value' => $g->id, 'label' => $g->nama_kelas])
-                    ->toArray()" placeholder="Pilih kelas..." />
+                <x-select name="formData.kelas_id" wire:model="formData.kelas_id" :options="$this->getKelas()->map(fn($g) => ['value' => $g->id, 'label' => $g->nama_kelas])->toArray()"
+                    placeholder="Pilih kelas..." />
                 <flux:error name="formData.kelas_id" />
             </flux:field>
 
@@ -257,16 +260,19 @@ new class extends Component implements HasActions, HasSchemas {
                 <flux:label>Guru Pengajar</flux:label>
                 <x-select name="formData.guru_id" wire:model="formData.guru_id" :options="App\Models\Guru::all()
                     ->map(fn($g) => ['value' => $g->id, 'label' => $g->nama_guru])
-                    ->toArray()" placeholder="Pilih guru..." />
+                    ->toArray()"
+                    placeholder="Pilih guru..." />
                 <flux:error name="formData.guru_id" />
             </flux:field>
 
             <div class="flex mt-8">
                 @if ($this->isEdit)
-                    <flux:button variant="primary" color="red" icon="trash" x-on:click="() => {
+                    <flux:button variant="primary" color="red" icon="trash"
+                        x-on:click="() => {
                         $flux.modals().close()
                         $wire.mountAction('delete', { jadwal: '{{ $this->formData['id'] ?? null }}' })
-                    }">Hapus</flux:button>
+                    }">
+                        Hapus</flux:button>
                 @endif
                 <flux:spacer />
                 <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>

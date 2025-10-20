@@ -48,7 +48,8 @@
             "Tests\\": "tests/"
         },
         "files": [
-            "app/Helpers/ColorHelper.php"
+            "app/Helpers/ColorHelper.php",
+            "app/Helpers/JadwalHelper.php"
         ]
     },
     "scripts": {
