@@ -22,9 +22,9 @@ new class extends Component implements HasActions, HasSchemas {
 
     protected $columnDefs = [['name' => 'Kelas', 'field' => 'kelas_nama'], ['name' => 'Hari', 'field' => 'hari'], ['name' => 'Jam Mulai', 'field' => 'jam_mulai'], ['name' => 'Jam Selesai', 'field' => 'jam_selesai'], ['name' => 'Mata Pelajaran', 'field' => 'mapel_nama'], ['name' => 'Guru Pengajar', 'field' => 'guru_nama']];
 
-    public $errorMsg;
     public $tingkat;
     public $hariOptions;
+    public $jadwalBentrokList = [];
     public ?array $formData = [
         'hari' => '',
         'jam_mulai' => '',
@@ -89,7 +89,6 @@ new class extends Component implements HasActions, HasSchemas {
     public function openAddJadwalModal()
     {
         $this->isEdit = false;
-        $this->errorMsg = '';
         $this->formData = [
             'hari' => '',
             'jam_mulai' => '',
@@ -109,7 +108,6 @@ new class extends Component implements HasActions, HasSchemas {
         } else {
             $this->isEdit = false;
         }
-        $this->errorMsg = '';
         $this->formData = $record;
         Flux::modal('jadwal-modal')->show();
     }
@@ -120,7 +118,7 @@ new class extends Component implements HasActions, HasSchemas {
 
         $jadwal = JadwalHelper::isAvailable($this->formData, $this->formData['id'] ?? null);
         if (!$jadwal['available']) {
-            $this->errorMsg = 'Jadwal terjadi bentrok dengan kelas: ' . $jadwal['bentrok']->pluck('kelas')->join(', ');
+            $this->jadwalBentrokList = $jadwal['bentrok'];
             return;
         }
 
@@ -130,7 +128,7 @@ new class extends Component implements HasActions, HasSchemas {
             \App\Models\JadwalPelajaran::create($this->formData);
         }
 
-        $this->errorMsg = '';
+        $this->$jadwalBentrokList = [];
         Notification::make()->title('Jadwal Berhasil Tersimpan')->success()->send();
         Flux::modal('jadwal-modal')->close();
         $this->dispatch('refreshJadwalTable');
@@ -217,8 +215,16 @@ new class extends Component implements HasActions, HasSchemas {
                 {{ $isEdit ? 'Ubah Data Jadwal' : 'Tambah Data Jadwal' }}
             </flux:heading>
 
-            @if($this->errorMsg)
-                <flux:callout variant="danger" icon="x-circle" :heading="$this->errorMsg" />
+            @if (count($this->jadwalBentrokList) >= 1)
+                <flux:callout variant="danger" icon="x-circle" heading="Jadwal terjadi bentrok dengan:">
+                    <flux:callout.text>
+                        <ul>
+                            @foreach ($this->jadwalBentrokList as $jadwal)
+                                <li>{{ $jadwal['kelas'] }} {{ $jadwal['jam_mulai'] }} - {{ $jadwal['jam_selesai'] }}</li>
+                            @endforeach
+                        </ul>
+                    </flux:callout.text>
+                </flux:callout>
             @endif
 
             <flux:field>
