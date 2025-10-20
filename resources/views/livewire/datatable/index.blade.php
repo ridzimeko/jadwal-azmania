@@ -38,6 +38,8 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                 ->icon('heroicon-o-trash')
                 ->color('danger')
                 ->extraAttributes(['class' => 'bg-red-600 hover:bg-red-700 text-white !px-2'])
+                ->modalHeading('Hapus Data')
+                ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
                 ->requiresConfirmation()
                 ->action(function ($record) {
                     $record->delete();
@@ -122,6 +124,8 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     ->label('Hapus Data yang Dipilih')
                     ->icon('heroicon-o-trash') // ikon trash 🗑️
                     ->color('danger')
+                    ->modalHeading('Hapus Data')
+                    ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
                     ->requiresConfirmation() // muncul modal konfirmasi
                     ->action(function ($records) {
                         $records->each->delete(); // hapus semua data yang dipilih

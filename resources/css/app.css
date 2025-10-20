@@ -48,5 +48,5 @@
 }
 
 .fi-fo-color-picker-preview {
-    @apply border-neutral-400
+    @apply !border-neutral-400
 }

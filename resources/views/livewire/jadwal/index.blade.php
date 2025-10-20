@@ -141,6 +141,8 @@ new class extends Component implements HasActions, HasSchemas {
         return Action::make('delete')
             ->label('Hapus')
             ->color('danger')
+            ->modalHeading('Hapus Jadwal')
+            ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
             ->requiresConfirmation()
             ->modalHeading('Hapus Jadwal')
             ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
@@ -209,7 +211,7 @@ new class extends Component implements HasActions, HasSchemas {
     <x-filament-actions::modals />
 
     {{-- Add Data Modal --}}
-    <flux:modal name="jadwal-modal" class="md:w-[520px] z-[30]" variant="flyout">
+    <flux:modal name="jadwal-modal" class="md:w-[480px] z-[30]" variant="flyout">
         <form wire:submit.prevent="save" class="flex flex-col gap-3 max-w-[768px]">
             <flux:heading size="lg">
                 {{ $isEdit ? 'Ubah Data Jadwal' : 'Tambah Data Jadwal' }}
