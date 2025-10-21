@@ -14,6 +14,12 @@ class ExportController extends Controller
     public function exportPdf(Request $request)
     {
         $tingkat = strtoupper($request->query('tingkat', 'SMP'));
+
+        // jika tingkat != smp atau ma
+        if (!in_array($tingkat, ['SMP', 'MA'])) {
+            abort(404, 'Jadwal tidak ditemukan');
+        }
+
         $kelasList = Kelas::where('tingkat', $tingkat)
             ->orderBy('nama_kelas')
             ->get();
@@ -24,6 +30,7 @@ class ExportController extends Controller
         $jadwalPerHari = collect();
         foreach ($hariList as $hari) {
             $jadwal = JadwalPelajaran::with(['guru', 'mataPelajaran', 'kelas'])
+                ->withBentrok()
                 ->whereRelation('kelas', 'tingkat', $tingkat)
                 ->where('hari', $hari)
                 ->orderBy('jam_mulai')
@@ -36,8 +43,6 @@ class ExportController extends Controller
                 $jadwalPerHari[$hari] = $jadwal;
             }
         }
-
-        // dd($tingkat);
 
         $pdf = Pdf::loadView('exports.jadwal-pelajaran-pdf', [
             'tingkat' => $tingkat,

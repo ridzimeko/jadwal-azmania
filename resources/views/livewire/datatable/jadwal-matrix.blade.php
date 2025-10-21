@@ -118,13 +118,13 @@ new class extends Component {
                             @else
                                 <div class="text-gray-400 italic py-4 cursor-pointer hover:bg-green-50 hover:text-green-600 transition rounded"
                                     wire:click="$dispatch('openEditJadwal', { record: @js([
-    'hari' => $hariKey,
-    'jam_mulai' => $jam_mapel[0] ?? null,
-    'jam_selesai' => $jam_mapel[1] ?? null,
-    'kelas_id' => $kelas->id,
-    'mata_pelajaran_id' => null,
-    'guru_id' => null,
-]) })">
+                                            'hari' => $hariKey,
+                                            'jam_mulai' => $jam_mapel[0] ?? null,
+                                            'jam_selesai' => $jam_mapel[1] ?? null,
+                                            'kelas_id' => $kelas->id,
+                                            'mata_pelajaran_id' => null,
+                                            'guru_id' => null,
+                                        ]) })">
                                     Tambah +
                                 </div>
                             @endif
