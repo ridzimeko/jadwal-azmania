@@ -2,7 +2,6 @@
 
 use App\Helpers\JadwalHelper;
 use App\Models\JadwalPelajaran;
-use App\Models\Kelas;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -10,11 +9,8 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Flux\Flux;
-use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
-
-use function App\Providers\jadwal_available;
 
 new class extends Component implements HasActions, HasSchemas {
     use InteractsWithActions;
@@ -24,6 +20,9 @@ new class extends Component implements HasActions, HasSchemas {
 
     public $tingkat;
     public $hariOptions;
+    public $kelasOptions;
+    public $guruOptions;
+    public $mataPelajaranOptions;
     public $jadwalBentrokList = [];
     public ?array $formData = [
         'hari' => '',
@@ -39,9 +38,10 @@ new class extends Component implements HasActions, HasSchemas {
     public function mount($tingkat)
     {
         $this->tingkat = $tingkat;
-        $this->hariOptions = collect(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'])
-            ->map(fn($hari) => ['label' => $hari, 'value' => $hari])
-            ->toArray();
+        $this->hariOptions = JadwalHelper::getHariOptions();
+        $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
+        $this->kelasOptions = JadwalHelper::getKelasOptions($this->tingkat);
+        $this->guruOptions = JadwalHelper::getGuruOptions();
     }
 
     protected function rules(): array
@@ -78,12 +78,6 @@ new class extends Component implements HasActions, HasSchemas {
             'formData.guru_id.required' => 'Guru wajib dipilih.',
             'formData.guru_id.exists' => 'Guru yang dipilih tidak valid.',
         ];
-    }
-
-    #[Computed]
-    public function getKelas()
-    {
-        return Kelas::where('tingkat', $this->tingkat)->orderBy('nama_kelas')->get();
     }
 
     public function openAddJadwalModal()
@@ -216,29 +210,35 @@ new class extends Component implements HasActions, HasSchemas {
             </flux:heading>
 
             @if (count($this->jadwalBentrokList) >= 1)
-                <flux:callout variant="danger" icon="x-circle" heading="Jadwal terjadi bentrok dengan:">
-                    <flux:callout.text>
-                        <ul>
-                            @foreach ($this->jadwalBentrokList as $jadwal)
-                                <li>{{ $jadwal['kelas'] }} {{ $jadwal['jam_mulai'] }} - {{ $jadwal['jam_selesai'] }}</li>
-                            @endforeach
-                        </ul>
-                    </flux:callout.text>
-                </flux:callout>
+            <flux:callout variant="danger" icon="x-circle" heading="Jadwal terjadi bentrok dengan:">
+                <flux:callout.text>
+                    <ul>
+                        @foreach ($this->jadwalBentrokList as $jadwal)
+                        <li>
+                            <div>{{ $jadwal['kelas'] }} {{ $jadwal['jam_mulai'] }} - {{ $jadwal['jam_selesai'] }} ({{ $jadwal['guru'] }} / {{ $jadwal['mapel'] }})</div>
+                        </li>
+                        @endforeach
+                    </ul>
+                </flux:callout.text>
+            </flux:callout>
             @endif
 
             <flux:field>
                 <flux:label>Nama Mata Pelajaran</flux:label>
-                <x-select name="formData.mata_pelajaran_id" wire:model="formData.mata_pelajaran_id" :options="App\Models\MataPelajaran::all()
-                    ->map(fn($g) => ['value' => $g->id, 'label' => $g->nama_mapel])
-                    ->toArray()"
+                <x-select
+                    name="formData.mata_pelajaran_id"
+                    wire:model="formData.mata_pelajaran_id"
+                    :options="$mataPelajaranOptions"
                     placeholder="Pilih mata pelajaran..." />
                 <flux:error name="formData.mata_pelajaran_id" />
             </flux:field>
 
             <flux:field>
                 <flux:label>Kelas</flux:label>
-                <x-select name="formData.kelas_id" wire:model="formData.kelas_id" :options="$this->getKelas()->map(fn($g) => ['value' => $g->id, 'label' => $g->nama_kelas])->toArray()"
+                <x-select
+                    name="formData.kelas_id"
+                    wire:model="formData.kelas_id"
+                    :options="$kelasOptions"
                     placeholder="Pilih kelas..." />
                 <flux:error name="formData.kelas_id" />
             </flux:field>
@@ -266,21 +266,22 @@ new class extends Component implements HasActions, HasSchemas {
 
             <flux:field>
                 <flux:label>Guru Pengajar</flux:label>
-                <x-select name="formData.guru_id" wire:model="formData.guru_id" :options="App\Models\Guru::all()
-                    ->map(fn($g) => ['value' => $g->id, 'label' => $g->nama_guru])
-                    ->toArray()"
+                <x-select
+                    name="formData.guru_id"
+                    wire:model="formData.guru_id"
+                    :options="$this->guruOptions"
                     placeholder="Pilih guru..." />
                 <flux:error name="formData.guru_id" />
             </flux:field>
 
             <div class="flex mt-8">
                 @if ($this->isEdit)
-                    <flux:button variant="primary" color="red" icon="trash"
-                        x-on:click="() => {
+                <flux:button variant="primary" color="red" icon="trash"
+                    x-on:click="() => {
                         $flux.modals().close()
                         $wire.mountAction('delete', { jadwal: '{{ $this->formData['id'] ?? null }}' })
                     }">
-                        Hapus</flux:button>
+                    Hapus</flux:button>
                 @endif
                 <flux:spacer />
                 <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>

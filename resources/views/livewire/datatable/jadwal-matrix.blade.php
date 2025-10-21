@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\JadwalPelajaran; // Pastikan model JadwalPelajaran di-import
+use App\Helpers\JadwalHelper;
 use App\Models\Kelas;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -21,11 +21,7 @@ new class extends Component {
     #[Computed]
     public function getJadwal($id = null)
     {
-        $query = JadwalPelajaran::with(['guru', 'mataPelajaran', 'kelas'])
-            ->withBentrok()
-            ->whereRelation('kelas', 'tingkat', $this->tingkat)
-            ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
-            ->orderBy('jam_mulai');
+        $query = JadwalHelper::getQuery($this->tingkat);
 
         if ($id) {
             return $query->where('id', $id)->get();

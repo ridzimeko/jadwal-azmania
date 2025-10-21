@@ -2,11 +2,15 @@
 
 namespace App\Helpers;
 
+use App\Models\Guru;
 use App\Models\JadwalPelajaran;
+use App\Models\Kelas;
+use App\Models\MataPelajaran;
+use Illuminate\Support\Facades\Cache;
 
 class JadwalHelper
 {
-     /**
+    /**
      * Cek apakah jadwal baru tersedia (tidak bentrok)
      * dan kembalikan detail bentrok jika ada.
      *
@@ -20,11 +24,11 @@ class JadwalHelper
             ->where('hari', $data['hari'])
             ->where(function ($q) use ($data) {
                 $q->whereBetween('jam_mulai', [$data['jam_mulai'], $data['jam_selesai']])
-                  ->orWhereBetween('jam_selesai', [$data['jam_mulai'], $data['jam_selesai']])
-                  ->orWhere(function ($q2) use ($data) {
-                      $q2->where('jam_mulai', '<', $data['jam_mulai'])
-                         ->where('jam_selesai', '>', $data['jam_selesai']);
-                  });
+                    ->orWhereBetween('jam_selesai', [$data['jam_mulai'], $data['jam_selesai']])
+                    ->orWhere(function ($q2) use ($data) {
+                        $q2->where('jam_mulai', '<', $data['jam_mulai'])
+                            ->where('jam_selesai', '>', $data['jam_selesai']);
+                    });
             });
 
         if ($ignoreId) {
@@ -56,5 +60,60 @@ class JadwalHelper
         }
 
         return ['available' => true, 'bentrok' => collect()];
+    }
+
+    public static function getQuery($tingkat)
+    {
+        return JadwalPelajaran::query()
+            ->with(['kelas', 'mataPelajaran', 'guru'])
+            ->withBentrok()
+            ->whereRelation('kelas', 'tingkat', $tingkat)
+            ->orderByDesc('is_bentrok')
+            ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
+            ->orderBy('jam_mulai');
+    }
+
+    public static function getKelasOptions(string $tingkat)
+    {
+        return Cache::remember("kelas_options_{$tingkat}", 60 * 60, function () use ($tingkat) {
+            return Kelas::where('tingkat', $tingkat)
+                ->orderBy('nama_kelas')
+                ->get()
+                ->map(fn($g) => [
+                    'value' => $g->id,
+                    'label' => $g->nama_kelas,
+                ])
+                ->toArray();
+        });
+    }
+
+    public static function getMapelOptions()
+    {
+        return Cache::remember("mapel_options", 60 * 60, function () {
+            return MataPelajaran::orderBy('nama_mapel')
+                ->get()
+                ->map(fn($g) => ['value' => $g->id, 'label' => $g->nama_mapel])
+                ->toArray();
+        });
+    }
+
+    public static function getHariOptions()
+    {
+        return collect(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'])
+            ->map(fn($hari) => ['label' => $hari, 'value' => $hari])
+            ->toArray();
+    }
+
+    public static function getGuruOptions()
+    {
+        return Cache::remember('guru_options', 60 * 60, function () {
+            return Guru::orderBy('nama_guru')
+                ->get()
+                ->map(fn($g) => [
+                    'value' => $g->id,
+                    'label' => $g->nama_guru,
+                ])
+                ->toArray();
+        });
     }
 }

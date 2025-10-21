@@ -1,7 +1,7 @@
 <?php
 
+use App\Helpers\JadwalHelper;
 use App\Models\JadwalPelajaran;
-use App\Models\Kelas;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -15,7 +15,6 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
@@ -41,13 +40,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     {
         return $table->query(function () {
             //filter tingkat
-            $query = JadwalPelajaran::query()
-                ->with(['kelas', 'mataPelajaran', 'guru'])
-                ->withBentrok()
-                ->whereRelation('kelas', 'tingkat', '=', $this->tingkat)
-                ->orderByDesc('is_bentrok') // Bentrok di atas
-                ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
-                ->orderBy('jam_mulai');
+            $query = JadwalHelper::getQuery($this->tingkat);
             return $query;
         })
             ->recordClasses(
