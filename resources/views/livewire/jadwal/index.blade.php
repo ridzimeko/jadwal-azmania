@@ -128,7 +128,7 @@ new class extends Component implements HasActions, HasSchemas {
             \App\Models\JadwalPelajaran::create($this->formData);
         }
 
-        $this->$jadwalBentrokList = [];
+        $this->jadwalBentrokList = [];
         Notification::make()->title('Jadwal Berhasil Tersimpan')->success()->send();
         Flux::modal('jadwal-modal')->close();
         $this->dispatch('refreshJadwalTable');
