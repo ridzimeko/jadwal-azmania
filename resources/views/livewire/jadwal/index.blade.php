@@ -191,11 +191,11 @@ new class extends Component implements HasActions, HasSchemas {
         </flux:tabs>
 
         <div class="mt-4">
-            <div x-cloak x-show="activeTab === 'tabel'">
+            <div x-show="activeTab === 'tabel'">
                 <livewire:datatable.jadwal :tingkat="$tingkat" />
             </div>
             <div x-cloak x-show="activeTab === 'timeline'">
-                <livewire:datatable.jadwal-matrix :tingkat="$tingkat" />
+                <livewire:datatable.jadwal-matrix lazy :tingkat="$this->tingkat" />
             </div>
         </div>
     </div>

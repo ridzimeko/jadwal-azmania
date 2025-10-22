@@ -95,7 +95,7 @@ new class extends Component {
     <livewire:datatable.jadwal-tetap />
 
     {{-- Add Data Modal --}}
-    <flux:modal name="jadwal-modal" class="md:w-[720px]">
+    <flux:modal name="kegiatan-nonkbm-modal" class="md:w-[720px]">
         <form wire:submit.prevent="save" class="flex flex-col gap-3 max-w-[768px]">
             <flux:heading size="lg">
                 {{ $isEdit ? 'Ubah Data Jadwal' : 'Tambah Data Jadwal' }}
