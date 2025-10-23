@@ -9,4 +9,12 @@ class Periode extends Model
 {
     /** @use HasFactory<\Database\Factories\PeriodeFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'tahun_ajaran',
+        'semester',
+        'aktif',
+    ];
+
+    protected $table = 'periode';
 }

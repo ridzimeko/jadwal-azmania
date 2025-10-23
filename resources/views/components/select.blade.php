@@ -52,6 +52,7 @@
 
     <!-- Dropdown -->
     <div
+        x-cloak
         x-show="open"
         @click.away="open = false"
         x-transition

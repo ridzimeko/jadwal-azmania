@@ -20,28 +20,23 @@ Route::middleware(['auth'])->group(function () {
     // Volt::route('settings/password', 'settings.password')->name('password.edit');
     // Volt::route('settings/appearance', 'settings.appearance')->name('appearance.edit');
 
-    Route::group(['prefix' => '/jadwal'], function() {
-        Volt::route('{tingkat}', 'jadwal.index')
-            ->where('tingkat', 'smp|ma')
+    Route::group(['prefix' => '/jadwal'], function () {
+        Volt::route('', 'jadwal.index')
             ->name('jadwal.index');
 
-        Volt::route('{tingkat}/edit', 'jadwal.edit')
-            ->where('tingkat', 'smp|ma')
-            ->name('jadwal.edit');
-
         Volt::route('tetap', 'jadwal.tetap')
-        ->name('jadwal.tetap');
+            ->name('jadwal.tetap');
     });
 
-    Route::group(['prefix' => '/data'], function() {
+    Route::group(['prefix' => '/data'], function () {
         Volt::route('mata-pelajaran', 'data.mata-pelajaran')->name('data.mata-pelajaran');
         Volt::route('guru', 'data.guru')->name('data.guru');
         Volt::route('kelas', 'data.kelas')->name('data.kelas');
     });
 
     Volt::route('atur-admin', 'atur-admin.index')
-    ->name('atur-admin')
-    ->middleware(RoleMiddleware::class . ':superadmin');
+        ->name('atur-admin')
+        ->middleware(RoleMiddleware::class . ':superadmin');
 
     Route::get('/download/template/{type}', function ($type) {
         $filename = "template_{$type}.xlsx";
@@ -69,4 +64,4 @@ Route::middleware(['auth'])->group(function () {
     //     ->name('two-factor.show');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

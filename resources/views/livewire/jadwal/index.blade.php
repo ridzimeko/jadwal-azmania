@@ -18,7 +18,6 @@ new class extends Component implements HasActions, HasSchemas {
 
     protected $columnDefs = [['name' => 'Kelas', 'field' => 'kelas_nama'], ['name' => 'Hari', 'field' => 'hari'], ['name' => 'Jam Mulai', 'field' => 'jam_mulai'], ['name' => 'Jam Selesai', 'field' => 'jam_selesai'], ['name' => 'Mata Pelajaran', 'field' => 'mapel_nama'], ['name' => 'Guru Pengajar', 'field' => 'guru_nama']];
 
-    public $tingkat;
     public $hariOptions;
     public $kelasOptions;
     public $guruOptions;
@@ -32,15 +31,17 @@ new class extends Component implements HasActions, HasSchemas {
         'mata_pelajaran_id' => '',
         'guru_id' => '',
     ];
-    public ?array $filterActions;
+    public ?array $filterData = [
+        'hari' => '',
+        'tingkat' => ''
+    ];
     public bool $isEdit = false;
 
-    public function mount($tingkat)
+    public function mount()
     {
-        $this->tingkat = $tingkat;
         $this->hariOptions = JadwalHelper::getHariOptions();
         $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
-        $this->kelasOptions = JadwalHelper::getKelasOptions($this->tingkat);
+        $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
         $this->guruOptions = JadwalHelper::getGuruOptions();
     }
 
@@ -152,50 +153,65 @@ new class extends Component implements HasActions, HasSchemas {
 ?>
 
 <div class="dash-card">
-    <x-card-heading title="Jadwal Pelajaran {{ strtoupper($tingkat) }}"
-        description="Manajemen jadwal Pelajaran untuk tingkat {{ strtoupper($tingkat) }}">
+    {{ $this->filterData['hari'] ?? 'hari' }} - {{ $this->filterData['tingkat'] ?? 'tingkat' }}
+    <x-card-heading title="Jadwal Pelajaran"
+        description="Manajemen jadwal Pelajaran periode">
         <x-slot name="action_buttons">
             <flux:modal.trigger name="import-excel">
                 <flux:button icon="file-excel" class="!bg-az-green !text-white">Import dari Excel</flux:button>
             </flux:modal.trigger>
             <flux:button icon="plus" @click="$wire.openAddJadwalModal" class="!bg-primary !text-white">
-                Tambah Data</flux:button>
-            <flux:dropdown align="end">
-                <flux:button icon="arrow-down-tray" icon:trailing="chevron-down">
+                Tambah Data
+            </flux:button>
+            <flux:button icon="arrow-down-tray" icon:trailing="chevron-down">
                     Unduh Data
-                </flux:button>
-
-                <flux:menu>
-                    <flux:menu.item
-                        x-on:click="window.location='{{ route('export-jadwal.pdf', ['tingkat' => $this->tingkat]) }}'"
-                        icon="file-pdf">PDF</flux:menu.item>
-                    <flux:menu.separator />
-                    <flux:menu.item
-                        x-on:click="window.location='{{ route('export-jadwal.excel', ['tingkat' => $this->tingkat]) }}'"
-                        icon="file-excel">Excel</flux:menu.item>
-                </flux:menu>
-            </flux:dropdown>
+            </flux:button>
         </x-slot>
     </x-card-heading>
 
     <div x-data="{ activeTab: 'tabel' }">
-        <flux:tabs variant="segmented">
-            <flux:tab icon="list-bullet" x-on:click="activeTab = 'tabel'"
-                x-bind:data-selected="activeTab === 'tabel'">
-                Tabel
-            </flux:tab>
-            <flux:tab icon="calendar-days" x-on:click="activeTab = 'timeline'"
-                x-bind:data-selected="activeTab === 'timeline'">
-                Timeline
-            </flux:tab>
-        </flux:tabs>
+        <div class="flex items-center justify-between gap-4">
+            <flux:tabs variant="segmented">
+                <flux:tab icon="list-bullet" x-on:click="activeTab = 'tabel'"
+                    x-bind:data-selected="activeTab === 'tabel'">
+                    Tabel
+                </flux:tab>
+                <flux:tab icon="calendar-days" x-on:click="activeTab = 'timeline'"
+                    x-bind:data-selected="activeTab === 'timeline'">
+                    Timeline
+                </flux:tab>
+            </flux:tabs>
+
+            <div class="flex items-center gap-4">
+                <x-select
+                    x-cloak
+                    x-show="activeTab === 'timeline'"
+                    wire:model.live="filterData.hari"
+                    :search="false"
+                    :options="$this->hariOptions"
+                    placeholder="Pilih hari"
+                    class="!w-[140px]"
+                />
+                <x-select
+                    wire:model.live="filterData.tingkat"
+                    :search="false"
+                    :options="[
+                        ['label' => 'Semua Tingkat', 'value' => ''],
+                        ['label' => 'SMP', 'value' => 'smp'],
+                        ['label' => 'MA', 'value' => 'ma']
+                    ]"
+                    placeholder="Pilih tingkat"
+                    class="!w-[160px]"
+                />
+            </div>
+        </div>
 
         <div class="mt-4">
             <div x-show="activeTab === 'tabel'">
-                <livewire:datatable.jadwal :tingkat="$tingkat" />
+                <livewire:datatable.jadwal :tingkat="$this->filterData['tingkat']" />
             </div>
             <div x-cloak x-show="activeTab === 'timeline'">
-                <livewire:datatable.jadwal-matrix lazy :tingkat="$this->tingkat" />
+                <livewire:datatable.jadwal-matrix lazy :hari="$this->filterData['hari']" :tingkat="$this->filterData['tingkat']" />
             </div>
         </div>
     </div>

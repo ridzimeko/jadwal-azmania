@@ -16,6 +16,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Reactive;
 use Livewire\Volt\Component;
 
 new class extends Component implements HasActions, HasSchemas, HasTable {
@@ -23,6 +24,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     use InteractsWithSchemas;
     use InteractsWithTable;
 
+    #[Reactive]
     public $tingkat;
 
     public function mount($tingkat = null)

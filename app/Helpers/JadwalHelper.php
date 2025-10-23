@@ -64,20 +64,37 @@ class JadwalHelper
 
     public static function getQuery($tingkat)
     {
-        return JadwalPelajaran::query()
+        $query = JadwalPelajaran::query()
             ->with(['kelas', 'mataPelajaran', 'guru'])
             ->withBentrok()
-            ->whereRelation('kelas', 'tingkat', $tingkat)
             ->orderByDesc('is_bentrok')
             ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
             ->orderBy('jam_mulai');
+
+        if ($tingkat) {
+            $query->whereRelation('kelas', 'tingkat', $tingkat);
+        }
+
+        return $query;
     }
 
     public static function getKelasOptions(string $tingkat)
     {
-        return Cache::remember("kelas_options_{$tingkat}", 60 * 60, function () use ($tingkat) {
-            return Kelas::where('tingkat', $tingkat)
-                ->orderBy('nama_kelas')
+        if ($tingkat) {
+            return Cache::remember("kelas_options_{$tingkat}", 60 * 60, function () use ($tingkat) {
+                return Kelas::where('tingkat', $tingkat)
+                    ->orderBy('nama_kelas')
+                    ->get()
+                    ->map(fn($g) => [
+                        'value' => $g->id,
+                        'label' => $g->nama_kelas,
+                    ])
+                    ->toArray();
+            });
+        }
+
+        return Cache::remember("kelas_options", 60 * 60, function () {
+            return Kelas::orderBy('nama_kelas')
                 ->get()
                 ->map(fn($g) => [
                     'value' => $g->id,
