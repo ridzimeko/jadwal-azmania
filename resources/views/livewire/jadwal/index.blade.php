@@ -14,80 +14,19 @@ use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 
 new
-#[Title('Jadwal Pelajaran')]
-class extends Component implements HasActions, HasSchemas {
-    use InteractsWithActions;
-    use InteractsWithSchemas;
+    #[Title('Jadwal Pelajaran')]
+    class extends Component implements HasActions, HasSchemas {
+        use InteractsWithActions;
+        use InteractsWithSchemas;
 
-    protected $columnDefs = [['name' => 'Kelas', 'field' => 'kelas_nama'], ['name' => 'Hari', 'field' => 'hari'], ['name' => 'Jam Mulai', 'field' => 'jam_mulai'], ['name' => 'Jam Selesai', 'field' => 'jam_selesai'], ['name' => 'Mata Pelajaran', 'field' => 'mapel_nama'], ['name' => 'Guru Pengajar', 'field' => 'guru_nama']];
+        protected $columnDefs = [['name' => 'Kelas', 'field' => 'kelas_nama'], ['name' => 'Hari', 'field' => 'hari'], ['name' => 'Jam Mulai', 'field' => 'jam_mulai'], ['name' => 'Jam Selesai', 'field' => 'jam_selesai'], ['name' => 'Mata Pelajaran', 'field' => 'mapel_nama'], ['name' => 'Guru Pengajar', 'field' => 'guru_nama']];
 
-    public $hariOptions;
-    public $kelasOptions;
-    public $guruOptions;
-    public $mataPelajaranOptions;
-    public $jadwalBentrokList = [];
-    public ?array $formData = [
-        'hari' => '',
-        'jam_mulai' => '',
-        'jam_selesai' => '',
-        'kelas_id' => '',
-        'mata_pelajaran_id' => '',
-        'guru_id' => '',
-    ];
-    public ?array $filterData = [
-        'hari' => '',
-        'tingkat' => ''
-    ];
-    public bool $isEdit = false;
-
-    public function mount()
-    {
-        $this->hariOptions = JadwalHelper::getHariOptions();
-        $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
-        $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
-        $this->guruOptions = JadwalHelper::getGuruOptions();
-    }
-
-    protected function rules(): array
-    {
-        return [
-            'formData.hari' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
-            'formData.jam_mulai' => 'required|date_format:H:i',
-            'formData.jam_selesai' => 'required|date_format:H:i|after:formData.jam_mulai',
-            'formData.kelas_id' => 'required|exists:kelas,id',
-            'formData.mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
-            'formData.guru_id' => 'required|exists:guru,id',
-        ];
-    }
-
-    protected function messages(): array
-    {
-        return [
-            'formData.hari.required' => 'Hari wajib diisi.',
-            'formData.hari.in' => 'Hari harus salah satu dari Senin sampai Minggu.',
-
-            'formData.jam_mulai.required' => 'Jam mulai wajib diisi.',
-            'formData.jam_mulai.date_format' => 'Format jam mulai harus HH:MM (24 jam).',
-
-            'formData.jam_selesai.required' => 'Jam selesai wajib diisi.',
-            'formData.jam_selesai.date_format' => 'Format jam selesai harus HH:MM (24 jam).',
-            'formData.jam_selesai.after' => 'Jam selesai harus lebih besar dari jam mulai.',
-
-            'formData.kelas_id.required' => 'Kelas wajib dipilih.',
-            'formData.kelas_id.exists' => 'Kelas yang dipilih tidak valid.',
-
-            'formData.mata_pelajaran_id.required' => 'Mata pelajaran wajib dipilih.',
-            'formData.mata_pelajaran_id.exists' => 'Mata pelajaran yang dipilih tidak valid.',
-
-            'formData.guru_id.required' => 'Guru wajib dipilih.',
-            'formData.guru_id.exists' => 'Guru yang dipilih tidak valid.',
-        ];
-    }
-
-    public function openAddJadwalModal()
-    {
-        $this->isEdit = false;
-        $this->formData = [
+        public $hariOptions;
+        public $kelasOptions;
+        public $guruOptions;
+        public $mataPelajaranOptions;
+        public $jadwalBentrokList = [];
+        public ?array $formData = [
             'hari' => '',
             'jam_mulai' => '',
             'jam_selesai' => '',
@@ -95,64 +34,125 @@ class extends Component implements HasActions, HasSchemas {
             'mata_pelajaran_id' => '',
             'guru_id' => '',
         ];
-        Flux::modal('jadwal-modal')->show();
-    }
+        public ?array $filterData = [
+            'hari' => '',
+            'tingkat' => ''
+        ];
+        public bool $isEdit = false;
 
-    #[On('openEditJadwal')]
-    public function openEditJadwal($record)
-    {
-        if ($record['id'] ?? null) {
-            $this->isEdit = true;
-        } else {
+        public function mount()
+        {
+            $this->hariOptions = JadwalHelper::getHariOptions();
+            $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
+            $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
+            $this->guruOptions = JadwalHelper::getGuruOptions();
+        }
+
+        protected function rules(): array
+        {
+            return [
+                'formData.hari' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
+                'formData.jam_mulai' => 'required|date_format:H:i',
+                'formData.jam_selesai' => 'required|date_format:H:i|after:formData.jam_mulai',
+                'formData.kelas_id' => 'required|exists:kelas,id',
+                'formData.mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
+                'formData.guru_id' => 'required|exists:guru,id',
+            ];
+        }
+
+        protected function messages(): array
+        {
+            return [
+                'formData.hari.required' => 'Hari wajib diisi.',
+                'formData.hari.in' => 'Hari harus salah satu dari Senin sampai Minggu.',
+
+                'formData.jam_mulai.required' => 'Jam mulai wajib diisi.',
+                'formData.jam_mulai.date_format' => 'Format jam mulai harus HH:MM (24 jam).',
+
+                'formData.jam_selesai.required' => 'Jam selesai wajib diisi.',
+                'formData.jam_selesai.date_format' => 'Format jam selesai harus HH:MM (24 jam).',
+                'formData.jam_selesai.after' => 'Jam selesai harus lebih besar dari jam mulai.',
+
+                'formData.kelas_id.required' => 'Kelas wajib dipilih.',
+                'formData.kelas_id.exists' => 'Kelas yang dipilih tidak valid.',
+
+                'formData.mata_pelajaran_id.required' => 'Mata pelajaran wajib dipilih.',
+                'formData.mata_pelajaran_id.exists' => 'Mata pelajaran yang dipilih tidak valid.',
+
+                'formData.guru_id.required' => 'Guru wajib dipilih.',
+                'formData.guru_id.exists' => 'Guru yang dipilih tidak valid.',
+            ];
+        }
+
+        public function openAddJadwalModal()
+        {
             $this->isEdit = false;
-        }
-        $this->formData = $record;
-        Flux::modal('jadwal-modal')->show();
-    }
-
-    public function save()
-    {
-        $this->validate();
-
-        $jadwal = JadwalHelper::isAvailable($this->formData, $this->formData['id'] ?? null);
-        if (!$jadwal['available']) {
-            $this->jadwalBentrokList = $jadwal['bentrok'];
-            return;
+            $this->formData = [
+                'hari' => '',
+                'jam_mulai' => '',
+                'jam_selesai' => '',
+                'kelas_id' => '',
+                'mata_pelajaran_id' => '',
+                'guru_id' => '',
+            ];
+            Flux::modal('jadwal-modal')->show();
         }
 
-        if ($this->isEdit) {
-            \App\Models\JadwalPelajaran::find($this->formData['id'])->update($this->formData);
-        } else {
-            \App\Models\JadwalPelajaran::create($this->formData);
+        #[On('openEditJadwal')]
+        public function openEditJadwal($record)
+        {
+            if ($record['id'] ?? null) {
+                $this->isEdit = true;
+            } else {
+                $this->isEdit = false;
+            }
+            $this->formData = $record;
+            Flux::modal('jadwal-modal')->show();
         }
 
-        $this->jadwalBentrokList = [];
-        Notification::make()->title('Jadwal Berhasil Tersimpan')->success()->send();
-        Flux::modal('jadwal-modal')->close();
-        $this->dispatch('refreshJadwalTable');
-    }
+        public function save()
+        {
+            $this->validate();
 
-    public function deleteAction(): Action
-    {
-        return Action::make('delete')
-            ->label('Hapus')
-            ->color('danger')
-            ->modalHeading('Hapus Jadwal')
-            ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
-            ->requiresConfirmation()
-            ->modalHeading('Hapus Jadwal')
-            ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
-            ->action(function (array $arguments) {
-                $post = JadwalPelajaran::find($arguments['jadwal']);
+            $jadwal = JadwalHelper::isAvailable($this->formData, $this->formData['id'] ?? null);
+            if (!$jadwal['available']) {
+                $this->jadwalBentrokList = $jadwal['bentrok'];
+                return;
+            }
 
-                $post?->delete();
+            if ($this->isEdit) {
+                \App\Models\JadwalPelajaran::find($this->formData['id'])->update($this->formData);
+            } else {
+                \App\Models\JadwalPelajaran::create($this->formData);
+            }
 
-                Notification::make()->title('Jadwal berhasil dihapus')->success()->send();
-                Flux::modal('jadwal-modal')->close();
-                $this->dispatch('refreshJadwalTable');
-            });
-    }
-};
+            $this->jadwalBentrokList = [];
+            Notification::make()->title('Jadwal Berhasil Tersimpan')->success()->send();
+            Flux::modal('jadwal-modal')->close();
+            $this->dispatch('refreshJadwalTable');
+        }
+
+        public function deleteAction(): Action
+        {
+            return Action::make('delete')
+                ->label('Hapus')
+                ->color('danger')
+                ->modalHeading('Hapus Jadwal')
+                ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
+                ->requiresConfirmation()
+                ->modalHeading('Hapus Jadwal')
+                ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
+                ->action(function (array $arguments) {
+                    $post = JadwalPelajaran::find($arguments['jadwal']);
+
+                    $post?->delete();
+
+                    Notification::make()->title('Jadwal berhasil dihapus')->success()->send();
+                    Flux::modal('jadwal-modal')->close();
+                    $this->dispatch('refreshJadwalTable');
+                });
+        }
+    };
 ?>
 
 <div class="dash-card">
@@ -165,9 +165,11 @@ class extends Component implements HasActions, HasSchemas {
             <flux:button icon="plus" @click="$wire.openAddJadwalModal" class="!bg-primary !text-white">
                 Tambah Data
             </flux:button>
-            <flux:button icon="arrow-down-tray" icon:trailing="chevron-down">
+            <flux:modal.trigger name="export-jadwal">
+                <flux:button icon="arrow-down-tray">
                     Unduh Data
-            </flux:button>
+                </flux:button>
+            </flux:modal.trigger>
         </x-slot>
     </x-card-heading>
 
@@ -192,8 +194,7 @@ class extends Component implements HasActions, HasSchemas {
                     :search="false"
                     :options="$this->hariOptions"
                     placeholder="Pilih hari"
-                    class="!w-[140px]"
-                />
+                    class="!w-[140px]" />
                 <x-select
                     wire:model.live="filterData.tingkat"
                     :search="false"
@@ -203,8 +204,7 @@ class extends Component implements HasActions, HasSchemas {
                         ['label' => 'MA', 'value' => 'ma']
                     ]"
                     placeholder="Pilih tingkat"
-                    class="!w-[160px]"
-                />
+                    class="!w-[160px]" />
             </div>
         </div>
 
@@ -309,4 +309,7 @@ class extends Component implements HasActions, HasSchemas {
 
     {{-- Import Excel Modal --}}
     <livewire:excel-import-modal context="jadwal" />
+
+    {{-- Export Jadwal Modal --}}
+    <livewire:export-jadwal-modal periode="2025/2026" tingkat="SMP" />
 </div>
