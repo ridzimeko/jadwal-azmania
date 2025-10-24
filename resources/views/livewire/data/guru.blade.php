@@ -8,9 +8,12 @@ use Filament\Schemas\Schema;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 
-new class extends Component implements HasSchemas {
+new
+#[Title('Data Guru')]
+class extends Component implements HasSchemas {
     use InteractsWithSchemas;
 
     protected $columnDefs = [['name' => 'NIP', 'field' => 'nip'], ['name' => 'Nama Guru', 'field' => 'nama_guru']];

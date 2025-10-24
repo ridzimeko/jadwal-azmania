@@ -3,9 +3,12 @@
 use Filament\Notifications\Notification;
 use Flux\Flux;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 
-new class extends Component {
+new
+#[Title('Jadwal Tetap')]
+class extends Component {
     public ?array $formData = [
         'nama' => '',
         'jam_mulai' => '',
@@ -84,7 +87,7 @@ new class extends Component {
 ?>
 
 <div class="dash-card">
-    <x-card-heading title="Kegiatan Tetap"
+    <x-card-heading title="Jadwal Tetap"
         description="Manajemen jadwal tetap pelajaran">
         <x-slot name="action_buttons">
             <flux:button icon="plus" @click="$wire.openAddJadwalModal" class="!bg-primary !text-white">

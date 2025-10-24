@@ -1,4 +1,4 @@
-<x-layouts.app :title="__('Dashboard')">
+<x-layouts.app title="Beranda">
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <x-stat-card title="Mata Pelajaran" :total="$totalMataPelajaran" icon="book-open" />
         <x-stat-card title="Kelas" :total="$totalKelas" icon="building-library" />

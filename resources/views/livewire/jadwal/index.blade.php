@@ -10,9 +10,12 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Flux\Flux;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 
-new class extends Component implements HasActions, HasSchemas {
+new
+#[Title('Jadwal Pelajaran')]
+class extends Component implements HasActions, HasSchemas {
     use InteractsWithActions;
     use InteractsWithSchemas;
 
@@ -153,7 +156,6 @@ new class extends Component implements HasActions, HasSchemas {
 ?>
 
 <div class="dash-card">
-    {{ $this->filterData['hari'] ?? 'hari' }} - {{ $this->filterData['tingkat'] ?? 'tingkat' }}
     <x-card-heading title="Jadwal Pelajaran"
         description="Manajemen jadwal Pelajaran periode">
         <x-slot name="action_buttons">

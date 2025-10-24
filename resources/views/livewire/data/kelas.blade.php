@@ -4,9 +4,12 @@ use Filament\Notifications\Notification;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 
-new class extends Component {
+new
+#[Title('Data Kelas')]
+class extends Component {
     protected $columnDefs = [['name' => 'Kode Kelas', 'field' => 'kode_kelas'], ['name' => 'Tingkat', 'field' => 'tingkat'], ['name' => 'Kelas', 'field' => 'nama_kelas']];
 
     public ?array $formData = null;
