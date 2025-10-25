@@ -13,10 +13,8 @@ return new class extends Migration
     {
         Schema::create('periode', function (Blueprint $table) {
             $table->id();
-            $table->string('tahun_ajaran', 12); // contoh: 2025/2026
+            $table->string('tahun_ajaran'); // contoh: 2025/2026
             $table->enum('semester', ['Ganjil', 'Genap']);
-            $table->date('tanggal_mulai');
-            $table->date('tanggal_selesai');
             $table->boolean('aktif')->default(false);
             $table->timestamps();
         });

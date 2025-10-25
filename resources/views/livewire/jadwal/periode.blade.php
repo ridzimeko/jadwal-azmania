@@ -24,12 +24,14 @@ new
             'aktif' => '',
         ];
         public bool $isEdit = false;
-        public $periodeList;
 
-        public function mount()
-        {
-            $this->periodeList = Periode::all();
-        }
+        // public function mount()
+        // {
+        //     $this->hariOptions = JadwalHelper::getHariOptions();
+        //     $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
+        //     $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
+        //     $this->guruOptions = JadwalHelper::getGuruOptions();
+        // }
 
         protected function rules(): array
         {
