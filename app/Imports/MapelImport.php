@@ -7,8 +7,9 @@ use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithUpserts;
 
-class MapelImport implements ToModel, WithHeadingRow, SkipsOnError
+class MapelImport implements ToModel, WithHeadingRow, WithUpserts, SkipsOnError
 {
     /**
     * @param array $row
@@ -24,5 +25,10 @@ class MapelImport implements ToModel, WithHeadingRow, SkipsOnError
             'kode_mapel' => $row['kode_mapel'],
             'nama_mapel' => $row['mata_pelajaran'],
         ]);
+    }
+
+    public function uniqueBy()
+    {
+        return 'kode_mapel';
     }
 }

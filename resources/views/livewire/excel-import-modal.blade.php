@@ -52,13 +52,15 @@ new class extends Component {
 
     private function importJadwal($path)
     {
-        Excel::import(new JadwalPelajaranImport(), $path);
+        // Excel::import(new JadwalPelajaranImport(), $path);
+        $mapelImport = new JadwalPelajaranImport();
+        $mapelImport->import($path);
 
         Notification::make()
         ->title('Jadwal Pelajaran berhasil di unggah!')
         ->success()
         ->send();
-        $this->dispatch('refreshTable');
+        $this->dispatch('refreshJadwalTable');
     }
 }; ?>
 

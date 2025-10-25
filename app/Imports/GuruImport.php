@@ -7,8 +7,9 @@ use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithUpserts;
 
-class GuruImport implements ToModel, WithHeadingRow, SkipsOnError
+class GuruImport implements ToModel, WithHeadingRow, WithUpserts, SkipsOnError
 {
     /**
     * @param array $row
@@ -25,5 +26,10 @@ class GuruImport implements ToModel, WithHeadingRow, SkipsOnError
             'nama_guru' => $row['nama_guru'],
             'warna' => $row['warna'] ?? '#ffffff',
         ]);
+    }
+
+    public function uniqueBy()
+    {
+        return 'nip';
     }
 }
