@@ -21,6 +21,7 @@ new
         public ?array $formData = [
             'tahun_ajaran' => '',
             'semester' => '',
+            'aktif' => '',
         ];
         public bool $isEdit = false;
         public $periodeList;
@@ -55,6 +56,7 @@ new
             $this->formData = [
                 'tahun_ajaran' => '',
                 'semester' => '',
+                'aktif' => '',
             ];
             Flux::modal('periode-modal')->show();
         }
@@ -83,6 +85,7 @@ new
 
             Notification::make()->title('Periode Berhasil Tersimpan')->success()->send();
             Flux::modal('periode-modal')->close();
+            $this->dispatch('refreshPeriodeTable');
         }
 
         public function deleteAction(): Action
@@ -100,7 +103,7 @@ new
 
                     Notification::make()->title('Data periode berhasil dihapus')->success()->send();
                     Flux::modal('periode-modal')->close();
-                    $this->dispatch('$refresh');
+                    $this->dispatch('refreshPeriodeTable');
                 });
         }
     };
@@ -108,7 +111,7 @@ new
 
 <div class="dash-card">
     <x-card-heading title="Periode Jadwal"
-        description="Silahkan atur periode jadwal yang akan digunakan">
+        description="Manajemen periode jadwal pelajaran">
         <x-slot name="action_buttons">
             <flux:button icon="plus" @click="$wire.openAddPeriode" class="!bg-primary !text-white">
                 Tambah Data
@@ -116,37 +119,7 @@ new
         </x-slot>
     </x-card-heading>
 
-    <!-- main content -->
-    <div class="grid grid-cols-3 gap-4 mt-4">
-        @foreach ($this->periodeList as $periode)
-        <flux:card size="sm" class="relative hover:bg-zinc-50 dark:hover:bg-zinc-700">
-            <a href="#" aria-label="Latest on our blog">
-                <div class="w-[90%]">
-                    <flux:heading class="flex items-center gap-2">{{ $periode->tahun_ajaran }}
-                    </flux:heading>
-                    <flux:text class="mt-2">{{ $periode->semester }}</flux:text>
-                </div>
-            </a>
-            <div class="!absolute top-1 right-2 flex flex-col">
-                <flux:button
-                    x-on:click="$wire.openEditPeriode({{ json_encode([
-                        'id' => $periode->id,
-                        'tahun_ajaran' => $periode->tahun_ajaran,
-                        'semester' => $periode->semester,
-                        ])
-                        }}
-                    )"
-                    icon="pencil"
-                    variant="subtle"
-                    class="ml-text-zinc-400" />
-                <flux:button
-                    icon="trash"
-                    variant="subtle"
-                    class="ml-text-zinc-400" />
-            </div>
-        </flux:card>
-        @endforeach
-    </div>
+    <livewire:datatable.periode-jadwal />
 
     <x-filament-actions::modals />
 
@@ -172,6 +145,18 @@ new
                 <flux:error name="formData.semester" />
             </flux:field>
 
+            <flux:field>
+                <flux:label>Status</flux:label>
+                <x-select
+                    wire:model="formData.aktif"
+                    :search="false"
+                    :options="[
+                    ['label' => 'Aktif', 'value' => '1'],
+                    ['label' => 'Nonaktif', 'value' => '0'],
+                ]"
+                    placeholder="Pilih Semester" />
+                <flux:error name="formData.semester" />
+            </flux:field>
 
             <div class="flex mt-8">
                 <flux:spacer />
