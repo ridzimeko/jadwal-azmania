@@ -23,14 +23,12 @@ new
             'semester' => '',
         ];
         public bool $isEdit = false;
+        public $periodeList;
 
-        // public function mount()
-        // {
-        //     $this->hariOptions = JadwalHelper::getHariOptions();
-        //     $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
-        //     $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
-        //     $this->guruOptions = JadwalHelper::getGuruOptions();
-        // }
+        public function mount()
+        {
+            $this->periodeList = Periode::all();
+        }
 
         protected function rules(): array
         {
@@ -120,20 +118,34 @@ new
 
     <!-- main content -->
     <div class="grid grid-cols-3 gap-4 mt-4">
-        <a href="#" aria-label="Latest on our blog">
-            <flux:card size="sm" class="relative hover:bg-zinc-50 dark:hover:bg-zinc-700">
+        @foreach ($this->periodeList as $periode)
+        <flux:card size="sm" class="relative hover:bg-zinc-50 dark:hover:bg-zinc-700">
+            <a href="#" aria-label="Latest on our blog">
                 <div class="w-[90%]">
-                    <flux:heading class="flex items-center gap-2">Latest on our blog
+                    <flux:heading class="flex items-center gap-2">{{ $periode->tahun_ajaran }}
                     </flux:heading>
-                    <flux:text class="mt-2">Stay up to date with our latest insights, tutorials, and product updates.</flux:text>
+                    <flux:text class="mt-2">{{ $periode->semester }}</flux:text>
                 </div>
+            </a>
+            <div class="!absolute top-1 right-2 flex flex-col">
                 <flux:button
-                icon="pencil"
-                variant="subtle"
-                class="!absolute top-1 right-2 ml-text-zinc-400"
-                />
-            </flux:card>
-        </a>
+                    x-on:click="$wire.openEditPeriode({{ json_encode([
+                        'id' => $periode->id,
+                        'tahun_ajaran' => $periode->tahun_ajaran,
+                        'semester' => $periode->semester,
+                        ])
+                        }}
+                    )"
+                    icon="pencil"
+                    variant="subtle"
+                    class="ml-text-zinc-400" />
+                <flux:button
+                    icon="trash"
+                    variant="subtle"
+                    class="ml-text-zinc-400" />
+            </div>
+        </flux:card>
+        @endforeach
     </div>
 
     <x-filament-actions::modals />

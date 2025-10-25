@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Periode;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -11,13 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('periode', function (Blueprint $table) {
+        Schema::create('item_jadwal_tetap', function (Blueprint $table) {
             $table->id();
-            $table->string('tahun_ajaran', 12); // contoh: 2025/2026
-            $table->enum('semester', ['Ganjil', 'Genap']);
-            $table->date('tanggal_mulai');
-            $table->date('tanggal_selesai');
-            $table->boolean('aktif')->default(false);
+            $table->foreignIdFor(Periode::class)->constrained()->onDelete('cascade');
+            $table->time('jam_mulai');
+            $table->time('jam_selesai');
+            $table->string('nama_kegiatan');
             $table->timestamps();
         });
     }
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('periode');
+        Schema::dropIfExists('item_jadwal_tetap');
     }
 };
