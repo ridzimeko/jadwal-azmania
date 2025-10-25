@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\JadwalPelajaranExport;
 use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
+use App\Models\Periode;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -14,6 +15,9 @@ class ExportController extends Controller
     public function exportPdf(Request $request)
     {
         $tingkat = strtoupper($request->query('tingkat', 'SMP'));
+        $periode = $request->query('periode');
+
+        if (!$periode) return abort('400', 'Masukkan periode jadwal');
 
         // jika tingkat != smp atau ma
         if (!in_array($tingkat, ['SMP', 'MA'])) {
@@ -62,6 +66,9 @@ class ExportController extends Controller
     public function exportExcel(Request $request)
     {
         $tingkat = strtoupper($request->query('tingkat', 'SMP'));
-        return Excel::download(new JadwalPelajaranExport($tingkat), 'jadwal.xlsx');
+        $periode = $request->query('periode');
+
+        if (!$periode) return abort('400', 'Masukkan periode jadwal');
+        return Excel::download(new JadwalPelajaranExport($tingkat, $periode), "jadwal-{$tingkat}.xlsx");
     }
 }

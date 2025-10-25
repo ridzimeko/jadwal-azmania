@@ -6,6 +6,7 @@ use App\Models\Guru;
 use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
 use App\Models\MataPelajaran;
+use App\Models\Periode;
 use Illuminate\Support\Facades\Cache;
 
 class JadwalHelper
@@ -114,9 +115,19 @@ class JadwalHelper
         });
     }
 
+    public static function getPeriodeOptions()
+    {
+        return Cache::remember("periode_options", 60 * 60, function () {
+            return Periode::orderBy('created_at')
+                ->get()
+                ->map(fn($g) => ['value' => $g->id, 'label' => $g->tahun_ajaran])
+                ->toArray();
+        });
+    }
+
     public static function getHariOptions()
     {
-        return collect(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'])
+        return collect(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'])
             ->map(fn($hari) => ['label' => $hari, 'value' => $hari])
             ->toArray();
     }

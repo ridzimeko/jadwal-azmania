@@ -17,4 +17,8 @@ class Periode extends Model
     ];
 
     protected $table = 'periode';
+
+    public function scopeGetTahunAjaran($query, $id) {
+        return $query->find($id)->first()->tahun_ajaran;
+    }
 }

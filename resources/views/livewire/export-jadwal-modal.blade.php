@@ -1,64 +1,82 @@
 <?php
 
+use App\Helpers\JadwalHelper;
 use Livewire\Volt\Component;
 
 new class extends Component {
     public $name = 'export-jadwal';
-    public $periode = '';
+    public array $periodeList = [];
     public ?array $formData = [
-        'filename' => '',
         'tingkat' => '',
         'filetype' => '',
+        'periode' => '',
     ];
 
-    public function mount() {
-        $tingkat = strtoupper($this->formData['tingkat']);
-        $this->formData['filename'] = "Jadwal Pelajaran {$tingkat}-{$this->periode}";
-        // $this->formData['filetype'] = 'pdf';
-        // $this->formData['filetype'] = 'smp';
+    public function mount()
+    {
+        $this->formData['filetype'] = "pdf";
+        $this->formData['tingkat'] = "smp";
+        $this->periodeList = JadwalHelper::getPeriodeOptions();
+        $this->formData['periode'] = $this->periodeList[0]['value'] ?? '';
     }
 
-    public function save() {
-        $exportType = $this->formData['filetype'];
-        $url = route("export-jadwal.{$exportType}", ['tingkat' => $this->tingkat]);
+    protected function rules(): array
+    {
+        return [
+            'formData.periode' => 'required|numeric',
+            'formData.tingkat' => 'required|string|in:smp,ma',
+            'formData.filetype' => 'required|in:pdf,excel',
+        ];
+    }
 
-        // kirim event ke browser
-        $this->dispatch('open-new-tab', ['url' => $url]);
+    protected function messages(): array
+    {
+        return [
+            // 'formData.periode.*' => 'Harap isi periode yang valid.',
+            'formData.tingkat.*' => 'Pilih tingkat yang valid.',
+            'formData.filetype.*' => 'Pilih format berkas yang valid.',
+        ];
+    }
+
+    public function save()
+    {
+        $this->validate();
+
+        $exportType = $this->formData['filetype'];
+        $exportRoute = "export-jadwal.{$exportType}";
+        $url = route($exportRoute, [
+            'tingkat' => $this->formData['tingkat'],
+            'periode' => $this->formData['periode'],
+        ]);
+
+        // Emit event ke browser
+        $this->dispatch('export-file-jadwal', ['url' => $url]);
     }
 }; ?>
 
 <div>
-    <flux:modal name="{{ $name }}" class="min-w-[28rem]">
+    <flux:modal name="{{ $this->name }}" class="min-w-[28rem]">
         <flux:heading size="lg">Unduh Jadwal</flux:heading>
         <form wire:submit.prevent="save" class="mt-6">
             <div class="space-y-4">
 
-            <flux:input wire:model.defer="formData.filename" label="Nama Berkas" placeholder="Nama berkas..." />
+                <flux:field>
+                    <flux:label>Periode</flux:label>
+                    <x-select wire:model="formData.periode" :search="false" :options="$this->periodeList"
+                        placeholder="Pilih periode" />
+                    <flux:error name="formData.periode" />
+                </flux:field>
 
-            <flux:field>
+                <flux:field>
                     <flux:label>Tingkat</flux:label>
-                    <x-select
-                        wire:model="formData.filetype"
-                        :search="false"
-                        :options="[
-                            ['label' => 'SMP', 'value' => 'smp'],
-                            ['label' => 'MA', 'value' => 'ma'],
-                        ]"
-                        value="smp"
+                    <x-select wire:model="formData.tingkat" :search="false" :options="[['label' => 'SMP', 'value' => 'smp'], ['label' => 'MA', 'value' => 'ma']]" value="smp"
                         placeholder="Pilih tingkat" />
-                    <flux:error name="formData.filetype" />
+                    <flux:error name="formData.tingkat" />
                 </flux:field>
 
                 <flux:field>
                     <flux:label>Unduh Sebagai</flux:label>
-                    <x-select
-                        wire:model="formData.filetype"
-                        :search="false"
-                        :options="[
-                            ['label' => 'PDF', 'value' => 'pdf'],
-                            ['label' => 'Excel', 'value' => 'excel'],
-                        ]"
-                        value="pdf"
+                    <x-select wire:model="formData.filetype" :search="false" :options="[['label' => 'PDF', 'value' => 'pdf'], ['label' => 'Excel', 'value' => 'excel']]" value="pdf"
                         placeholder="Pilih format berkas" />
                     <flux:error name="formData.filetype" />
                 </flux:field>
@@ -74,4 +92,13 @@ new class extends Component {
             </div>
         </form>
     </flux:modal>
+
+    <script>
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('export-file-jadwal', (event) => {
+                const url = event[0].url;
+                window.open(url, '_blank'); // buka tab baru
+            });
+        });
+    </script>
 </div>
