@@ -26,15 +26,13 @@ Route::middleware(['auth'])->group(function () {
 
         Volt::route('periode', 'jadwal.periode')
         ->name('jadwal.periode');
-
-        Volt::route('tetap', 'jadwal.tetap')
-            ->name('jadwal.tetap');
     });
 
     Route::group(['prefix' => '/data'], function () {
         Volt::route('mata-pelajaran', 'data.mata-pelajaran')->name('data.mata-pelajaran');
         Volt::route('guru', 'data.guru')->name('data.guru');
         Volt::route('kelas', 'data.kelas')->name('data.kelas');
+        Volt::route('kegiatan', 'data.kegiatan')->name('data.kegiatan');
     });
 
     Volt::route('atur-admin', 'atur-admin.index')

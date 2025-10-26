@@ -67,7 +67,7 @@ class JadwalHelper
     {
 
         $query = JadwalPelajaran::query()
-            ->with(['kelas', 'mataPelajaran', 'guru'])
+            ->with(['kelas', 'mataPelajaran', 'guru', 'kegiatan'])
             ->whereRelation('periode', 'id', $periode)
             ->withBentrok()
             ->orderByDesc('is_bentrok')

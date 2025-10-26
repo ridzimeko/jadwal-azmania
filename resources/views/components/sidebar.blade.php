@@ -16,11 +16,11 @@
         <flux:sidebar.group expandable icon="book" heading="Jadwal" class="grid">
             <flux:sidebar.item href="/jadwal/periode">Periode</flux:sidebar.item>
             <flux:sidebar.item href="/jadwal">Pelajaran</flux:sidebar.item>
-            <flux:sidebar.item href="/jadwal/tetap">Jadwal Tetap</flux:sidebar.item>
         </flux:sidebar.group>
 
         <flux:sidebar.group expandable icon="pencil-square" heading="Data" class="grid">
             <flux:sidebar.item href="/data/mata-pelajaran">Mata Pelajaran</flux:sidebar.item>
+            <flux:sidebar.item href="/data/kegiatan">Kegiatan</flux:sidebar.item>
             <flux:sidebar.item href="/data/guru">Guru</flux:sidebar.item>
             <flux:sidebar.item href="/data/kelas">Kelas</flux:sidebar.item>
         </flux:sidebar.group>

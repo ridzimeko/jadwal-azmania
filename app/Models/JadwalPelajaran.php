@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -19,6 +18,7 @@ class JadwalPelajaran extends Model
         'kelas_id',
         'mata_pelajaran_id',
         'guru_id',
+        'kegiatan_id',
         'periode_id'
     ];
 
@@ -93,5 +93,9 @@ class JadwalPelajaran extends Model
     public function periode()
     {
         return $this->belongsTo(Periode::class);
+    }
+
+    public function kegiatan() {
+        return $this->belongsTo(Kegiatan::class);
     }
 }

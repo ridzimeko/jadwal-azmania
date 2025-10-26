@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\JadwalTetap;
+use App\Models\Kegiatan;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -31,18 +32,20 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     {
         return $table->query(function () {
             //filter tingkat
-            $query = JadwalTetap::query()->orderBy('jam_mulai');
+            $query = Kegiatan::query();
             return $query;
         })
             ->searchable()
             ->columns([
                 // Tambahkan kolom nomor urut paling awal
                 TextColumn::make('index')->label('No')->rowIndex()->sortable(false)->searchable(false),
-                TextColumn::make('jam')
-                ->label('Jam')
-                ->getStateUsing(fn($record) => "{$record->jam_mulai} - {$record->jam_selesai}")
+                TextColumn::make('nama_kegiatan')->label('Nama Kegiatan')->searchable(true),
+                TextColumn::make('global')->label('Semua Kelas')
+                ->formatStateUsing(function ($record) {
+                    return $record->global ? 'Ya' : 'Tidak';
+                })
                 ->searchable(true),
-                TextColumn::make('nama')->label('Nama Kegiatan')->searchable(true),
+                TextColumn::make('warna')->label('Warna')->searchable(true),
             ])
             ->recordActions([
                 Action::make('edit')
@@ -85,7 +88,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     })
                     ->deselectRecordsAfterCompletion(),
             ])
-            ->emptyStateHeading('Tidak ada data jadwal tetap');
+            ->emptyStateHeading('Tidak ada data kegiatan');
     }
 };
 

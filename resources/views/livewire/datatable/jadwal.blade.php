@@ -57,6 +57,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
             ->columns([
                 // Tambahkan kolom nomor urut paling awal
                 TextColumn::make('index')->label('No')->rowIndex()->sortable(false)->searchable(false),
+                TextColumn::make('kategori')->label('Kategori')->searchable(true),
                 TextColumn::make('kelas.nama_kelas')->label('Kelas')->searchable(true),
                 TextColumn::make('hari')->label('Hari')->searchable(true),
                 TextColumn::make('jam')

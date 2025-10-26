@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jadwal_tetap', function (Blueprint $table) {
+        Schema::create('kegiatan', function (Blueprint $table) {
             $table->id();
-            $table->string('nama', 40);
-            $table->time('jam_mulai');
-            $table->time('jam_selesai');
-            $table->string('warna', 7);
+            $table->string('kode_kegiatan', 12)->unique();
+            $table->string('nama_kegiatan', 40);
+            $table->boolean('global')->default(false);
+            $table->string('warna', 7)->default('#ffffff');
             $table->timestamps();
         });
     }
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jadwal_tetaps');
+        Schema::dropIfExists('kegiatan');
     }
 };

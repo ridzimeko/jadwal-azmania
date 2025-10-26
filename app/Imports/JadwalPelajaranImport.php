@@ -29,7 +29,7 @@ class JadwalPelajaranImport implements ToModel, WithHeadingRow, WithUpserts, Ski
         // cari ID berdasarkan kode
         $kelas = Kelas::where('kode_kelas', $row['kode_kelas'] ?? null)->first();
         $mapel = MataPelajaran::where('kode_mapel', $row['kode_mata_pelajaran'] ?? null)->first();
-        $guru  = Guru::where('nip', $row['kode_guru_pengajar'] ?? null)->first();
+        $guru  = Guru::where('kode_guru', $row['kode_guru_pengajar'] ?? null)->first();
 
         // validasi sederhana
         if (!$kelas || !$mapel || !$guru) {
