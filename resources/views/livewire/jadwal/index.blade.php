@@ -33,6 +33,7 @@ new
             'kelas_id' => '',
             'mata_pelajaran_id' => '',
             'guru_id' => '',
+            'periode_id' => '',
         ];
         public ?array $filterData = [
             'hari' => '',
@@ -57,6 +58,7 @@ new
                 'formData.jam_mulai' => 'required|date_format:H:i',
                 'formData.jam_selesai' => 'required|date_format:H:i|after:formData.jam_mulai',
                 'formData.kelas_id' => 'required|exists:kelas,id',
+                'formData.periode_id' => 'required|exists:periode,id',
                 'formData.mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
                 'formData.guru_id' => 'required|exists:guru,id',
             ];
@@ -78,6 +80,9 @@ new
                 'formData.kelas_id.required' => 'Kelas wajib dipilih.',
                 'formData.kelas_id.exists' => 'Kelas yang dipilih tidak valid.',
 
+                'formData.periode_id.required' => 'Periode wajib dipilih.',
+                'formData.periode_id.exists' => 'Periode yang dipilih tidak valid.',
+
                 'formData.mata_pelajaran_id.required' => 'Mata pelajaran wajib dipilih.',
                 'formData.mata_pelajaran_id.exists' => 'Mata pelajaran yang dipilih tidak valid.',
 
@@ -96,6 +101,7 @@ new
                 'kelas_id' => '',
                 'mata_pelajaran_id' => '',
                 'guru_id' => '',
+                'periode_id' => '',
             ];
             Flux::modal('jadwal-modal')->show();
         }
@@ -275,6 +281,19 @@ new
                     placeholder="Pilih hari..." />
                 <flux:error name="formData.hari" />
             </flux:field>
+
+            <flux:field>
+                <flux:label>Periode</flux:label>
+                <x-select
+                    wire:model="formData.periode_id"
+                    :search="false"
+                    :options="JadwalHelper::getPeriodeOptions()"
+                    placeholder="Pilih periode"
+                />
+                <flux:error name="formData.periode_id" />
+            </flux:field>
+
+
 
             <div class="flex flex-row items-center gap-6 w-full">
                 <flux:field class="min-w-[200px]">
