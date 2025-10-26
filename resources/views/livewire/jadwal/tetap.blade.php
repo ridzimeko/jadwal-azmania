@@ -1,6 +1,11 @@
 <?php
 
+use App\Models\JadwalTetap;
+use Filament\Forms\Components\ColorPicker;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Schemas\Schema;
 use Flux\Flux;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
@@ -8,11 +13,14 @@ use Livewire\Volt\Component;
 
 new
 #[Title('Jadwal Tetap')]
-class extends Component {
+class extends Component implements HasSchemas {
+    use InteractsWithSchemas;
+
     public ?array $formData = [
         'nama' => '',
         'jam_mulai' => '',
         'jam_selesai' => '',
+        'warna' => '',
     ];
     public bool $isEdit = false;
 
@@ -45,6 +53,14 @@ class extends Component {
         ];
     }
 
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                ColorPicker::make('formData.warna')->label('Warna')->placeholder('Pilih warna untuk jadwal')->regex('/^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})\b$/')
+            ]);
+    }
+
     public function openAddJadwalModal()
     {
         $this->isEdit = false;
@@ -52,6 +68,7 @@ class extends Component {
             'nama' => '',
             'jam_mulai' => '',
             'jam_selesai' => '',
+            'warna' => '',
         ];
         Flux::modal('jadwal-modal')->show();
     }
@@ -68,12 +85,12 @@ class extends Component {
 
     public function save()
     {
-        $this->validate();
+        // $this->validate();
 
         if ($this->isEdit) {
-            \App\Models\JadwalTetap::find($this->formData['id'])->update($this->formData);
+            JadwalTetap::find($this->formData['id'])->update($this->formData);
         } else {
-            \App\Models\JadwalTetap::create($this->formData);
+            JadwalTetap::create($this->formData);
         }
 
         Notification::make()
@@ -98,8 +115,8 @@ class extends Component {
     <livewire:datatable.jadwal-tetap />
 
     {{-- Add Data Modal --}}
-    <flux:modal name="kegiatan-nonkbm-modal" class="md:w-[720px]">
-        <form wire:submit.prevent="save" class="flex flex-col gap-3 max-w-[768px]">
+    <flux:modal name="jadwal-modal" class="md:w-[720px]">
+        <form wire:submit.prevent="save" class="flex flex-col gap-4 max-w-[768px]">
             <flux:heading size="lg">
                 {{ $isEdit ? 'Ubah Data Jadwal' : 'Tambah Data Jadwal' }}
             </flux:heading>
@@ -119,6 +136,9 @@ class extends Component {
                     <flux:error name="formData.jam_selesai" />
                 </flux:field>
             </div>
+
+            {{-- Filament form --}}
+            {{ $this->form }}
 
             <div class="flex mt-8">
                 <flux:spacer />

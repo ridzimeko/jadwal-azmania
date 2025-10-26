@@ -31,6 +31,7 @@ class MataPelajaranFactory extends Factory
                 'Sosiologi',
                 'Informatika',
             ]),
+            'warna' => $this->faker->hexColor() ?? '#ffffff',
         ];
     }
 }

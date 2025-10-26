@@ -14,6 +14,7 @@ class JadwalTetap extends Model
         'nama',
         'jam_mulai',
         'jam_selesai',
+        'warna'
     ];
 
     protected $table = 'jadwal_tetap';

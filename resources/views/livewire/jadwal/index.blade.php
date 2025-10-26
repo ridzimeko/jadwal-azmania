@@ -221,7 +221,7 @@ new
                 <livewire:datatable.jadwal :periode_id="$this->filterData['periode']" :tingkat="$this->filterData['tingkat']" />
             </div>
             <div x-cloak x-show="activeTab === 'timeline'">
-                <livewire:datatable.jadwal-matrix lazy :peride_id="$this->filterData['periode']" :hari="$this->filterData['hari']" :tingkat="$this->filterData['tingkat']" />
+                <livewire:datatable.jadwal-matrix lazy :periode_id="$this->filterData['periode']" :hari="$this->filterData['hari']" :tingkat="$this->filterData['tingkat']" />
             </div>
         </div>
     </div>

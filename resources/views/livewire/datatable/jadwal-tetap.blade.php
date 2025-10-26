@@ -31,9 +31,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     {
         return $table->query(function () {
             //filter tingkat
-            $query = JadwalTetap::query()
-                ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
-                ->orderBy('jam_mulai');
+            $query = JadwalTetap::query()->orderBy('jam_mulai');
             return $query;
         })
             ->searchable()
@@ -69,17 +67,6 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                             ->send();
                         $this->dispatch('refreshJadwalTable');
                     }),
-            ])
-            ->filters([
-                SelectFilter::make('hari')
-                    ->options([
-                        'senin' => 'Senin',
-                        'selasa' => 'Selasa',
-                        'rabu' => 'Rabu',
-                        'kamis' => 'Kamis',
-                        'jumat' => 'Jumat',
-                        'sabtu' => 'Sabtu'
-                    ]),
             ])
             ->toolbarActions([
                 BulkAction::make('deleteSelected')

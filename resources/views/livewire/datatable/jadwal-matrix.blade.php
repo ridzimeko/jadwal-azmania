@@ -95,10 +95,10 @@ new class extends Component {
                         <th class="px-4 py-2 border text-center">Hari</th>
                     @endif
 
-                    <th class="px-4 py-2 border text-center w-[160px]">Jam</th>
+                    <th class="px-4 py-2 border text-center w-[160px] sticky left-[-1px] bg-gray-100">Jam</th>
 
                     @foreach ($kelasList as $kelas)
-                        <th class="px-4 py-2 border text-center w-[160px]">{{ $kelas->nama_kelas }}</th>
+                        <th class="px-4 py-2 border text-center min-w-[120px]">{{ $kelas->nama_kelas }}</th>
                     @endforeach
                 </tr>
             </thead>
@@ -113,7 +113,7 @@ new class extends Component {
                                 <td class="px-4 py-2 border text-center">{{ $hariKey }}</td>
                             @endif
 
-                            <td class="px-4 py-2 border text-center">{{ $jamLabel }}</td>
+                            <td class="px-4 py-2 border text-center sticky left-[-1px] bg-white">{{ $jamLabel }}</td>
 
                             @foreach ($kelasList as $kelas)
                                 @php
@@ -127,7 +127,7 @@ new class extends Component {
                                     @if ($kelasItems->count() > 0)
                                         @foreach ($kelasItems as $item)
                                             @php
-                                                $bg = $item->guru->warna ?? '#ffffff';
+                                                $bg = $item->mataPelajaran->warna ?? '#ffffff';
                                                 $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                             @endphp
                                             <div class="mb-2 p-2 rounded cursor-pointer hover:bg-yellow-100 transition"
