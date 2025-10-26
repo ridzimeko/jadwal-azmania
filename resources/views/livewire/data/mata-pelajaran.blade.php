@@ -1,6 +1,10 @@
 <?php
 
+use Filament\Forms\Components\ColorPicker;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Schemas\Schema;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
@@ -9,15 +13,19 @@ use Livewire\Volt\Component;
 
 new
 #[Title('Mata Pelajaran')]
-class extends Component {
+class extends Component implements HasSchemas {
+    use InteractsWithSchemas;
+
     protected $columnDefs = [
         ['name' => 'Kode Mapel', 'field' => 'kode_mapel'],
         ['name' => 'Mata Pelajaran', 'field' => 'nama_mapel'],
+        ['name' => 'Warna', 'field' => 'warna'],
     ];
 
     public array $formData = [
         'kode_mapel' => '',
         'nama_mapel' => '',
+        'warna' => '',
     ];
     public bool $isEdit = false;
 
@@ -35,6 +43,7 @@ class extends Component {
                 'string',
                 'max:40',
             ],
+            'formData.warna' => ['hex_color']
         ];
     }
 
@@ -49,7 +58,17 @@ class extends Component {
             'formData.nama_mapel.required' => 'Nama mata pelajaran wajib diisi.',
             'formData.nama_mapel.string' => 'Nama mata pelajaran harus berupa teks.',
             'formData.nama_mapel.max' => 'Nama mata pelajaran tidak boleh lebih dari 40 karakter.',
+
+            'formData.warna.hex_color' => 'Warna harus dalam format heksadesimal.'
         ];
+    }
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                ColorPicker::make('formData.warna')->label('Warna')->placeholder('Pilih warna untuk jadwal')->regex('/^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})\b$/')
+            ]);
     }
 
     #[On('openAddModal')]
@@ -59,6 +78,7 @@ class extends Component {
         $this->formData = [
             'kode_mapel' => '',
             'nama_mapel' => '',
+            'warna' => '',
         ];
         Flux::modal('mapel-modal')->show();
     }
@@ -115,6 +135,10 @@ class extends Component {
                 </div>
                 <flux:input wire:model.defer="formData.kode_mapel" label="Kode Mapel" placeholder="Kode Mapel" />
                 <flux:input wire:model.defer="formData.nama_mapel" label="Nama Mapel" placeholder="Nama Mapel" />
+
+                {{-- filament form --}}
+                {{ $this->form }}
+
                 <div class="flex">
                     <flux:spacer />
                     <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>

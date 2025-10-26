@@ -11,7 +11,7 @@ class Guru extends Model
     use HasFactory;
 
     protected $fillable = [
-        'nip',
+        'kode_guru',
         'nama_guru',
         'warna'
     ];

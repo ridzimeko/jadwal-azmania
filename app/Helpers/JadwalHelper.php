@@ -63,10 +63,12 @@ class JadwalHelper
         return ['available' => true, 'bentrok' => collect()];
     }
 
-    public static function getQuery($tingkat)
+    public static function getQuery($periode = null, $tingkat = null)
     {
+
         $query = JadwalPelajaran::query()
             ->with(['kelas', 'mataPelajaran', 'guru'])
+            ->whereRelation('periode', 'id', $periode)
             ->withBentrok()
             ->orderByDesc('is_bentrok')
             ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
@@ -118,18 +120,33 @@ class JadwalHelper
     public static function getPeriodeOptions()
     {
         return Cache::remember("periode_options", 60 * 60, function () {
-            return Periode::orderBy('created_at')
+            return Periode::orderBy('tahun_ajaran')
                 ->get()
                 ->map(fn($g) => ['value' => $g->id, 'label' => $g->tahun_ajaran])
                 ->toArray();
         });
     }
 
-    public static function getHariOptions()
+    public static function getFirstPeriode()
     {
-        return collect(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'])
-            ->map(fn($hari) => ['label' => $hari, 'value' => $hari])
-            ->toArray();
+        return Periode::orderBy('tahun_ajaran')->first();
+    }
+
+    public static function getHariOptions(bool $includeAll = false)
+    {
+        $days = collect(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']);
+        $days = $days
+        ->map(fn($hari) => ['label' => $hari, 'value' => $hari])
+        ->toArray();
+
+        if ($includeAll) {
+            $days = [
+                ['label' => 'Semua Hari', 'value' => ''],
+                ...$days
+            ];
+        }
+
+        return $days;
     }
 
     public static function getGuruOptions()

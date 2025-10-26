@@ -36,7 +36,8 @@ new
         ];
         public ?array $filterData = [
             'hari' => '',
-            'tingkat' => ''
+            'tingkat' => '',
+            'periode' => '',
         ];
         public bool $isEdit = false;
 
@@ -46,6 +47,7 @@ new
             $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
             $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
             $this->guruOptions = JadwalHelper::getGuruOptions();
+            $this->filterData['periode'] = JadwalHelper::getFirstPeriode()->id;
         }
 
         protected function rules(): array
@@ -192,8 +194,14 @@ new
                     x-show="activeTab === 'timeline'"
                     wire:model.live="filterData.hari"
                     :search="false"
-                    :options="$this->hariOptions"
+                    :options="JadwalHelper::getHariOptions(true)"
                     placeholder="Pilih hari"
+                    class="!w-[140px]" />
+                <x-select
+                    wire:model.live="filterData.periode"
+                    :search="false"
+                    :options="JadwalHelper::getPeriodeOptions()"
+                    placeholder="Pilih periode"
                     class="!w-[140px]" />
                 <x-select
                     wire:model.live="filterData.tingkat"
@@ -210,10 +218,10 @@ new
 
         <div class="mt-4">
             <div x-show="activeTab === 'tabel'">
-                <livewire:datatable.jadwal :tingkat="$this->filterData['tingkat']" />
+                <livewire:datatable.jadwal :periode_id="$this->filterData['periode']" :tingkat="$this->filterData['tingkat']" />
             </div>
             <div x-cloak x-show="activeTab === 'timeline'">
-                <livewire:datatable.jadwal-matrix lazy :hari="$this->filterData['hari']" :tingkat="$this->filterData['tingkat']" />
+                <livewire:datatable.jadwal-matrix lazy :peride_id="$this->filterData['periode']" :hari="$this->filterData['hari']" :tingkat="$this->filterData['tingkat']" />
             </div>
         </div>
     </div>

@@ -132,7 +132,8 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                         $this->dispatch('notify', message: 'Data berhasil dihapus!');
                     })
                     ->deselectRecordsAfterCompletion(),
-            ]);
+            ])
+            ->emptyStateHeading('Tidak ada data');
 
         if ($this->actionType) {
             $mTable->recordActions(array_merge($editActions, $defaultActions));

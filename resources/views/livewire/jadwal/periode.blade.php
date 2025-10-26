@@ -8,6 +8,7 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Flux\Flux;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
@@ -85,28 +86,11 @@ new
                 Periode::create($this->formData);
             }
 
+            Cache::forget('periode_options');
+
             Notification::make()->title('Periode Berhasil Tersimpan')->success()->send();
             Flux::modal('periode-modal')->close();
             $this->dispatch('refreshPeriodeTable');
-        }
-
-        public function deleteAction(): Action
-        {
-            return Action::make('delete')
-                ->label('Hapus')
-                ->color('danger')
-                ->requiresConfirmation()
-                ->modalHeading('Hapus Periode')
-                ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
-                ->action(function (array $arguments) {
-                    $post = Periode::find($arguments['periode']);
-
-                    $post?->delete();
-
-                    Notification::make()->title('Data periode berhasil dihapus')->success()->send();
-                    Flux::modal('periode-modal')->close();
-                    $this->dispatch('refreshPeriodeTable');
-                });
         }
     };
 ?>

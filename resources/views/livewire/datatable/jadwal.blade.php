@@ -25,6 +25,9 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     use InteractsWithTable;
 
     #[Reactive]
+    public $periode_id;
+
+    #[Reactive]
     public $tingkat;
 
     public function mount($tingkat = null)
@@ -42,7 +45,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     {
         return $table->query(function () {
             //filter tingkat
-            $query = JadwalHelper::getQuery($this->tingkat);
+            $query = JadwalHelper::getQuery($this->periode_id, $this->tingkat);
             return $query;
         })
             ->recordClasses(
@@ -62,11 +65,6 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     ->searchable(true),
                 TextColumn::make('mataPelajaran.nama_mapel')->label('Mata Pelajaran')->searchable(true),
                 TextColumn::make('guru.nama_guru')->label('Guru Pengajar')->searchable(true)
-                    ->formatStateUsing(function ($state, $record) {
-                        $borderColor = $record->guru->warna ?? 'transparent';
-                        return "<div style='border-bottom: 2px solid {$borderColor}; width: fit-content'>{$state}</div>";
-                    })
-                    ->html(),
             ])
             ->recordActions([
                 Action::make('edit')
@@ -122,7 +120,8 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                             ->send();
                     })
                     ->deselectRecordsAfterCompletion(),
-            ]);
+            ])
+            ->emptyStateHeading('Tidak ada data jadwal pelajaran');
     }
 };
 

@@ -19,6 +19,7 @@ class JadwalPelajaran extends Model
         'kelas_id',
         'mata_pelajaran_id',
         'guru_id',
+        'periode_id'
     ];
 
     protected $table = 'jadwal_pelajaran';
@@ -87,5 +88,10 @@ class JadwalPelajaran extends Model
     public function mataPelajaran()
     {
         return $this->belongsTo(MataPelajaran::class);
+    }
+
+    public function periode()
+    {
+        return $this->belongsTo(Periode::class);
     }
 }

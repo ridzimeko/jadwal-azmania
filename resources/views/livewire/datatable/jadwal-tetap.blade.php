@@ -97,7 +97,8 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                             ->send();
                     })
                     ->deselectRecordsAfterCompletion(),
-            ]);
+            ])
+            ->emptyStateHeading('Tidak ada data jadwal tetap');
     }
 };
 

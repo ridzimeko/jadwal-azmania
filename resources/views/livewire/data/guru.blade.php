@@ -1,10 +1,6 @@
 <?php
 
-use Filament\Forms\Components\ColorPicker;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Concerns\InteractsWithSchemas;
-use Filament\Schemas\Contracts\HasSchemas;
-use Filament\Schemas\Schema;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
@@ -13,14 +9,12 @@ use Livewire\Volt\Component;
 
 new
 #[Title('Data Guru')]
-class extends Component implements HasSchemas {
-    use InteractsWithSchemas;
-
-    protected $columnDefs = [['name' => 'NIP', 'field' => 'nip'], ['name' => 'Nama Guru', 'field' => 'nama_guru']];
+class extends Component {
+    protected $columnDefs = [['name' => 'Kode Guru', 'field' => 'kode_guru'], ['name' => 'Nama Guru', 'field' => 'nama_guru']];
 
     public array $formData = [
         'nama_guru' => '',
-        'nip' => '',
+        'kode_guru' => '',
         'warna' => ''
     ];
     public bool $isEdit = false;
@@ -28,30 +22,19 @@ class extends Component implements HasSchemas {
     protected function rules(): array
     {
         return [
-            'formData.nip' => ['required', 'digits_between:8,20',  Rule::unique('guru', 'nip')->ignore($this->formData['id'] ?? null)],
+            'formData.kode_guru' => ['required', 'string',  Rule::unique('guru', 'kode_guru')->ignore($this->formData['id'] ?? null)],
             'formData.nama_guru' => ['required', 'string', 'max:40'],
-            'formData.warna' => ['hex_color']
         ];
     }
 
     protected function messages(): array
     {
         return [
-            'formData.nip.required' => 'NIP wajib diisi.',
-            'formData.nip.digits_between' => 'NIP harus terdiri dari 8 hingga 20 angka.',
-            'formData.nip.unique' => 'NIP ini sudah digunakan oleh guru lain.',
+            'formData.kode_guru.required' => 'Kode Guru wajib diisi.',
+            'formData.kode_guru.unique' => 'Kode Guru ini sudah digunakan oleh guru lain.',
             'formData.nama_guru.required' => 'Nama guru wajib diisi.',
             'formData.nama_guru.max' => 'Nama guru tidak boleh lebih dari 40 karakter.',
-            'formData.warna.hex_color' => 'Warna harus dalam format heksadesimal.'
         ];
-    }
-
-    public function form(Schema $schema): Schema
-    {
-        return $schema
-            ->components([
-                ColorPicker::make('formData.warna')->label('Warna')->placeholder('Pilih warna untuk jadwal')->regex('/^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})\b$/')
-            ]);
     }
 
     #[On('openAddModal')]
@@ -60,7 +43,7 @@ class extends Component implements HasSchemas {
         $this->isEdit = false;
         $this->formData = [
             'nama_guru' => '',
-            'nip' => '',
+            'kode_guru' => '',
         ];
         Flux::modal('guru-modal')->show();
     }
@@ -115,9 +98,8 @@ class extends Component implements HasSchemas {
                         {{ $isEdit ? 'Ubah Data Guru' : 'Tambah Data Guru' }}
                     </flux:heading>
                 </div>
-                <flux:input wire:model.defer="formData.nip" label="NIP" placeholder="NIP" />
+                <flux:input wire:model.defer="formData.kode_guru" label="Kode Guru" placeholder="Kode Guru" />
                 <flux:input wire:model.defer="formData.nama_guru" label="Nama Guru" placeholder="Nama Guru" />
-                {{ $this->form }}
                 <div class="flex">
                     <flux:spacer />
                     <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>

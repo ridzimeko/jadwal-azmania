@@ -12,6 +12,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
@@ -41,16 +42,16 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                 TextColumn::make('tahun_ajaran')->label('Tahun Ajaran')->searchable(true),
                 TextColumn::make('semester')->label('Semester')->searchable(true),
                 TextColumn::make('aktif')->label('Status')
-                ->formatStateUsing(function ($state, $record) {
-                    $status = $record->aktif ?'Aktif' : 'Nonaktif';
-                    return $status;
-                })
-                ->badge()
-                ->color(fn (string $state): string => match ($state) {
-                    '1' => 'success',
-                    '0' => 'danger',
-                })
-                ->searchable(true),
+                    ->formatStateUsing(function ($state, $record) {
+                        $status = $record->aktif ? 'Aktif' : 'Nonaktif';
+                        return $status;
+                    })
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        '1' => 'success',
+                        '0' => 'danger',
+                    })
+                    ->searchable(true),
             ])
             ->recordActions([
                 Action::make('edit')
@@ -69,10 +70,9 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     ->requiresConfirmation()
                     ->action(function ($record) {
                         $record->delete();
-                        Notification::make()
-                            ->title('Data berhasil dihapus!')
-                            ->success()
-                            ->send();
+                        Cache::forget('periode_options');
+
+                        Notification::make()->title('Data periode berhasil dihapus')->success()->send();
                         $this->dispatch('refreshPeriodeTable');
                     }),
             ])
@@ -88,9 +88,9 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                         $records->each->delete(); // hapus semua data yang dipilih
                         $total = count($records);
                         Notification::make()
-                        ->title($total ? "{$total} Periode berhasil dihapus!" : "Periode berhasil dihapus!")
-                        ->success()
-                        ->send();
+                            ->title($total ? "{$total} Periode berhasil dihapus!" : "Periode berhasil dihapus!")
+                            ->success()
+                            ->send();
                     })
                     ->deselectRecordsAfterCompletion(),
             ])
