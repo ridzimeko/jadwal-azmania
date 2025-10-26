@@ -54,7 +54,7 @@
                     @foreach ($kelasList as $kelas)
                         @php
                         $item = $items->firstWhere('kelas_id', $kelas->id);
-                        $bg = $item->guru->warna ?? '#ffffff';
+                        $bg = $item->mataPelajaran->warna ?? '#ffffff';
                         $text = \App\Helpers\ColorHelper::getTextColor($bg);
                         @endphp
                         <td bgcolor="{{ $bg }}" style="{{ $styleTd }} font-weight: 400; color: {{ $text }};">

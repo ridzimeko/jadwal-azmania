@@ -186,7 +186,7 @@
                             @foreach ($kelasList as $kelas)
                                 @php
                                     $item = $items->firstWhere('kelas_id', $kelas->id);
-                                    $bg = $item->guru->warna ?? '#ffffff';
+                                    $bg = $item->mataPelajaran->warna ?? '#ffffff';
                                     $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                     $textBentrok = $item->is_bentrok ?? null ? 'red' : $text;
                                 @endphp

@@ -87,7 +87,7 @@ new class extends Component {
     @endphp
     @if (count($jadwalList) >= 1)
         <table class="min-w-full border border-gray-300 text-sm">
-            <thead class="bg-gray-100">
+            <thead class="bg-primary text-white">
                 <tr>
                     <th class="px-4 py-2 border text-center">No</th>
 
@@ -95,7 +95,7 @@ new class extends Component {
                         <th class="px-4 py-2 border text-center">Hari</th>
                     @endif
 
-                    <th class="px-4 py-2 border text-center w-[160px] sticky left-[-1px] bg-gray-100">Jam</th>
+                    <th class="px-4 py-2 border text-center w-[160px] sticky left-[-1px] bg-primary text-white">Jam</th>
 
                     @foreach ($kelasList as $kelas)
                         <th class="px-4 py-2 border text-center min-w-[120px]">{{ $kelas->nama_kelas }}</th>

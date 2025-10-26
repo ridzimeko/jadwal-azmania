@@ -6,50 +6,82 @@ use App\Models\Guru;
 use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
 use App\Models\MataPelajaran;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
-use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithUpserts;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
-class JadwalPelajaranImport implements ToModel, WithHeadingRow, WithUpserts, SkipsOnError
+class JadwalPelajaranImport implements ToCollection, WithHeadingRow, WithUpserts, SkipsOnError
 {
-    /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
-
     use Importable, SkipsErrors;
 
-    public function model(array $row)
-    {
-        // dd($row);
-        // cari ID berdasarkan kode
-        $kelas = Kelas::where('kode_kelas', $row['kode_kelas'] ?? null)->first();
-        $mapel = MataPelajaran::where('kode_mapel', $row['kode_mata_pelajaran'] ?? null)->first();
-        $guru  = Guru::where('kode_guru', $row['kode_guru_pengajar'] ?? null)->first();
+    protected int $importedCount = 0;
 
-        // validasi sederhana
-        if (!$kelas || !$mapel || !$guru) {
-            // bisa skip atau throw error
-            dd([$kelas, $mapel, $guru]);
-            return null;
+    public function collection(Collection $rows)
+    {
+        foreach ($rows as $row) {
+            // cari ID berdasarkan kode
+            $kelas = Kelas::where('kode_kelas', $row['kode_kelas'] ?? null)->first();
+            $mapel = MataPelajaran::where('kode_mapel', $row['kode_mata_pelajaran'] ?? null)->first();
+            $guru  = Guru::where('kode_guru', $row['kode_guru_pengajar'] ?? null)->first();
+
+            // skip kalau tidak ditemukan
+            if (!$kelas || !$mapel || !$guru) {
+                continue;
+            }
+
+            // konversi format jam Excel (angka desimal / serial date)
+            $jamMulai = $this->parseExcelTime($row['jam_mulai']);
+            $jamSelesai = $this->parseExcelTime($row['jam_selesai']);
+
+            // update or create data
+            $jadwal = JadwalPelajaran::updateOrCreate(
+                [
+                    'kelas_id' => $kelas->id,
+                    'mata_pelajaran_id' => $mapel->id,
+                    'guru_id' => $guru->id,
+                    'hari' => $row['hari'],
+                    'jam_mulai' => $jamMulai,
+                    'periode_id' => '1'
+                ],
+                [
+                    'jam_selesai' => $jamSelesai,
+                ]
+            );
+
+            if ($jadwal->wasRecentlyCreated || $jadwal->wasChanged()) {
+                $this->importedCount++;
+            }
         }
 
-        return new JadwalPelajaran([
-            'kelas_id' => $kelas->id,
-            'mata_pelajaran_id' => $mapel->id,
-            'guru_id' => $guru->id,
-            'hari' => $row['hari'],
-            'jam_mulai' => $row['jam_mulai'],
-            'jam_selesai' => $row['jam_selesai'],
-        ]);
+        // return total data yang diimport
+        return [
+            'total_imported' => $this->importedCount,
+        ];
+    }
+
+    protected function parseExcelTime($value)
+    {
+        // Jika value berupa angka desimal (contoh: 0.25 = 6:00)
+        if (is_numeric($value)) {
+            return Date::excelToDateTimeObject($value)->format('H:i');
+        }
+
+        // Kalau sudah string (misal "08:00")
+        return date('H:i', strtotime($value));
     }
 
     public function uniqueBy()
     {
         return ['kelas_id', 'mata_pelajaran_id', 'guru_id', 'hari', 'jam_mulai'];
+    }
+
+    public function getImportedCount(): int
+    {
+        return $this->importedCount;
     }
 }
