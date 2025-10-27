@@ -37,10 +37,10 @@ class JadwalHelper
         }
 
         // // 🔸 Cek bentrok berdasarkan guru dan kelas
-        // $query->where(function ($q) use ($data) {
-        //     $q->where('guru_id', $data['guru_id'])
-        //       ->orWhere('kelas_id', $data['kelas_id']);
-        // });
+        $query->where(function ($q) use ($data) {
+            $q->where('guru_id', $data['guru_id'])
+              ->orWhere('kelas_id', $data['kelas_id']);
+        });
 
         $bentrok = $query->with(['guru', 'kelas', 'mataPelajaran'])->get();
 

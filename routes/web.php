@@ -21,10 +21,13 @@ Route::middleware(['auth'])->group(function () {
     // Volt::route('settings/appearance', 'settings.appearance')->name('appearance.edit');
 
     Route::group(['prefix' => '/jadwal'], function () {
-        Volt::route('', 'jadwal.index')
+        Volt::route('pelajaran', 'jadwal.periode')
+            ->name('jadwal.periode');
+
+        Volt::route('pelajaran/detail/{periode_id}', 'jadwal.index')
             ->name('jadwal.index');
 
-        Volt::route('periode', 'jadwal.periode')
+        Volt::route('periode', 'jadwal.periode-old')
         ->name('jadwal.periode');
     });
 

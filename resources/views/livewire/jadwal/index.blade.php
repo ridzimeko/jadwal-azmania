@@ -21,6 +21,7 @@ new
 
         protected $columnDefs = [['name' => 'Kelas', 'field' => 'kelas_nama'], ['name' => 'Hari', 'field' => 'hari'], ['name' => 'Jam Mulai', 'field' => 'jam_mulai'], ['name' => 'Jam Selesai', 'field' => 'jam_selesai'], ['name' => 'Mata Pelajaran', 'field' => 'mapel_nama'], ['name' => 'Guru Pengajar', 'field' => 'guru_nama']];
 
+        public $periode_id;
         public $hariOptions;
         public $kelasOptions;
         public $guruOptions;
@@ -33,12 +34,10 @@ new
             'kelas_id' => '',
             'mata_pelajaran_id' => '',
             'guru_id' => '',
-            'periode_id' => '',
         ];
         public ?array $filterData = [
             'hari' => '',
             'tingkat' => '',
-            'periode' => '',
         ];
         public bool $isEdit = false;
 
@@ -48,7 +47,6 @@ new
             $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
             $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
             $this->guruOptions = JadwalHelper::getGuruOptions();
-            $this->filterData['periode'] = JadwalHelper::getFirstPeriode()->id;
         }
 
         protected function rules(): array
@@ -58,7 +56,6 @@ new
                 'formData.jam_mulai' => 'required|date_format:H:i',
                 'formData.jam_selesai' => 'required|date_format:H:i|after:formData.jam_mulai',
                 'formData.kelas_id' => 'required|exists:kelas,id',
-                'formData.periode_id' => 'required|exists:periode,id',
                 'formData.mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
                 'formData.guru_id' => 'required|exists:guru,id',
             ];
@@ -79,9 +76,6 @@ new
 
                 'formData.kelas_id.required' => 'Kelas wajib dipilih.',
                 'formData.kelas_id.exists' => 'Kelas yang dipilih tidak valid.',
-
-                'formData.periode_id.required' => 'Periode wajib dipilih.',
-                'formData.periode_id.exists' => 'Periode yang dipilih tidak valid.',
 
                 'formData.mata_pelajaran_id.required' => 'Mata pelajaran wajib dipilih.',
                 'formData.mata_pelajaran_id.exists' => 'Mata pelajaran yang dipilih tidak valid.',
@@ -129,9 +123,15 @@ new
             }
 
             if ($this->isEdit) {
-                \App\Models\JadwalPelajaran::find($this->formData['id'])->update($this->formData);
+                JadwalPelajaran::find($this->formData['id'])->update([
+                    'periode_id' => $this->periode_id,
+                    ...$this->formData
+                ]);
             } else {
-                \App\Models\JadwalPelajaran::create($this->formData);
+                JadwalPelajaran::create([
+                    'periode_id' => $this->periode_id,
+                    ...$this->formData
+                ]);
             }
 
             $this->jadwalBentrokList = [];
@@ -204,12 +204,6 @@ new
                     placeholder="Pilih hari"
                     class="!w-[140px]" />
                 <x-select
-                    wire:model.live="filterData.periode"
-                    :search="false"
-                    :options="JadwalHelper::getPeriodeOptions()"
-                    placeholder="Pilih periode"
-                    class="!w-[140px]" />
-                <x-select
                     wire:model.live="filterData.tingkat"
                     :search="false"
                     :options="[
@@ -224,10 +218,10 @@ new
 
         <div class="mt-4">
             <div x-show="activeTab === 'tabel'">
-                <livewire:datatable.jadwal :periode_id="$this->filterData['periode']" :tingkat="$this->filterData['tingkat']" />
+                <livewire:datatable.jadwal :periode_id="$this->periode_id" :tingkat="$this->filterData['tingkat']" />
             </div>
             <div x-cloak x-show="activeTab === 'timeline'">
-                <livewire:datatable.jadwal-matrix lazy :periode_id="$this->filterData['periode']" :hari="$this->filterData['hari']" :tingkat="$this->filterData['tingkat']" />
+                <livewire:datatable.jadwal-matrix lazy :periode_id="$this->periode_id" :hari="$this->filterData['hari']" :tingkat="$this->filterData['tingkat']" />
             </div>
         </div>
     </div>
@@ -282,19 +276,6 @@ new
                 <flux:error name="formData.hari" />
             </flux:field>
 
-            <flux:field>
-                <flux:label>Periode</flux:label>
-                <x-select
-                    wire:model="formData.periode_id"
-                    :search="false"
-                    :options="JadwalHelper::getPeriodeOptions()"
-                    placeholder="Pilih periode"
-                />
-                <flux:error name="formData.periode_id" />
-            </flux:field>
-
-
-
             <div class="flex flex-row items-center gap-6 w-full">
                 <flux:field class="min-w-[200px]">
                     <flux:label>Jam Mulai</flux:label>
@@ -338,5 +319,5 @@ new
     <livewire:excel-import-modal context="jadwal" />
 
     {{-- Export Jadwal Modal --}}
-    <livewire:export-jadwal-modal periode="2025/2026" tingkat="SMP" />
+    <livewire:export-jadwal-modal :periode="$this->periode_id" tingkat="SMP" />
 </div>
