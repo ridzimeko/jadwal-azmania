@@ -100,7 +100,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
-            page-break-inside: avoid;
+            /* page-break-inside: avoid; */
         }
 
         th,
@@ -167,7 +167,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th id="hari" colspan="{{ 2 + $kelasList->count() }}">{{ $hari ?? 'wkwkwk' }}</th>
+                        <th id="hari" colspan="{{ 2 + $kelasList->count() }}">{{ $hari ?? '' }}</th>
                     </tr>
                     <tr>
                         <th style="width: 40px;">No</th>

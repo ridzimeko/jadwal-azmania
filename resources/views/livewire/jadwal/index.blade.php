@@ -315,6 +315,8 @@ new
         </form>
     </flux:modal>
 
+    <livewire:export-jadwal-modal />
+
     {{-- Import Excel Modal --}}
     <div>
         <livewire:excel-import-modal context="jadwal" :periodeId="$this->periode_id" />

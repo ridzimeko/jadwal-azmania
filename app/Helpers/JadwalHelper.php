@@ -157,16 +157,4 @@ class JadwalHelper
                 ->toArray();
         });
     }
-
-    public static function getKegiatanOptions()
-    {
-        return Kegiatan::query()
-            ->select('id', 'nama_kegiatan')
-            ->get()
-            ->map(fn($g) => [
-                'value' => $g->id,
-                'label' => $g->nama_kegiatan,
-            ])
-            ->toArray();
-    }
 }

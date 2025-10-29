@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Exports\JadwalPelajaranExport;
-use App\Models\JadwalPelajaran;
+use App\Helpers\JadwalHelper;
 use App\Models\Kelas;
-use App\Models\Periode;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -33,11 +32,7 @@ class ExportController extends Controller
         // Ambil semua jadwal berdasarkan hari
         $jadwalPerHari = collect();
         foreach ($hariList as $hari) {
-            $jadwal = JadwalPelajaran::with(['guru', 'mataPelajaran', 'kelas'])
-                ->withBentrok()
-                ->whereRelation('kelas', 'tingkat', $tingkat)
-                ->where('hari', $hari)
-                ->orderBy('jam_mulai')
+            $jadwal = JadwalHelper::getQuery($periode, $tingkat)
                 ->get()
                 ->groupBy(function ($item) {
                     return $item->jam_mulai . ' - ' . $item->jam_selesai;
