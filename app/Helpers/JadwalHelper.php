@@ -24,22 +24,18 @@ class JadwalHelper
         $query = JadwalPelajaran::query()
             ->where('hari', $data['hari'])
             ->where(function ($q) use ($data) {
-                $q->whereBetween('jam_mulai', [$data['jam_mulai'], $data['jam_selesai']])
-                    ->orWhereBetween('jam_selesai', [$data['jam_mulai'], $data['jam_selesai']])
-                    ->orWhere(function ($q2) use ($data) {
-                        $q2->where('jam_mulai', '<', $data['jam_mulai'])
-                            ->where('jam_selesai', '>', $data['jam_selesai']);
-                    });
+                $q->where('jam_mulai', '<', $data['jam_selesai'])
+                    ->where('jam_selesai', '>', $data['jam_mulai']);
             });
 
         if ($ignoreId) {
             $query->where('id', '!=', $ignoreId);
         }
 
-        // // 🔸 Cek bentrok berdasarkan guru dan kelas
+        // 🔸 Cek bentrok berdasarkan guru dan kelas
         $query->where(function ($q) use ($data) {
             $q->where('guru_id', $data['guru_id'])
-              ->orWhere('kelas_id', $data['kelas_id']);
+                ->orWhere('kelas_id', $data['kelas_id']);
         });
 
         $bentrok = $query->with(['guru', 'kelas', 'mataPelajaran'])->get();
@@ -136,8 +132,8 @@ class JadwalHelper
     {
         $days = collect(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']);
         $days = $days
-        ->map(fn($hari) => ['label' => $hari, 'value' => $hari])
-        ->toArray();
+            ->map(fn($hari) => ['label' => $hari, 'value' => $hari])
+            ->toArray();
 
         if ($includeAll) {
             $days = [
@@ -160,5 +156,17 @@ class JadwalHelper
                 ])
                 ->toArray();
         });
+    }
+
+    public static function getKegiatanOptions()
+    {
+        return Kegiatan::query()
+            ->select('id', 'nama_kegiatan')
+            ->get()
+            ->map(fn($g) => [
+                'value' => $g->id,
+                'label' => $g->nama_kegiatan,
+            ])
+            ->toArray();
     }
 }

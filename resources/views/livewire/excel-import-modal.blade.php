@@ -77,6 +77,7 @@ new class extends Component {
         } catch (\Throwable $th) {
             Notification::make()
                 ->title('Terjadi error saat import data')
+                ->body($th->getMessage())
                 ->danger()
                 ->persistent()
                 ->send();
