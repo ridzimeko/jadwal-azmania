@@ -316,8 +316,7 @@ new
     </flux:modal>
 
     {{-- Import Excel Modal --}}
-    <livewire:excel-import-modal context="jadwal" />
-
-    {{-- Export Jadwal Modal --}}
-    <livewire:export-jadwal-modal :periode="$this->periode_id" tingkat="SMP" />
+    <div>
+        <livewire:excel-import-modal context="jadwal" :periodeId="$this->periode_id" />
+    </div>
 </div>

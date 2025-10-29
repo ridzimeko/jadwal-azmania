@@ -8,18 +8,23 @@ use App\Models\Kelas;
 use App\Models\MataPelajaran;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Importable;
-use Maatwebsite\Excel\Concerns\SkipsErrors;
-use Maatwebsite\Excel\Concerns\SkipsOnError;
+use Maatwebsite\Excel\Concerns\SkipsFailures;
+use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithUpserts;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
-class JadwalPelajaranImport implements ToCollection, WithHeadingRow, WithUpserts, SkipsOnError
+class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFailure
 {
-    use Importable, SkipsErrors;
+    use Importable, SkipsFailures;
 
     protected int $importedCount = 0;
+    protected $periodeId;
+
+    public function __construct($periodeId)
+    {
+        $this->periodeId = $periodeId;
+    }
 
     public function collection(Collection $rows)
     {
@@ -46,7 +51,7 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, WithUpserts
                     'guru_id' => $guru->id,
                     'hari' => $row['hari'],
                     'jam_mulai' => $jamMulai,
-                    'periode_id' => '1'
+                    'periode_id' => $this->periodeId,
                 ],
                 [
                     'jam_selesai' => $jamSelesai,
@@ -73,11 +78,6 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, WithUpserts
 
         // Kalau sudah string (misal "08:00")
         return date('H:i', strtotime($value));
-    }
-
-    public function uniqueBy()
-    {
-        return ['kelas_id', 'mata_pelajaran_id', 'guru_id', 'hari', 'jam_mulai'];
     }
 
     public function getImportedCount(): int

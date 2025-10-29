@@ -11,6 +11,7 @@ use Maatwebsite\Excel\Facades\Excel;
 new class extends Component {
     public $context;
     public $name = 'import-excel';
+    public $periodeId;
 
     public function save()
     {
@@ -30,12 +31,23 @@ new class extends Component {
 
     private function importGuru($path)
     {
-        Excel::import(new GuruImport(), $path);
+        $guru = new GuruImport();
+        $guru->import($path);
+        $errors = $guru->errors();
+
+        if (count($errors) >= 1) {
+            Notification::make()
+                ->title('Terjadi error saat import data')
+                ->danger()
+                ->persistent()
+                ->send();
+            return;
+        }
 
         Notification::make()
-        ->title('Data guru berhasil di unggah!')
-        ->success()
-        ->send();
+            ->title('Data guru berhasil di unggah!')
+            ->success()
+            ->send();
         $this->dispatch('refreshTable');
     }
 
@@ -52,15 +64,23 @@ new class extends Component {
 
     private function importJadwal($path)
     {
-        // Excel::import(new JadwalPelajaranImport(), $path);
-        $mapelImport = new JadwalPelajaranImport();
-        $mapelImport->import($path);
+        try {
+            $mapel = new JadwalPelajaranImport($this->periodeId);
+            $mapel->import($path);
 
-        Notification::make()
-        ->title('Jadwal Pelajaran berhasil di unggah!')
-        ->success()
-        ->send();
-        $this->dispatch('refreshJadwalTable');
+            Notification::make()
+                ->title('Jadwal Pelajaran berhasil di unggah!')
+                ->body("Total data yang diimport: {$mapel->getImportedCount()}")
+                ->success()
+                ->send();
+            $this->dispatch('refreshJadwalTable');
+        } catch (\Throwable $th) {
+            Notification::make()
+                ->title('Terjadi error saat import data')
+                ->danger()
+                ->persistent()
+                ->send();
+        }
     }
 }; ?>
 
@@ -82,39 +102,10 @@ new class extends Component {
                         <flux:button variant="ghost">Batal</flux:button>
                     </flux:modal.close>
                     <flux:button type="submit" variant="filled"
-                        class="!bg-primary !text-white disabled:text-gray-700 !disabled:bg-primary/40">Unggah data
+                        class="!bg-primary !text-white disabled:text-gray-700 !disabled:bg-primary/40">Unggah Data
                     </flux:button>
                 </div>
             </div>
         </form>
     </flux:modal>
-{{--
-    <flux:modal name="confirm-duplicate" class="min-w-[22rem]">
-        <form wire:submit.prevent="save">
-            <div class="space-y-6">
-                <div class="space-y-1 mb-6">
-                    <flux:heading size="lg">Konfirmasi Import</flux:heading>
-                    <flux:text class="whitespace-normal">
-                        Ada {{ count($duplicates) }} data duplikat. Apakah anda yakin ingin melanjutkan? Data berikut
-                        akan dilewati:
-                    </flux:text>
-                    <ul>
-                        @foreach ($duplicates as $d)
-                            <li>{{ $d[0] }} - {{ $d[1] }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-                <div class="flex gap-2">
-                    <flux:spacer />
-                    <flux:modal.close>
-                        <flux:button variant="ghost">Batal</flux:button>
-                    </flux:modal.close>
-                    <flux:button type="submit" variant="filled"
-                        class="!bg-yellow-600 !text-white disabled:text-gray-700 !disabled:bg-primary/40">
-                        Lanjutkan
-                    </flux:button>
-                </div>
-            </div>
-        </form>
-    </flux:modal>
-</div> --}}
+</div>
