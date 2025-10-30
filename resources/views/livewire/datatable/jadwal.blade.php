@@ -30,6 +30,9 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     #[Reactive]
     public $tingkat;
 
+    public $useEdit = true;
+    public $useHariIni;
+
     public function mount($tingkat = null)
     {
         $this->tingkat = $tingkat;
@@ -43,9 +46,14 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
 
     public function table(Table $table): Table
     {
-        return $table->query(function () {
+        $rTable = $table->query(function () {
             //filter tingkat
             $query = JadwalHelper::getQuery($this->periode_id, $this->tingkat);
+
+            // if ($this->useHariIni) {
+            //     $currentDay = JadwalHelper::getCurrentDay();
+            //     $query->where('hari', $currentDay);
+            // }
             return $query;
         })
             ->recordClasses(
@@ -63,33 +71,9 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                 TextColumn::make('jam')
                     ->label('Jam')
                     ->getStateUsing(fn($record) => "{$record->jam_mulai} - {$record->jam_selesai}")
-                    ->searchable(true),
+                    ->searchable(['jam_mulai', 'jam_selesai']),
                 TextColumn::make('mataPelajaran.nama_mapel')->label('Mata Pelajaran')->searchable(true),
                 TextColumn::make('guru.nama_guru')->label('Guru Pengajar')->searchable(true)
-            ])
-            ->recordActions([
-                Action::make('edit')
-                    ->iconButton()
-                    ->icon('heroicon-o-pencil')
-                    ->color('warning')
-                    ->extraAttributes(['class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1'])
-                    ->action(fn($record) => $this->dispatch('openEditJadwal', $record->toArray())),
-                Action::make('delete')
-                    ->iconButton()
-                    ->icon('heroicon-o-trash')
-                    ->color('danger')
-                    ->extraAttributes(['class' => 'bg-red-600 hover:bg-red-700 text-white !px-2'])
-                    ->modalHeading('Hapus Jadwal')
-                    ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
-                    ->requiresConfirmation()
-                    ->action(function ($record) {
-                        $record->delete();
-                        Notification::make()
-                            ->title('Data berhasil dihapus!')
-                            ->success()
-                            ->send();
-                        $this->dispatch('refreshJadwalTable');
-                    }),
             ])
             ->filters([
                 SelectFilter::make('hari')
@@ -105,7 +89,10 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     ->label('Kelas')
                     ->relationship('kelas', 'nama_kelas', fn(Builder $query) => $query->where('tingkat', $this->tingkat))
             ])
-            ->toolbarActions([
+            ->emptyStateHeading('Tidak ada data jadwal pelajaran');
+
+        if ($this->useEdit) {
+            $rTable->toolbarActions([
                 BulkAction::make('deleteSelected')
                     ->label('Hapus Data yang Dipilih')
                     ->icon('heroicon-o-trash') // ikon trash 🗑️
@@ -122,7 +109,32 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     })
                     ->deselectRecordsAfterCompletion(),
             ])
-            ->emptyStateHeading('Tidak ada data jadwal pelajaran');
+                ->recordActions([
+                    Action::make('edit')
+                        ->iconButton()
+                        ->icon('heroicon-o-pencil')
+                        ->color('warning')
+                        ->extraAttributes(['class' => 'bg-yellow-500 hover:bg-yellow-600 text-white !px-2 mr-1'])
+                        ->action(fn($record) => $this->dispatch('openEditJadwal', $record->toArray())),
+                    Action::make('delete')
+                        ->iconButton()
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->extraAttributes(['class' => 'bg-red-600 hover:bg-red-700 text-white !px-2'])
+                        ->modalHeading('Hapus Jadwal')
+                        ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
+                        ->requiresConfirmation()
+                        ->action(function ($record) {
+                            $record->delete();
+                            Notification::make()
+                                ->title('Data berhasil dihapus!')
+                                ->success()
+                                ->send();
+                            $this->dispatch('refreshJadwalTable');
+                        }),
+                ]);
+        }
+        return $rTable;
     }
 };
 

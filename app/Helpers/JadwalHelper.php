@@ -157,4 +157,9 @@ class JadwalHelper
                 ->toArray();
         });
     }
+
+    public static function getCurrentDay()
+    {
+        return now()->translatedFormat('l');
+    }
 }

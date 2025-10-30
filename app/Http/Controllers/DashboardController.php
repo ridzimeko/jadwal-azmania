@@ -6,6 +6,7 @@ use App\Models\Guru;
 use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
 use App\Models\MataPelajaran;
+use App\Models\Periode;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -22,6 +23,7 @@ class DashboardController extends Controller
 
     public function index()
     {
+        $latestPeriode = Periode::latest()->first();
         return view('dashboard', [
             'totalMataPelajaran' => MataPelajaran::count(),
             'totalKelas' => Kelas::count(),
@@ -29,6 +31,7 @@ class DashboardController extends Controller
             'totalUsers' => User::count(),
             'jadwalPelajaran' => JadwalPelajaran::class,
             'columnDefs' => $this->columnDefs,
+            'periode' => $latestPeriode ?? null,
         ]);
     }
 }
