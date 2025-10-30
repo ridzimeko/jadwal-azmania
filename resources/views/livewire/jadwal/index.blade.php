@@ -267,7 +267,8 @@ new
                     name="formData.kelas_id"
                     wire:model="formData.kelas_id"
                     :options="$kelasOptions"
-                    placeholder="Pilih kelas..." />
+                    placeholder="Pilih kelas..." 
+                    clearable />
                 <flux:error name="formData.kelas_id" />
             </flux:field>
 
@@ -298,7 +299,8 @@ new
                     name="formData.guru_id"
                     wire:model="formData.guru_id"
                     :options="$this->guruOptions"
-                    placeholder="Pilih guru..." />
+                    placeholder="Pilih guru..."
+                    clearable />
                 <flux:error name="formData.guru_id" />
             </flux:field>
 
