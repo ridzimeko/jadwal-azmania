@@ -170,7 +170,7 @@ new
             <flux:modal.trigger name="import-excel">
                 <flux:button icon="file-excel" class="!bg-az-green !text-white">Import dari Excel</flux:button>
             </flux:modal.trigger>
-            <flux:button icon="plus" @click="$wire.openAddJadwalModal" class="!bg-primary !text-white">
+            <flux:button icon="plus" wire:click="openAddJadwalModal" class="!bg-primary !text-white">
                 Tambah Data
             </flux:button>
             <flux:modal.trigger name="export-jadwal">

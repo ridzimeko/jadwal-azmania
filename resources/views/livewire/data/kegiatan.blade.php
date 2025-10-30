@@ -100,7 +100,7 @@ class extends Component implements HasSchemas {
 <div class="dash-card">
     <x-card-heading title="Data Kegiatan">
         <x-slot name="action_buttons">
-            <flux:button icon="plus" @click="$wire.openAddJadwalModal" class="!bg-primary !text-white">
+            <flux:button icon="plus" wire:click="openAddJadwalModal" class="!bg-primary !text-white">
                 Tambah Data</flux:button>
         </x-slot>
     </x-card-heading>

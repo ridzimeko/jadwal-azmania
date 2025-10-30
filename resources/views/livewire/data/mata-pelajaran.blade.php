@@ -117,7 +117,7 @@ class extends Component implements HasSchemas {
             <flux:modal.trigger name="import-excel">
                 <flux:button icon="file-excel" class="!bg-az-green !text-white">Import dari Excel</flux:button>
             </flux:modal.trigger>
-            <flux:button @click="$wire.openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data</flux:button>
+            <flux:button wire:click="openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data</flux:button>
         </x-slot>
     </x-card-heading>
 

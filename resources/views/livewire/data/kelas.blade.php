@@ -81,7 +81,7 @@ class extends Component {
 <div class="dash-card">
     <x-card-heading title="Data Kelas">
         <x-slot name="action_buttons">
-            <flux:button @click="$wire.openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data
+            <flux:button wire:click="openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data
             </flux:button>
         </x-slot>
     </x-card-heading>

@@ -99,7 +99,7 @@ new
     <x-card-heading title="Periode Jadwal"
         description="Manajemen periode jadwal pelajaran">
         <x-slot name="action_buttons">
-            <flux:button icon="plus" @click="$wire.openAddPeriode" class="!bg-primary !text-white">
+            <flux:button icon="plus" wire:click="openAddPeriode" class="!bg-primary !text-white">
                 Tambah Data
             </flux:button>
         </x-slot>
