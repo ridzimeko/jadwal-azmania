@@ -21,13 +21,9 @@ return new class extends Migration
             $table->enum('hari', ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']);
             $table->time('jam_mulai');
             $table->time('jam_selesai');
-            // $table->enum('kategori', ['pelajaran', 'kegiatan']);
-            // $table->foreignIdFor(Kegiatan::class)->nullable()->constrained()->onDelete('set null');
-            // $table->foreignIdFor(MataPelajaran::class)->nullable()->constrained()->onDelete('set null');
-            // $table->foreignIdFor(Kelas::class)->nullable()->constrained()->onDelete('set null');
             $table->foreignIdFor(MataPelajaran::class)->constrained()->onDelete('cascade');
-            $table->foreignIdFor(Kelas::class)->constrained()->onDelete('cascade');
-            $table->foreignIdFor(Guru::class)->nullable()->constrained()->onDelete('cascade');
+            $table->foreignIdFor(Kelas::class)->nullable()->constrained()->onDelete('set null');
+            $table->foreignIdFor(Guru::class)->nullable()->constrained()->onDelete('set null');
             $table->foreignIdFor(Periode::class)->constrained()->onDelete('cascade');
             $table->timestamps();
         });
@@ -38,6 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jadwal_pelajarans');
+        Schema::dropIfExists('jadwal_pelajaran');
     }
 };

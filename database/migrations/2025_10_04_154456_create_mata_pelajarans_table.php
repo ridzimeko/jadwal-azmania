@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('kode_mapel', 12)->unique();
             $table->string('nama_mapel', 40);
+            $table->enum('jenis_mapel', ['KBM', 'Non KBM']);
             $table->string('warna', 7)->default('#ffffff');
         });
     }
