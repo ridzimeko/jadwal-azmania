@@ -47,6 +47,8 @@ new
             $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
             $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
             $this->guruOptions = JadwalHelper::getGuruOptions();
+            $this->filterData['hari'] = 'Senin';
+            $this->filterData['tingkat'] = 'smp';
         }
 
         protected function rules(): array

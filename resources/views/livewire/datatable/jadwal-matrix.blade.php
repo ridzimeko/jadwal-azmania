@@ -88,6 +88,11 @@ new class extends Component {
     @if (count($jadwalList) >= 1)
         <table class="min-w-full border border-gray-300 text-sm">
             <thead class="bg-primary text-white">
+                @if ($this->hari)
+                    <tr>
+                        <th colspan="{{ 2 + count($kelasList) }}" class="bg-[#fee685] text-black px-4 py-2 border text-center">{{ $this->hari }}</th>
+                    </tr>
+                @endif
                 <tr>
                     <th class="px-4 py-2 border text-center">No</th>
 
