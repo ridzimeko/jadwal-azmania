@@ -50,15 +50,7 @@
             <span x-text="selectedLabel || '{{ $placeholder }}'"></span>
             <div class="flex items-center gap-2">
                 @if($clearable)
-                <template x-if="selectedLabel">
-                    <button
-                        type="button"
-                        @click.stop="clear()"
-                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    >
-                        <flux:icon name="x-mark" class="w-4 h-4" />
-                    </button>
-                </template>
+                    <flux:icon x-cloak x-show="selectedLabel" x-on:click.stop="clear()" name="x-mark" class="w-4 h-4 text-gray-400" />
                 @endif
                 <flux:icon name="chevron-down" class="w-4 h-4 text-gray-400" />
             </div>

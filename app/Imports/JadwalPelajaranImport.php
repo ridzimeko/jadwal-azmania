@@ -42,6 +42,7 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFail
             // konversi format jam Excel (angka desimal / serial date)
             $jamMulai = $this->parseExcelTime($row['jam_mulai']);
             $jamSelesai = $this->parseExcelTime($row['jam_selesai']);
+            $hari = ucfirst(strtolower($row['hari']));
 
             // update or create data
             $jadwal = JadwalPelajaran::updateOrCreate(
@@ -49,7 +50,7 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFail
                     'kelas_id' => $kelas->id,
                     'mata_pelajaran_id' => $mapel->id,
                     'guru_id' => $guru->id,
-                    'hari' => $row['hari'],
+                    'hari' => $hari,
                     'jam_mulai' => $jamMulai,
                     'periode_id' => $this->periodeId,
                 ],
