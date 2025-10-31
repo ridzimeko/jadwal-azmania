@@ -135,20 +135,22 @@ new class extends Component {
                                                 $bg = $item->mataPelajaran->warna ?? '#ffffff';
                                                 $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                             @endphp
-                                            <div class="mb-2 p-2 rounded cursor-pointer hover:bg-yellow-100 transition"
+                                            <button class="mb-2 p-2 rounded cursor-pointer hover:bg-yellow-100 transition"
                                                 style="background-color: {{ $bg }}; color: {{ $text }}"
-                                                                                                wire:click="$dispatch('openEditJadwal', { record: @js([
+                                                wire:click="$parent.openEditJadwal({{ json_encode([
                                                     'id' => $item->id,
-                                                    'hari' => $item->hari,
+                                                    'hari' => $hariKey,
                                                     'jam_mulai' => $item->jam_mulai,
                                                     'jam_selesai' => $item->jam_selesai,
-                                                    'kelas_id' => $item->kelas_id,
+                                                    'kelas_id' => $kelas->id,
                                                     'mata_pelajaran_id' => $item->mata_pelajaran_id,
                                                     'guru_id' => $item->guru_id,
-                                                ]) })">
+                                                    ]) 
+                                                  }} 
+                                                )">
                                                 <div class="font-semibold">{{ $item->mataPelajaran->nama_mapel }}</div>
                                                 <div class="text-xs">{{ $item->guru->nama_guru }}</div>
-                                            </div>
+                                            </button>
                                             @if (!$loop->last)
                                                 <hr class="my-1 border-gray-200">
                                             @endif
