@@ -22,18 +22,7 @@ new class extends Component {
 
     public function placeholder()
     {
-        return <<<'HTML'
-        <div class="grid place-items-center">
-            <div
-                class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-e-transparent align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-white"
-                role="status">
-            <span
-                class="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]"
-                >Loading...</span
-            >
-            </div>
-        </div>
-        HTML;
+        return view('components.loading');
     }
 
     #[Computed]
@@ -147,7 +136,7 @@ new class extends Component {
                                                     'guru_id' => $item->guru_id,
                                                     ]) 
                                                   }} 
-                                                )">
+                                                );">
                                                 <div class="font-semibold">{{ $item->mataPelajaran->nama_mapel }}</div>
                                                 <div class="text-xs">{{ $item->guru->nama_guru }}</div>
                                             </button>
@@ -159,14 +148,14 @@ new class extends Component {
                                         {{-- Jika kolom kosong --}}
                                     @else
                                         <div class="text-gray-400 italic py-4 cursor-pointer hover:bg-green-50 hover:text-green-600 transition rounded"
-                                            wire:click="$dispatch('openEditJadwal', { record: @js([
+                                            wire:click="$parent.openEditJadwal({{ json_encode([
                                                 'hari' => $hariKey,
                                                 'jam_mulai' => $jam_mapel[0] ?? null,
                                                 'jam_selesai' => $jam_mapel[1] ?? null,
                                                 'kelas_id' => $kelas->id,
                                                 'mata_pelajaran_id' => null,
                                                 'guru_id' => null,
-                                            ]) })">
+                                            ]) }})">
                                             Tambah +
                                         </div>
                                     @endif
