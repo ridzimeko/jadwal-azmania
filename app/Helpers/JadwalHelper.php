@@ -77,30 +77,26 @@ class JadwalHelper
         return $query;
     }
 
-    public static function getKelasOptions(string $tingkat)
+    public static function getKelasOptions(?string $tingkat = null, bool $showAllTingkat = true)
     {
+        $options = $query = Kelas::orderBy('nama_kelas');
         if ($tingkat) {
-            return Cache::remember("kelas_options_{$tingkat}", 60 * 60, function () use ($tingkat) {
-                return Kelas::where('tingkat', $tingkat)
-                    ->orderBy('nama_kelas')
-                    ->get()
-                    ->map(fn($g) => [
-                        'value' => $g->id,
-                        'label' => $g->nama_kelas,
-                    ])
-                    ->toArray();
-            });
+            $query->where('tingkat', $tingkat);
         }
 
-        return Cache::remember("kelas_options", 60 * 60, function () {
-            return Kelas::orderBy('nama_kelas')
-                ->get()
-                ->map(fn($g) => [
-                    'value' => $g->id,
-                    'label' => $g->nama_kelas,
-                ])
-                ->toArray();
-        });
+        if (!$showAllTingkat) {
+            $query->whereNotIn('kode_kelas', ['SMP', 'MA']);
+        }
+
+        return $query
+            ->get()
+            ->map(fn($g) => [
+                'value' => $g->id,
+                'label' => $g->nama_kelas,
+            ])
+            ->toArray();
+
+        return $options;
     }
 
     public static function getMapelOptions()
