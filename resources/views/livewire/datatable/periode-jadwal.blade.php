@@ -66,7 +66,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     ->color('danger')
                     ->extraAttributes(['class' => 'bg-red-600 hover:bg-red-700 text-white !px-2'])
                     ->modalHeading('Hapus Data')
-                    ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
+                    ->modalDescription('Apakah anda yakin ingin menghapus periode ini? Semua jadwal dengan periode ini AKAN DIHAPUS!')
                     ->requiresConfirmation()
                     ->action(function ($record) {
                         $record->delete();
