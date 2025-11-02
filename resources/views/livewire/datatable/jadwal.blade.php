@@ -46,21 +46,18 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
 
     public function table(Table $table): Table
     {
-        $rTable = $table->query(function () {
-            //filter tingkat
-            $query = JadwalHelper::getQuery($this->periode_id, $this->tingkat);
+        $rTable = $table
+            ->query(function () {
+                //filter tingkat
+                $query = JadwalHelper::getQuery($this->periode_id, $this->tingkat);
 
-            // if ($this->useHariIni) {
-            //     $currentDay = JadwalHelper::getCurrentDay();
-            //     $query->where('hari', $currentDay);
-            // }
-            return $query;
-        })
-            ->recordClasses(
-                fn(JadwalPelajaran $record) => $record->is_bentrok
-                    ? 'bg-red-100 text-red-700 font-semibold dark:bg-red-900/20'
-                    : ''
-            )
+                // if ($this->useHariIni) {
+                //     $currentDay = JadwalHelper::getCurrentDay();
+                //     $query->where('hari', $currentDay);
+                // }
+                return $query;
+            })
+            ->recordClasses(fn(JadwalPelajaran $record) => $record->is_bentrok ? 'bg-red-100 text-red-700 font-semibold dark:bg-red-900/20' : '')
             ->searchable()
             ->columns([
                 // Tambahkan kolom nomor urut paling awal
@@ -73,42 +70,37 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     ->getStateUsing(fn($record) => "{$record->jam_mulai} - {$record->jam_selesai}")
                     ->searchable(['jam_mulai', 'jam_selesai']),
                 TextColumn::make('mataPelajaran.nama_mapel')->label('Mata Pelajaran')->searchable(true),
-                TextColumn::make('guru.nama_guru')->label('Guru Pengajar')->searchable(true)
+                TextColumn::make('guru.nama_guru')->label('Guru Pengajar')->searchable(true)->default('-'),
             ])
             ->filters([
-                SelectFilter::make('hari')
-                    ->options([
-                        'senin' => 'Senin',
-                        'selasa' => 'Selasa',
-                        'rabu' => 'Rabu',
-                        'kamis' => 'Kamis',
-                        'jumat' => 'Jumat',
-                        'sabtu' => 'Sabtu'
-                    ]),
-                SelectFilter::make('kelas.nama_kelas')
-                    ->label('Kelas')
-                    ->relationship('kelas', 'nama_kelas', fn(Builder $query) => $query->where('tingkat', $this->tingkat))
+                SelectFilter::make('hari')->options([
+                    'senin' => 'Senin',
+                    'selasa' => 'Selasa',
+                    'rabu' => 'Rabu',
+                    'kamis' => 'Kamis',
+                    'jumat' => 'Jumat',
+                    'sabtu' => 'Sabtu',
+                ]),
+                SelectFilter::make('kelas.nama_kelas')->label('Kelas')->relationship('kelas', 'nama_kelas', fn(Builder $query) => $query->where('tingkat', $this->tingkat)),
             ])
             ->emptyStateHeading('Tidak ada data jadwal pelajaran');
 
         if ($this->useEdit) {
-            $rTable->toolbarActions([
-                BulkAction::make('deleteSelected')
-                    ->label('Hapus Data yang Dipilih')
-                    ->icon('heroicon-o-trash') // ikon trash 🗑️
-                    ->color('danger')
-                    ->modalHeading('Hapus Jadwal')
-                    ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
-                    ->requiresConfirmation() // muncul modal konfirmasi
-                    ->action(function ($records) {
-                        $records->each->delete(); // hapus semua data yang dipilih
-                        Notification::make()
-                            ->title('Data berhasil dihapus!')
-                            ->success()
-                            ->send();
-                    })
-                    ->deselectRecordsAfterCompletion(),
-            ])
+            $rTable
+                ->toolbarActions([
+                    BulkAction::make('deleteSelected')
+                        ->label('Hapus Data yang Dipilih')
+                        ->icon('heroicon-o-trash') // ikon trash 🗑️
+                        ->color('danger')
+                        ->modalHeading('Hapus Jadwal')
+                        ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
+                        ->requiresConfirmation() // muncul modal konfirmasi
+                        ->action(function ($records) {
+                            $records->each->delete(); // hapus semua data yang dipilih
+                            Notification::make()->title('Data berhasil dihapus!')->success()->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+                ])
                 ->recordActions([
                     Action::make('edit')
                         ->iconButton()
@@ -126,10 +118,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                         ->requiresConfirmation()
                         ->action(function ($record) {
                             $record->delete();
-                            Notification::make()
-                                ->title('Data berhasil dihapus!')
-                                ->success()
-                                ->send();
+                            Notification::make()->title('Data berhasil dihapus!')->success()->send();
                             $this->dispatch('refreshJadwalTable');
                         }),
                 ]);

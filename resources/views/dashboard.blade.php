@@ -10,6 +10,8 @@
         <x-card-heading title="Jadwal Pelajaran Terbaru" :description="'Periode tahun ajaran ' . $periode->tahun_ajaran" class="mb-4" />
 
         {{-- Datatable --}}
-        <livewire:datatable.jadwal :periode_id="$periode->id" :useEdit="false"  />
+        <div>
+            <livewire:datatable.jadwal :periode_id="$periode->id" :useEdit="false"  />
+        </div>
     </div>
 </x-layouts.app>
