@@ -14,7 +14,6 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Reactive;
 use Livewire\Volt\Component;
@@ -81,7 +80,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     'jumat' => 'Jumat',
                     'sabtu' => 'Sabtu',
                 ]),
-                SelectFilter::make('kelas.nama_kelas')->label('Kelas')->relationship('kelas', 'nama_kelas', fn(Builder $query) => $query->where('tingkat', $this->tingkat)),
+                SelectFilter::make('kelas.nama_kelas')->label('Kelas')->relationship('kelas', 'nama_kelas'),
             ])
             ->emptyStateHeading('Tidak ada data jadwal pelajaran');
 

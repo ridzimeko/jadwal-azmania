@@ -167,6 +167,11 @@ class JadwalHelper
         });
     }
 
+    public static function getTahunAjaran($id) {
+        $periode = Periode::find($id);
+        return $periode ? $periode->tahun_ajaran : null;
+    }
+
     public static function getCurrentDay()
     {
         return now()->translatedFormat('l');
