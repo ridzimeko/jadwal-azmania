@@ -19,4 +19,9 @@ class Kelas extends Model
     protected $table = 'kelas';
 
     public $timestamps = false;
+
+    public function scopeNoTingkat($query)
+    {
+        return $query->whereNotIn('kode_kelas', ['SMP', 'MA']);
+    }
 }

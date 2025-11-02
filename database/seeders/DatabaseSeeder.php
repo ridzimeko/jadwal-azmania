@@ -25,5 +25,9 @@ class DatabaseSeeder extends Seeder
             'nama' => 'Bagian Kurikulum',
             'username' => 'kurikulum@azmania_id',
         ]);
+
+        $this->call([
+            KelasSeeder::class,
+        ]);
     }
 }

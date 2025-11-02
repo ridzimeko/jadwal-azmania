@@ -7,11 +7,11 @@
     </div>
 
     <div class="flex flex-col gap-6 dash-card mt-6">
-        <x-card-heading title="Jadwal Pelajaran Terbaru" :description="'Periode tahun ajaran ' . $periode->tahun_ajaran" class="mb-4" />
+        <x-card-heading title="Jadwal Pelajaran Terbaru" :description="'Periode tahun ajaran ' . $periode?->tahun_ajaran ?? ''" class="mb-4" />
 
         {{-- Datatable --}}
         <div>
-            <livewire:datatable.jadwal :periode_id="$periode->id" :useEdit="false"  />
+            <livewire:datatable.jadwal :periode_id="$periode?->id" :useEdit="false"  />
         </div>
     </div>
 </x-layouts.app>

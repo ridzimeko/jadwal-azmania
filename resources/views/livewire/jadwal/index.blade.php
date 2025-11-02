@@ -42,13 +42,18 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
     public function mount()
     {
+        $this->tahunAjaran = JadwalHelper::getTahunAjaran($this->periode_id);
+
+        if (!$this->tahunAjaran) {
+            abort(404, 'Jadwal dengan periode ini tidak ditemukan.');
+        }
+
         $this->hariOptions = JadwalHelper::getHariOptions();
         $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
         $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
         $this->guruOptions = JadwalHelper::getGuruOptions();
         $this->filterData['hari'] = 'Senin';
         $this->filterData['tingkat'] = 'smp';
-        $this->tahunAjaran = JadwalHelper::getTahunAjaran($this->periode_id);
     }
 
     protected function rules(): array

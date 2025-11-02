@@ -22,7 +22,6 @@ new
         public ?array $formData = [
             'tahun_ajaran' => '',
             'semester' => '',
-            'aktif' => '',
         ];
         public bool $isEdit = false;
 
@@ -59,7 +58,6 @@ new
             $this->formData = [
                 'tahun_ajaran' => '',
                 'semester' => '',
-                'aktif' => '',
             ];
             Flux::modal('periode-modal')->show();
         }
@@ -131,7 +129,7 @@ new
                 <flux:error name="formData.semester" />
             </flux:field>
 
-            <flux:field>
+            {{-- <flux:field>
                 <flux:label>Status</flux:label>
                 <x-select
                     wire:model="formData.aktif"
@@ -142,7 +140,7 @@ new
                 ]"
                     placeholder="Pilih Semester" />
                 <flux:error name="formData.semester" />
-            </flux:field>
+            </flux:field> --}}
 
             <div class="flex mt-8">
                 <flux:spacer />
