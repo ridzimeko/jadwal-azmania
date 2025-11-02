@@ -25,13 +25,13 @@ class GuruImport implements ToModel, WithHeadingRow, WithUpserts, SkipsOnFailure
     public function model(array $row)
     {
         return new Guru([
-            'nip' => $row['nip'],
-            'nama_guru' => $row['nama_guru'],
+            'kode_guru' => $row['kode_guru'] ?? null,
+            'nama_guru' => $row['nama_guru'] ?? null,
         ]);
     }
 
     public function uniqueBy()
     {
-        return 'nip';
+        return 'kode_guru';
     }
 }

@@ -13,7 +13,6 @@ class Guru extends Model
     protected $fillable = [
         'kode_guru',
         'nama_guru',
-        'warna'
     ];
 
     protected $table = 'guru';
