@@ -90,7 +90,7 @@ class extends Component {
     <livewire:datatable.index actionType="data" :columns="$this->columnDefs" :model="\App\Models\Kelas::class" scope="noTingkat" />
 
     {{-- Add Data Modal --}}
-    <flux:modal name="kelas-modal" class="md:w-96">
+    <flux:modal name="kelas-modal" class="w-[85%] md:w-[480px]">
         <form wire:submit.prevent="save">
             <div class="space-y-4">
                 <div>

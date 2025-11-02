@@ -186,7 +186,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     </x-card-heading>
 
     <div x-data="{ activeTab: 'tabel' }">
-        <div class="flex items-center justify-between gap-4">
+        <div class="flex items-center justify-between gap-4 flex-wrap">
             <flux:tabs variant="segmented">
                 <flux:tab icon="list-bullet" x-on:click="activeTab = 'tabel'"
                     x-bind:data-selected="activeTab === 'tabel'">
@@ -298,7 +298,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         </form>
     </flux:modal>
 
-    <livewire:export-jadwal-modal />
+    <livewire:export-jadwal-modal :periodeId="$this->periode_id" />
 
     {{-- Import Excel Modal --}}
     <div>

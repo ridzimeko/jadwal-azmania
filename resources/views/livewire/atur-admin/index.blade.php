@@ -119,7 +119,7 @@ class extends Component
     <livewire:atur-admin._change-password />
 
     {{-- Admin Modal --}}
-    <flux:modal name="admin-modal" class="md:w-[520px]">
+    <flux:modal name="admin-modal" class="w-[85%] md:w-[520px]">
         <form wire:submit.prevent="save">
             <div class="space-y-3">
                 <div>

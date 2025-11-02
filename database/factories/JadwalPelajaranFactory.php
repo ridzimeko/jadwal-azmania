@@ -28,11 +28,9 @@ class JadwalPelajaranFactory extends Factory
              'hari' => $this->faker->randomElement($hariList),
              'jam_mulai' => $jamMulai,
              'jam_selesai' => $jamSelesai,
-             'kategori' => 'pelajaran',
              'kelas_id' => \App\Models\Kelas::factory(),
              'guru_id' => \App\Models\Guru::factory(),
              'periode_id' => '1',
-             'kegiatan_id' => null,
              'mata_pelajaran_id' => \App\Models\MataPelajaran::factory(),
          ];
     }

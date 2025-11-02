@@ -5,25 +5,22 @@ use Livewire\Volt\Component;
 
 new class extends Component {
     public $name = 'export-jadwal';
-    public array $periodeList = [];
+    public $periodeId;
     public ?array $formData = [
         'tingkat' => '',
         'filetype' => '',
-        'periode' => '',
     ];
 
+    
     public function mount()
     {
         $this->formData['filetype'] = "pdf";
         $this->formData['tingkat'] = "smp";
-        $this->periodeList = JadwalHelper::getPeriodeOptions();
-        $this->formData['periode'] = $this->periodeList[0]['value'] ?? '';
     }
 
     protected function rules(): array
     {
         return [
-            'formData.periode' => 'required|numeric',
             'formData.tingkat' => 'required|string|in:smp,ma',
             'formData.filetype' => 'required|in:pdf,excel',
         ];
@@ -32,7 +29,6 @@ new class extends Component {
     protected function messages(): array
     {
         return [
-            // 'formData.periode.*' => 'Harap isi periode yang valid.',
             'formData.tingkat.*' => 'Pilih tingkat yang valid.',
             'formData.filetype.*' => 'Pilih format berkas yang valid.',
         ];
@@ -46,7 +42,7 @@ new class extends Component {
         $exportRoute = "export-jadwal.{$exportType}";
         $url = route($exportRoute, [
             'tingkat' => $this->formData['tingkat'],
-            'periode' => $this->formData['periode'],
+            'periode' => $this->periodeId,
         ]);
 
         // Emit event ke browser
@@ -59,13 +55,6 @@ new class extends Component {
         <flux:heading size="lg">Unduh Jadwal</flux:heading>
         <form wire:submit.prevent="save" class="mt-6">
             <div class="space-y-4">
-
-                <flux:field>
-                    <flux:label>Periode</flux:label>
-                    <x-select wire:model="formData.periode" :search="false" :options="$this->periodeList"
-                        placeholder="Pilih periode" />
-                    <flux:error name="formData.periode" />
-                </flux:field>
 
                 <flux:field>
                     <flux:label>Tingkat</flux:label>

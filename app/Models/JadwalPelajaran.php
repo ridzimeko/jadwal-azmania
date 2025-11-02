@@ -18,7 +18,6 @@ class JadwalPelajaran extends Model
         'kelas_id',
         'mata_pelajaran_id',
         'guru_id',
-        'kegiatan_id',
         'periode_id'
     ];
 
