@@ -183,22 +183,46 @@
                         <tr>
                             <td>{{ $no++ }}</td>
                             <td>{{ $jamLabel }}</td>
-                            @foreach ($kelasList as $kelas)
+
+                            @php
+                                $isGlobal = $items->filter(function ($item) {
+                                    return in_array($item->kelas?->kode_kelas, ['SMP', 'MA']);
+                                });
+                            @endphp
+
+                            @if ($isGlobal->count() > 0)
                                 @php
-                                    $item = $items->firstWhere('kelas_id', $kelas->id);
+                                    $item = $items->first();
                                     $bg = $item->mataPelajaran->warna ?? '#ffffff';
                                     $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                     $textBentrok = $item->is_bentrok ?? null ? 'red' : $text;
                                 @endphp
-                                <td style="background-color: {{ $bg }}; color: {{ $textBentrok }}">
+                                <td colspan="{{ count($kelasList) }}" style="background-color: {{ $bg }}; color: {{ $textBentrok }}">
                                     @if ($item)
                                         <div><strong>{{ $item->mataPelajaran->nama_mapel }}</strong></div>
-                                        <div style="font-size: 12px;">{{ $item->guru->nama_guru }}</div>
+                                        <div style="font-size: 12px;">{{ $item->guru->nama_guru ?? null }}</div>
                                     @else
                                         <span style="color: #999;">-</span>
                                     @endif
                                 </td>
-                            @endforeach
+                            @else
+                                @foreach ($kelasList as $kelas)
+                                    @php
+                                        $item = $items->firstWhere('kelas_id', $kelas->id);
+                                        $bg = $item->mataPelajaran->warna ?? '#ffffff';
+                                        $text = \App\Helpers\ColorHelper::getTextColor($bg);
+                                        $textBentrok = $item->is_bentrok ?? null ? 'red' : $text;
+                                    @endphp
+                                    <td style="background-color: {{ $bg }}; color: {{ $textBentrok }}">
+                                        @if ($item)
+                                            <div><strong>{{ $item->mataPelajaran->nama_mapel }}</strong></div>
+                                            <div style="font-size: 12px;">{{ $item->guru->nama_guru ?? null }}</div>
+                                        @else
+                                            <span style="color: #999;">-</span>
+                                        @endif
+                                    </td>
+                                @endforeach
+                            @endif
                         </tr>
                     @endforeach
                 </tbody>

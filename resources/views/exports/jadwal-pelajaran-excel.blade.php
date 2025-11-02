@@ -1,7 +1,9 @@
 @php
-    $styleTd = 'border: 1px solid #000000; text-align:center; vertical-align: center;';
-    $styleHari = 'border: 1px solid #000000; height: 28px; width: 40px; background-color:#fee685; vertical-align: center;';
-    $styleHead = 'border: 1px solid #000000; height: 28px; width:140px; background-color: #902C8E; color: #ffffff; text-align:center; vertical-align: center;';
+    $styleTd = 'height: 80px; border: 1px solid #000000; text-align:center; vertical-align: center;';
+    $styleHari =
+        'border: 1px solid #000000; height: 28px; width: 40px; background-color:#fee685; vertical-align: center; font-weight: bold;';
+    $styleHead =
+        'border: 1px solid #000000; height: 28px; width:110px; background-color: #902C8E; color: #ffffff; text-align:center; vertical-align: center;';
 @endphp
 
 <table>
@@ -28,14 +30,17 @@
             Email: azmaniapo@gmail.com | Website: www.azmania.sch.id
         </td>
     </tr>
-    <tr><td colspan="{{ 1 + $kelasList->count() }}">&nbsp;</td></tr>
+    <tr>
+        <td colspan="{{ 1 + $kelasList->count() }}">&nbsp;</td>
+    </tr>
 </table>
 
 @foreach ($jadwalPerHari as $hari => $jadwal)
     <table cellspacing="0" cellpadding="5" width="100%">
         <thead>
             <tr style="height: 60px; text-align:center; font-weight:bold;">
-                <th colspan="{{ 2 + $kelasList->count() }}" align="center" style="{{ $styleHari }}">{{ $hari }}</th>
+                <th colspan="{{ 2 + $kelasList->count() }}" align="center" style="{{ $styleHari }}">
+                    {{ $hari }}</th>
             </tr>
             <tr>
                 <th style="{{ $styleHead }}">No</th>
@@ -51,21 +56,47 @@
                 <tr>
                     <td style="{{ $styleTd }}">{{ $no++ }}</td>
                     <td style="{{ $styleTd }}">{{ $jamLabel }}</td>
-                    @foreach ($kelasList as $kelas)
+
+                    @php
+                        $isGlobal = $items->filter(function ($item) {
+                            return in_array($item->kelas?->kode_kelas, ['SMP', 'MA']);
+                        });
+                    @endphp
+
+                    @if ($isGlobal->count() > 0)
                         @php
-                        $item = $items->firstWhere('kelas_id', $kelas->id);
-                        $bg = $item->mataPelajaran->warna ?? '#ffffff';
-                        $text = \App\Helpers\ColorHelper::getTextColor($bg);
+                            $item = $items->first();
+                            $bg = $item->mataPelajaran->warna ?? '#ffffff';
+                            $text = \App\Helpers\ColorHelper::getTextColor($bg);
+                            $textBentrok = $item->is_bentrok ?? null ? 'red' : $text;
                         @endphp
-                        <td bgcolor="{{ $bg }}" style="{{ $styleTd }} font-weight: 400; color: {{ $text }};">
+                        <td colspan="{{ count($kelasList) }}" bgcolor="{{ $bg }}"
+                            style="{{ $styleTd }} font-weight: 400; color: {{ $textBentrok }};">
                             @if ($item)
                                 {{ $item->mataPelajaran->nama_mapel }}<br>
-                                {{ $item->guru->nama_guru }}
+                                {{ $item->guru->nama_guru ?? null }}
                             @else
                                 -
                             @endif
                         </td>
-                    @endforeach
+                    @else
+                        @foreach ($kelasList as $kelas)
+                            @php
+                                $item = $items->firstWhere('kelas_id', $kelas->id);
+                                $bg = $item->mataPelajaran->warna ?? '#ffffff';
+                                $text = \App\Helpers\ColorHelper::getTextColor($bg);
+                            @endphp
+                            <td bgcolor="{{ $bg }}"
+                                style="{{ $styleTd }} font-weight: 400; color: {{ $text }};">
+                                @if ($item)
+                                    {{ $item->mataPelajaran->nama_mapel }}<br>
+                                    {{ $item->guru->nama_guru ?? null }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+                        @endforeach
+                    @endif
                 </tr>
             @endforeach
         </tbody>

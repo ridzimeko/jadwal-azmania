@@ -24,6 +24,7 @@ class ExportController extends Controller
         }
 
         $kelasList = Kelas::where('tingkat', $tingkat)
+            ->whereNotIn('kode_kelas', ['SMP', 'MA'])
             ->orderBy('nama_kelas')
             ->get();
 
@@ -33,6 +34,7 @@ class ExportController extends Controller
         $jadwalPerHari = collect();
         foreach ($hariList as $hari) {
             $jadwal = JadwalHelper::getQuery($periode, $tingkat)
+                ->where('hari', $hari)
                 ->get()
                 ->groupBy(function ($item) {
                     return $item->jam_mulai . ' - ' . $item->jam_selesai;
