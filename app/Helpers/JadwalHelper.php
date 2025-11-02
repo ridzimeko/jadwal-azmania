@@ -32,11 +32,17 @@ class JadwalHelper
             $query->where('id', '!=', $ignoreId);
         }
 
-        // 🔸 Cek bentrok berdasarkan guru dan kelas
-        $query->where(function ($q) use ($data) {
-            $q->where('guru_id', $data['guru_id'])
-                ->orWhere('kelas_id', $data['kelas_id']);
-        });
+        // Cek data kelas (aman walau null)
+        $kelas = isset($data['kelas_id']) ? Kelas::find($data['kelas_id']) : null;
+        $kodeKelas = $kelas->kode_kelas ?? null;
+
+        // Kalau bukan SMP/MA, tetap cek bentrok guru dan kelas
+        if (!in_array($kodeKelas, ['SMP', 'MA'])) {
+            $query->where(function ($q) use ($data) {
+                $q->where('guru_id', $data['guru_id'])
+                    ->orWhere('kelas_id', $data['kelas_id']);
+            });
+        }
 
         $bentrok = $query->with(['guru', 'kelas', 'mataPelajaran'])->get();
 
@@ -59,6 +65,7 @@ class JadwalHelper
         return ['available' => true, 'bentrok' => collect()];
     }
 
+
     public static function getQuery($periode = null, $tingkat = null)
     {
 
@@ -79,7 +86,9 @@ class JadwalHelper
 
     public static function getKelasOptions(?string $tingkat = null, bool $showAllTingkat = true)
     {
-        $options = $query = Kelas::orderBy('nama_kelas');
+        $options = $query = Kelas::orderByRaw("FIELD(kode_kelas, 'SMP', 'MA') DESC")
+            ->orderBy('nama_kelas');
+            
         if ($tingkat) {
             $query->where('tingkat', $tingkat);
         }
