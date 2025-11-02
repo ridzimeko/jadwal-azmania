@@ -32,7 +32,9 @@ new class extends Component {
         if ($this->tingkat) {
             $kelasQuery->where('tingkat', $this->tingkat);
         }
-        return $kelasQuery->get();
+        return $kelasQuery
+            ->whereNotIn('kode_kelas', ['SMP', 'MA'])
+            ->get();
     }
 
     #[Computed]
@@ -79,7 +81,8 @@ new class extends Component {
             <thead class="bg-primary text-white">
                 @if ($this->hari)
                     <tr>
-                        <th colspan="{{ 2 + count($kelasList) }}" class="bg-[#fee685] text-black px-4 py-2 border text-center">{{ $this->hari }}</th>
+                        <th colspan="{{ 2 + count($kelasList) }}"
+                            class="bg-[#fee685] text-black px-4 py-2 border text-center">{{ $this->hari }}</th>
                     </tr>
                 @endif
                 <tr>
@@ -107,60 +110,102 @@ new class extends Component {
                                 <td class="px-4 py-2 border text-center">{{ $hariKey }}</td>
                             @endif
 
-                            <td class="px-4 py-2 border text-center sticky left-[-1px] bg-white">{{ $jamLabel }}</td>
+                            <td class="px-4 py-2 border text-center sticky left-[-1px] bg-white">{{ $jamLabel }}
+                            </td>
 
-                            @foreach ($kelasList as $kelas)
-                                @php
-                                    $kelasItems = $items->where('kelas_id', $kelas->id);
-                                    $jam_mapel = array_map('trim', explode('-', $jamLabel));
-                                @endphp
+                            @php
+                                $is_global = $items->filter(function ($item) {
+                                    return in_array($item->kelas?->kode_kelas, ['SMP', 'MA']);
+                                });
+                            @endphp
 
-                                <td
-                                    class="px-4 py-2 border text-center align-top {{ $kelasItems->first()?->is_bentrok ? 'bg-red-100 text-red-700' : '' }}">
+                            @if ($is_global->count() > 0)
+                                <td colspan="{{ 2 + count($kelasList) }}"
+                                    class="px-4 py-2 border text-center align-top {{ $items->first()?->is_bentrok ? 'bg-red-100 text-red-700' : '' }}">
                                     {{-- Jika kolom ada data --}}
-                                    @if ($kelasItems->count() > 0)
-                                        @foreach ($kelasItems as $item)
+                                    @if ($items->count() > 0)
+                                        @foreach ($items as $item)
                                             @php
                                                 $bg = $item->mataPelajaran->warna ?? '#ffffff';
                                                 $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                             @endphp
-                                            <button class="mb-2 p-2 rounded cursor-pointer hover:bg-yellow-100 transition"
+                                            <button
+                                                class="w-full mb-2 p-2 rounded cursor-pointer hover:bg-yellow-100 transition"
                                                 style="background-color: {{ $bg }}; color: {{ $text }}"
                                                 wire:click="$parent.openEditJadwal({{ json_encode([
                                                     'id' => $item->id,
                                                     'hari' => $hariKey,
                                                     'jam_mulai' => $item->jam_mulai,
                                                     'jam_selesai' => $item->jam_selesai,
-                                                    'kelas_id' => $kelas->id,
+                                                    'kelas_id' => $item->kelas_id,
                                                     'mata_pelajaran_id' => $item->mata_pelajaran_id,
                                                     'guru_id' => $item->guru_id,
-                                                    ]) 
-                                                  }} 
+                                                ]) }} 
                                                 );">
                                                 <div class="font-semibold">{{ $item->mataPelajaran->nama_mapel }}</div>
-                                                <div class="text-xs">{{ $item->guru->nama_guru }}</div>
+                                                <div class="text-xs">{{ $item->guru->nama_guru ?? null }}</div>
                                             </button>
                                             @if (!$loop->last)
                                                 <hr class="my-1 border-gray-200">
                                             @endif
                                         @endforeach
-
-                                        {{-- Jika kolom kosong --}}
-                                    @else
-                                        <div class="text-gray-400 italic py-4 cursor-pointer hover:bg-green-50 hover:text-green-600 transition rounded"
-                                            wire:click="$parent.openEditJadwal({{ json_encode([
-                                                'hari' => $hariKey,
-                                                'jam_mulai' => $jam_mapel[0] ?? null,
-                                                'jam_selesai' => $jam_mapel[1] ?? null,
-                                                'kelas_id' => $kelas->id,
-                                                'mata_pelajaran_id' => null,
-                                                'guru_id' => null,
-                                            ]) }})">
-                                            Tambah +
-                                        </div>
                                     @endif
                                 </td>
-                            @endforeach
+
+                                {{-- Jadwal per kelas --}}
+                            @else
+                                @foreach ($kelasList as $kelas)
+                                    @php
+                                        $kelasItems = $items->where('kelas_id', $kelas->id);
+                                        $jam_mapel = array_map('trim', explode('-', $jamLabel));
+                                    @endphp
+                                    <td
+                                        class="px-4 py-2 border text-center align-top {{ $kelasItems->first()?->is_bentrok ? 'bg-red-100 text-red-700' : '' }}">
+                                        {{-- Jika kolom ada data --}}
+                                        @if ($kelasItems->count() > 0)
+                                            @foreach ($kelasItems as $item)
+                                                @php
+                                                    $bg = $item->mataPelajaran->warna ?? '#ffffff';
+                                                    $text = \App\Helpers\ColorHelper::getTextColor($bg);
+                                                @endphp
+                                                <button
+                                                    class="mb-2 p-2 rounded cursor-pointer hover:bg-yellow-100 transition"
+                                                    style="background-color: {{ $bg }}; color: {{ $text }}"
+                                                    wire:click="$parent.openEditJadwal({{ json_encode([
+                                                        'id' => $item->id,
+                                                        'hari' => $hariKey,
+                                                        'jam_mulai' => $item->jam_mulai,
+                                                        'jam_selesai' => $item->jam_selesai,
+                                                        'kelas_id' => $kelas->id,
+                                                        'mata_pelajaran_id' => $item->mata_pelajaran_id,
+                                                        'guru_id' => $item->guru_id,
+                                                    ]) }} 
+                                                    );">
+                                                    <div class="font-semibold">{{ $item->mataPelajaran->nama_mapel }}</div>
+                                                    <div class="text-xs">{{ $item->guru->nama_guru ?? null }}</div>
+                                                </button>
+                                                @if (!$loop->last)
+                                                    <hr class="my-1 border-gray-200">
+                                                @endif
+                                            @endforeach
+
+                                            {{-- Jika kolom kosong --}}
+                                        @else
+                                            <div class="text-gray-400 italic py-4 cursor-pointer hover:bg-green-50 hover:text-green-600 transition rounded"
+                                                wire:click="$parent.openEditJadwal({{ json_encode([
+                                                    'hari' => $hariKey,
+                                                    'jam_mulai' => $jam_mapel[0] ?? null,
+                                                    'jam_selesai' => $jam_mapel[1] ?? null,
+                                                    'kelas_id' => $kelas->id,
+                                                    'mata_pelajaran_id' => null,
+                                                    'guru_id' => null,
+                                                ]) }})">
+                                                Tambah +
+                                            </div>
+                                        @endif
+                                    </td>
+                                @endforeach
+                            @endif
                         </tr>
                     @endforeach
                 @endforeach

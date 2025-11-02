@@ -44,6 +44,10 @@ class JadwalHelper
             });
         }
 
+        if (in_array($kodeKelas, ['SMP', 'MA'])) {
+            $query->whereRelation('kelas', 'tingkat', $kodeKelas);
+        }
+
         $bentrok = $query->with(['guru', 'kelas', 'mataPelajaran'])->get();
 
         if ($bentrok->isNotEmpty()) {
@@ -88,7 +92,7 @@ class JadwalHelper
     {
         $options = $query = Kelas::orderByRaw("FIELD(kode_kelas, 'SMP', 'MA') DESC")
             ->orderBy('nama_kelas');
-            
+
         if ($tingkat) {
             $query->where('tingkat', $tingkat);
         }
@@ -166,5 +170,10 @@ class JadwalHelper
     public static function getCurrentDay()
     {
         return now()->translatedFormat('l');
+    }
+
+    public static function empty_to_null(array $data): array
+    {
+        return array_map(fn($v) => $v === '' ? null : $v, $data);
     }
 }

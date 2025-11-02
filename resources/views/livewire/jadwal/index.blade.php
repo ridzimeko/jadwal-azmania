@@ -13,161 +13,156 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 
-new
-    #[Title('Jadwal Pelajaran')]
-    class extends Component implements HasActions, HasSchemas {
-        use InteractsWithActions;
-        use InteractsWithSchemas;
+new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, HasSchemas {
+    use InteractsWithActions;
+    use InteractsWithSchemas;
 
-        protected $columnDefs = [['name' => 'Kelas', 'field' => 'kelas_nama'], ['name' => 'Hari', 'field' => 'hari'], ['name' => 'Jam Mulai', 'field' => 'jam_mulai'], ['name' => 'Jam Selesai', 'field' => 'jam_selesai'], ['name' => 'Mata Pelajaran', 'field' => 'mapel_nama'], ['name' => 'Guru Pengajar', 'field' => 'guru_nama']];
+    protected $columnDefs = [['name' => 'Kelas', 'field' => 'kelas_nama'], ['name' => 'Hari', 'field' => 'hari'], ['name' => 'Jam Mulai', 'field' => 'jam_mulai'], ['name' => 'Jam Selesai', 'field' => 'jam_selesai'], ['name' => 'Mata Pelajaran', 'field' => 'mapel_nama'], ['name' => 'Guru Pengajar', 'field' => 'guru_nama']];
 
-        public $periode_id;
-        public $hariOptions;
-        public $kelasOptions;
-        public $guruOptions;
-        public $mataPelajaranOptions;
-        public $jadwalBentrokList = [];
-        public ?array $formData = [
+    public $periode_id;
+    public $hariOptions;
+    public $kelasOptions;
+    public $guruOptions;
+    public $mataPelajaranOptions;
+    public $jadwalBentrokList = [];
+    public ?array $formData = [
+        'hari' => '',
+        'jam_mulai' => '',
+        'jam_selesai' => '',
+        'kelas_id' => '',
+        'mata_pelajaran_id' => '',
+        'guru_id' => '',
+    ];
+    public ?array $filterData = [
+        'hari' => '',
+        'tingkat' => '',
+    ];
+    public bool $isEdit = false;
+
+    public function mount()
+    {
+        $this->hariOptions = JadwalHelper::getHariOptions();
+        $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
+        $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
+        $this->guruOptions = JadwalHelper::getGuruOptions();
+        $this->filterData['hari'] = 'Senin';
+        $this->filterData['tingkat'] = 'smp';
+    }
+
+    protected function rules(): array
+    {
+        return [
+            'formData.hari' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
+            'formData.jam_mulai' => 'required|date_format:H:i',
+            'formData.jam_selesai' => 'required|date_format:H:i|after:formData.jam_mulai',
+            'formData.kelas_id' => 'required|exists:kelas,id',
+            'formData.mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
+            'formData.guru_id' => 'nullable|exists:guru,id',
+        ];
+    }
+
+    protected function messages(): array
+    {
+        return [
+            'formData.hari.required' => 'Hari wajib diisi.',
+            'formData.hari.in' => 'Hari harus salah satu dari Senin sampai Minggu.',
+
+            'formData.jam_mulai.required' => 'Jam mulai wajib diisi.',
+            'formData.jam_mulai.date_format' => 'Format jam mulai harus HH:MM (24 jam).',
+
+            'formData.jam_selesai.required' => 'Jam selesai wajib diisi.',
+            'formData.jam_selesai.date_format' => 'Format jam selesai harus HH:MM (24 jam).',
+            'formData.jam_selesai.after' => 'Jam selesai harus lebih besar dari jam mulai.',
+
+            'formData.kelas_id.required' => 'Kelas wajib dipilih.',
+            'formData.kelas_id.exists' => 'Kelas yang dipilih tidak valid.',
+
+            'formData.mata_pelajaran_id.required' => 'Mata pelajaran wajib dipilih.',
+            'formData.mata_pelajaran_id.exists' => 'Mata pelajaran yang dipilih tidak valid.',
+
+            'formData.guru_id.exists' => 'Guru yang dipilih tidak valid.',
+        ];
+    }
+
+    public function openAddJadwalModal()
+    {
+        $this->isEdit = false;
+        $this->formData = [
             'hari' => '',
             'jam_mulai' => '',
             'jam_selesai' => '',
             'kelas_id' => '',
             'mata_pelajaran_id' => '',
             'guru_id' => '',
+            'periode_id' => '',
         ];
-        public ?array $filterData = [
-            'hari' => '',
-            'tingkat' => '',
-        ];
-        public bool $isEdit = false;
+        Flux::modal('jadwal-modal')->show();
+    }
 
-        public function mount()
-        {
-            $this->hariOptions = JadwalHelper::getHariOptions();
-            $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
-            $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
-            $this->guruOptions = JadwalHelper::getGuruOptions();
-            $this->filterData['hari'] = 'Senin';
-            $this->filterData['tingkat'] = 'smp';
-        }
-
-        protected function rules(): array
-        {
-            return [
-                'formData.hari' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
-                'formData.jam_mulai' => 'required|date_format:H:i',
-                'formData.jam_selesai' => 'required|date_format:H:i|after:formData.jam_mulai',
-                'formData.kelas_id' => 'required|exists:kelas,id',
-                'formData.mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
-                'formData.guru_id' => 'required|exists:guru,id',
-            ];
-        }
-
-        protected function messages(): array
-        {
-            return [
-                'formData.hari.required' => 'Hari wajib diisi.',
-                'formData.hari.in' => 'Hari harus salah satu dari Senin sampai Minggu.',
-
-                'formData.jam_mulai.required' => 'Jam mulai wajib diisi.',
-                'formData.jam_mulai.date_format' => 'Format jam mulai harus HH:MM (24 jam).',
-
-                'formData.jam_selesai.required' => 'Jam selesai wajib diisi.',
-                'formData.jam_selesai.date_format' => 'Format jam selesai harus HH:MM (24 jam).',
-                'formData.jam_selesai.after' => 'Jam selesai harus lebih besar dari jam mulai.',
-
-                'formData.kelas_id.required' => 'Kelas wajib dipilih.',
-                'formData.kelas_id.exists' => 'Kelas yang dipilih tidak valid.',
-
-                'formData.mata_pelajaran_id.required' => 'Mata pelajaran wajib dipilih.',
-                'formData.mata_pelajaran_id.exists' => 'Mata pelajaran yang dipilih tidak valid.',
-
-                'formData.guru_id.required' => 'Guru wajib dipilih.',
-                'formData.guru_id.exists' => 'Guru yang dipilih tidak valid.',
-            ];
-        }
-
-        public function openAddJadwalModal()
-        {
+    #[On('openEditJadwal')]
+    public function openEditJadwal($record)
+    {
+        if ($record['id'] ?? null) {
+            $this->isEdit = true;
+        } else {
             $this->isEdit = false;
-            $this->formData = [
-                'hari' => '',
-                'jam_mulai' => '',
-                'jam_selesai' => '',
-                'kelas_id' => '',
-                'mata_pelajaran_id' => '',
-                'guru_id' => '',
-                'periode_id' => '',
-            ];
-            Flux::modal('jadwal-modal')->show();
+        }
+        $this->formData = $record;
+        Flux::modal('jadwal-modal')->show();
+    }
+
+    public function save()
+    {
+        $this->validate();
+
+        $jadwal = JadwalHelper::isAvailable($this->formData, $this->formData['id'] ?? null);
+        if (!$jadwal['available']) {
+            $this->jadwalBentrokList = $jadwal['bentrok'];
+            return;
         }
 
-        #[On('openEditJadwal')]
-        public function openEditJadwal($record)
-        {
-            if ($record['id'] ?? null) {
-                $this->isEdit = true;
-            } else {
-                $this->isEdit = false;
-            }
-            $this->formData = $record;
-            Flux::modal('jadwal-modal')->show();
+        $result = [
+            ...JadwalHelper::empty_to_null($this->formData),
+            'periode_id' => $this->periode_id,
+        ];
+
+        if ($this->isEdit) {
+            JadwalPelajaran::find($this->formData['id'])->update($result);
+        } else {
+            JadwalPelajaran::create($result);
         }
 
-        public function save()
-        {
-            $this->validate();
+        $this->jadwalBentrokList = [];
+        Notification::make()->title('Jadwal Berhasil Tersimpan')->success()->send();
+        Flux::modal('jadwal-modal')->close();
+        $this->dispatch('refreshJadwalTable');
+    }
 
-            $jadwal = JadwalHelper::isAvailable($this->formData, $this->formData['id'] ?? null);
-            if (!$jadwal['available']) {
-                $this->jadwalBentrokList = $jadwal['bentrok'];
-                return;
-            }
+    public function deleteAction(): Action
+    {
+        return Action::make('delete')
+            ->label('Hapus')
+            ->color('danger')
+            ->modalHeading('Hapus Jadwal')
+            ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
+            ->requiresConfirmation()
+            ->modalHeading('Hapus Jadwal')
+            ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
+            ->action(function (array $arguments) {
+                $post = JadwalPelajaran::find($arguments['jadwal']);
 
-            if ($this->isEdit) {
-                JadwalPelajaran::find($this->formData['id'])->update([
-                    'periode_id' => $this->periode_id,
-                    ...$this->formData
-                ]);
-            } else {
-                JadwalPelajaran::create([
-                    'periode_id' => $this->periode_id,
-                    ...$this->formData
-                ]);
-            }
+                $post?->delete();
 
-            $this->jadwalBentrokList = [];
-            Notification::make()->title('Jadwal Berhasil Tersimpan')->success()->send();
-            Flux::modal('jadwal-modal')->close();
-            $this->dispatch('refreshJadwalTable');
-        }
-
-        public function deleteAction(): Action
-        {
-            return Action::make('delete')
-                ->label('Hapus')
-                ->color('danger')
-                ->modalHeading('Hapus Jadwal')
-                ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
-                ->requiresConfirmation()
-                ->modalHeading('Hapus Jadwal')
-                ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
-                ->action(function (array $arguments) {
-                    $post = JadwalPelajaran::find($arguments['jadwal']);
-
-                    $post?->delete();
-
-                    Notification::make()->title('Jadwal berhasil dihapus')->success()->send();
-                    Flux::modal('jadwal-modal')->close();
-                    $this->dispatch('refreshJadwalTable');
-                });
-        }
-    };
+                Notification::make()->title('Jadwal berhasil dihapus')->success()->send();
+                Flux::modal('jadwal-modal')->close();
+                $this->dispatch('refreshJadwalTable');
+            });
+    }
+};
 ?>
 
 <div class="dash-card">
-    <x-card-heading title="Jadwal Pelajaran"
-        description="Manajemen jadwal Pelajaran periode">
+    <x-card-heading title="Jadwal Pelajaran" description="Manajemen jadwal Pelajaran periode">
         <x-slot name="action_buttons">
             <flux:modal.trigger name="import-excel">
                 <flux:button icon="file-excel" class="!bg-az-green !text-white">Import dari Excel</flux:button>
@@ -196,31 +191,17 @@ new
                 </flux:tab>
             </flux:tabs>
 
-            <div class="flex items-center gap-4">
-                <x-select
-                    x-cloak
-                    x-show="activeTab === 'timeline'"
-                    wire:model.live="filterData.hari"
-                    :search="false"
-                    :options="JadwalHelper::getHariOptions(true)"
-                    placeholder="Pilih hari"
+            <div x-cloak x-show="activeTab === 'timeline'" class="flex items-center gap-4">
+                <x-select wire:model.live="filterData.hari" :search="false" :options="JadwalHelper::getHariOptions(true)" placeholder="Pilih hari"
                     class="!w-[140px]" />
-                <x-select
-                    wire:model.live="filterData.tingkat"
-                    :search="false"
-                    :options="[
-                        ['label' => 'Semua Tingkat', 'value' => ''],
-                        ['label' => 'SMP', 'value' => 'smp'],
-                        ['label' => 'MA', 'value' => 'ma']
-                    ]"
-                    placeholder="Pilih tingkat"
-                    class="!w-[160px]" />
+                <x-select wire:model.live="filterData.tingkat" :search="false" :options="[['label' => 'SMP', 'value' => 'smp'], ['label' => 'MA', 'value' => 'ma']]"
+                    placeholder="Pilih tingkat" class="!w-[160px]" />
             </div>
         </div>
 
         <div class="mt-4">
             <div x-show="activeTab === 'tabel'">
-                <livewire:datatable.jadwal :periode_id="$this->periode_id" :tingkat="$this->filterData['tingkat']" />
+                <livewire:datatable.jadwal :periode_id="$this->periode_id" />
             </div>
             <div x-cloak x-show="activeTab === 'timeline'">
                 <livewire:datatable.jadwal-matrix lazy :periode_id="$this->periode_id" :hari="$this->filterData['hari']" :tingkat="$this->filterData['tingkat']" />
@@ -238,37 +219,32 @@ new
             </flux:heading>
 
             @if (count($this->jadwalBentrokList) >= 1)
-            <flux:callout variant="danger" icon="x-circle" heading="Jadwal terjadi bentrok dengan:">
-                <flux:callout.text>
-                    <ul>
-                        @foreach ($this->jadwalBentrokList as $jadwal)
-                        <li>
-                            <div>{{ $jadwal['kelas'] }} {{ $jadwal['jam_mulai'] }} - {{ $jadwal['jam_selesai'] }} ({{ $jadwal['guru'] }} / {{ $jadwal['mapel'] }})</div>
-                        </li>
-                        @endforeach
-                    </ul>
-                </flux:callout.text>
-            </flux:callout>
+                <flux:callout variant="danger" icon="x-circle" heading="Jadwal terjadi bentrok dengan:">
+                    <flux:callout.text>
+                        <ul>
+                            @foreach ($this->jadwalBentrokList as $jadwal)
+                                <li>
+                                    <div>{{ $jadwal['kelas'] }} {{ $jadwal['jam_mulai'] }} -
+                                        {{ $jadwal['jam_selesai'] }} ({{ $jadwal['guru'] }} / {{ $jadwal['mapel'] }})
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </flux:callout.text>
+                </flux:callout>
             @endif
 
             <flux:field>
                 <flux:label>Nama Mata Pelajaran</flux:label>
-                <x-select
-                    name="formData.mata_pelajaran_id"
-                    wire:model="formData.mata_pelajaran_id"
-                    :options="$mataPelajaranOptions"
+                <x-select name="formData.mata_pelajaran_id" wire:model="formData.mata_pelajaran_id" :options="$mataPelajaranOptions"
                     placeholder="Pilih mata pelajaran..." />
                 <flux:error name="formData.mata_pelajaran_id" />
             </flux:field>
 
             <flux:field>
                 <flux:label>Kelas</flux:label>
-                <x-select
-                    name="formData.kelas_id"
-                    wire:model="formData.kelas_id"
-                    :options="$kelasOptions"
-                    placeholder="Pilih kelas..." 
-                    clearable />
+                <x-select name="formData.kelas_id" wire:model="formData.kelas_id" :options="$kelasOptions"
+                    placeholder="Pilih kelas..." />
                 <flux:error name="formData.kelas_id" />
             </flux:field>
 
@@ -295,23 +271,19 @@ new
 
             <flux:field>
                 <flux:label>Guru Pengajar</flux:label>
-                <x-select
-                    name="formData.guru_id"
-                    wire:model="formData.guru_id"
-                    :options="$this->guruOptions"
-                    placeholder="Pilih guru..."
-                    clearable />
+                <x-select name="formData.guru_id" wire:model="formData.guru_id" :options="$this->guruOptions"
+                    placeholder="Pilih guru..." clearable />
                 <flux:error name="formData.guru_id" />
             </flux:field>
 
             <div class="flex mt-8">
                 @if ($this->isEdit)
-                <flux:button variant="primary" color="red" icon="trash"
-                    x-on:click="() => {
+                    <flux:button variant="primary" color="red" icon="trash"
+                        x-on:click="() => {
                         $flux.modals().close()
                         $wire.mountAction('delete', { jadwal: '{{ $this->formData['id'] ?? null }}' })
                     }">
-                    Hapus</flux:button>
+                        Hapus</flux:button>
                 @endif
                 <flux:spacer />
                 <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>
