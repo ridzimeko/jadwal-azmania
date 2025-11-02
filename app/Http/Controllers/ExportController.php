@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\JadwalPelajaranExport;
 use App\Helpers\JadwalHelper;
 use App\Models\Kelas;
+use App\Models\Periode;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -14,9 +15,12 @@ class ExportController extends Controller
     public function exportPdf(Request $request)
     {
         $tingkat = strtoupper($request->query('tingkat', 'SMP'));
-        $periode = $request->query('periode');
+        $periode_id = $request->query('periode');
 
-        if (!$periode) return abort('400', 'Masukkan periode jadwal');
+        if (!$periode_id) return abort('400', 'Masukkan periode jadwal');
+
+        $periode = Periode::find($periode_id);
+        $currentDate = date('d-m-Y');
 
         // jika tingkat != smp atau ma
         if (!in_array($tingkat, ['SMP', 'MA'])) {
@@ -33,7 +37,7 @@ class ExportController extends Controller
         // Ambil semua jadwal berdasarkan hari
         $jadwalPerHari = collect();
         foreach ($hariList as $hari) {
-            $jadwal = JadwalHelper::getQuery($periode, $tingkat)
+            $jadwal = JadwalHelper::getQuery($periode_id, $tingkat)
                 ->where('hari', $hari)
                 ->get()
                 ->groupBy(function ($item) {
@@ -51,7 +55,7 @@ class ExportController extends Controller
             'jadwalPerHari' => $jadwalPerHari
         ])->setPaper('a4', 'landscape');
 
-        return $pdf->stream("Jadwal-{$tingkat}.pdf");
+        return $pdf->stream("jadwal {$periode?->semester} {$currentDate}-{$tingkat}.pdf");
 
         // return view('pdf.jadwal', [
         //     'tingkat' => $tingkat,
@@ -63,9 +67,13 @@ class ExportController extends Controller
     public function exportExcel(Request $request)
     {
         $tingkat = strtoupper($request->query('tingkat', 'SMP'));
-        $periode = $request->query('periode');
+        $periode_id = $request->query('periode');
 
-        if (!$periode) return abort('400', 'Masukkan periode jadwal');
-        return Excel::download(new JadwalPelajaranExport($tingkat, $periode), "jadwal-{$tingkat}.xlsx");
+        if (!$periode_id) return abort('400', 'Masukkan periode jadwal');
+
+        $periode = Periode::find($periode_id);
+        $currentDate = date('d-m-Y');
+
+        return Excel::download(new JadwalPelajaranExport($tingkat, $periode_id), "jadwal {$periode?->semester} {$currentDate}-{$tingkat}.xlsx");
     }
 }
