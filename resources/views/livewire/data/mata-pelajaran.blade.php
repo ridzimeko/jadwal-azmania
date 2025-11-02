@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\MataPelajaran;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
@@ -16,17 +17,11 @@ new
     class extends Component implements HasSchemas {
         use InteractsWithSchemas;
 
-        protected $columnDefs = [
-            ['name' => 'Kode Mapel', 'field' => 'kode_mapel'],
-            ['name' => 'Mata Pelajaran', 'field' => 'nama_mapel'],
-            ['name' => 'Warna', 'field' => 'warna'],
-        ];
-
         public array $formData = [
             'kode_mapel' => '',
             'nama_mapel' => '',
             'warna' => '',
-            'kategori' => '',
+            'jenis_mapel' => '',
         ];
         public bool $isEdit = false;
 
@@ -44,7 +39,8 @@ new
                     'string',
                     'max:40',
                 ],
-                'formData.warna' => ['hex_color']
+                'formData.warna' => ['hex_color'],
+                'formData.jenis_mapel' => 'required|string|in:KBM,Non KBM',
             ];
         }
 
@@ -60,7 +56,11 @@ new
                 'formData.nama_mapel.string' => 'Nama mata pelajaran harus berupa teks.',
                 'formData.nama_mapel.max' => 'Nama mata pelajaran tidak boleh lebih dari 40 karakter.',
 
-                'formData.warna.hex_color' => 'Warna harus dalam format heksadesimal.'
+                'formData.warna.hex_color' => 'Warna harus dalam format heksadesimal.',
+
+                'formData.jenis_mapel.required' => 'Jenis Mapel wajib diisi.',
+                'formData.jenis_mapel.string' => 'Jenis Mapel harus berupa teks.',
+                'formData.jenis_mapel.in' => 'Jenis Mapel harus salah satu dari: KBM, Non KBM.',
             ];
         }
 
@@ -80,7 +80,7 @@ new
                 'kode_mapel' => '',
                 'nama_mapel' => '',
                 'warna' => '',
-                'kategori' => '',
+                'jenis_mapel' => '',
             ];
             Flux::modal('mapel-modal')->show();
         }
@@ -98,9 +98,9 @@ new
             $this->validate();
 
             if ($this->isEdit) {
-                \App\Models\MataPelajaran::find($this->formData['id'])->update($this->formData);
+                MataPelajaran::find($this->formData['id'])->update($this->formData);
             } else {
-                \App\Models\MataPelajaran::create($this->formData);
+                MataPelajaran::create($this->formData);
             }
 
             Notification::make()
@@ -108,7 +108,7 @@ new
                 ->success()
                 ->send();
             Flux::modal('mapel-modal')->close();
-            $this->dispatch('refreshTable');
+            $this->dispatch('refreshMapelTable');
         }
     };
 ?>
@@ -124,7 +124,7 @@ new
     </x-card-heading>
 
     {{-- Datatable --}}
-    <livewire:datatable.index actionType="data" :columns="$this->columnDefs" :model="\App\Models\MataPelajaran::class" />
+    <livewire:datatable.mata-pelajaran />
 
     {{-- Add Data Modal --}}
     <flux:modal name="mapel-modal" class="w-[85%] md:w-[480px]">
@@ -139,18 +139,18 @@ new
                 <flux:input wire:model.defer="formData.nama_mapel" label="Nama Mapel" placeholder="Nama Mapel" />
 
                 <flux:field>
-                    <flux:label>Kategori</flux:label>
+                    <flux:label>Jenis Mapel</flux:label>
                     <x-select
-                        name="formData.kategori"
-                        wire:model="formData.kategori"
+                        name="formData.jenis_mapel"
+                        wire:model="formData.jenis_mapel"
                         :search="false"
                         :options="[
                         ['label' => 'KBM', 'value' => 'KBM'],
                         ['label' => 'Non KBM', 'value' => 'Non KBM'],
                     ]"
-                        placeholder="Pilih kategori mata pelajaran"
+                        placeholder="Pilih jenis mata pelajaran"
                         clearable />
-                    <flux:error name="formData.kategori" />
+                    <flux:error name="formData.jenis_mapel" />
                 </flux:field>
 
                 {{-- filament form --}}

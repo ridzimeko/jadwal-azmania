@@ -36,30 +36,23 @@ new class extends Component {
         $errors = $guru->errors();
 
         if (count($errors) >= 1) {
-            Notification::make()
-                ->title('Terjadi error saat import data')
-                ->danger()
-                ->persistent()
-                ->send();
+            Notification::make()->title('Terjadi error saat import data')->danger()->persistent()->send();
             return;
         }
 
-        Notification::make()
-            ->title('Data guru berhasil di unggah!')
-            ->success()
-            ->send();
+        Notification::make()->title('Data guru berhasil di unggah!')->success()->send();
         $this->dispatch('refreshTable');
     }
 
     private function importMapel($path)
     {
+        try {
         Excel::import(new MapelImport(), $path);
-
-        Notification::make()
-        ->title('Data Mata Pelajaran berhasil di unggah!')
-        ->success()
-        ->send();
-        $this->dispatch('refreshTable');
+            Notification::make()->title('Data Mata Pelajaran berhasil di unggah!')->success()->send();
+            $this->dispatch('refreshMapelTable');
+        } catch (\Throwable $th) {
+            Notification::make()->title('Terjadi error saat import data')->body($th->getMessage())->danger()->persistent()->send();
+        }
     }
 
     private function importJadwal($path)
@@ -75,12 +68,7 @@ new class extends Component {
                 ->send();
             $this->dispatch('refreshJadwalTable');
         } catch (\Throwable $th) {
-            Notification::make()
-                ->title('Terjadi error saat import data')
-                ->body($th->getMessage())
-                ->danger()
-                ->persistent()
-                ->send();
+            Notification::make()->title('Terjadi error saat import data')->body($th->getMessage())->danger()->persistent()->send();
         }
     }
 }; ?>
@@ -92,7 +80,9 @@ new class extends Component {
                 <div class="space-y-1 mb-6">
                     <flux:heading size="lg">Import Data</flux:heading>
                     <flux:text class="whitespace-normal">Silakan unduh berkas
-                        <flux:badge as="button" x-on:click="window.location.href='{{ route('download.template', $this->context) }}'" color="green" icon="file-excel" size="sm">Template Excel
+                        <flux:badge as="button"
+                            x-on:click="window.location.href='{{ route('download.template', $this->context) }}'"
+                            color="green" icon="file-excel" size="sm">Template Excel
                         </flux:badge> untuk melakukan import data.
                     </flux:text>
                 </div>
