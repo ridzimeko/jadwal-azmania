@@ -129,7 +129,8 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     ->requiresConfirmation() // muncul modal konfirmasi
                     ->action(function ($records) {
                         $records->each->delete(); // hapus semua data yang dipilih
-                        $this->dispatch('notify', message: 'Data berhasil dihapus!');
+                        Notification::make()->title('Data berhasil dihapus')->success()->send();
+
                     })
                     ->deselectRecordsAfterCompletion(),
             ])
