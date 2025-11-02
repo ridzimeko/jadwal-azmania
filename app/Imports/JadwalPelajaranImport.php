@@ -35,7 +35,7 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFail
             $guru  = Guru::where('kode_guru', $row['kode_guru_pengajar'] ?? null)->first();
 
             // skip kalau tidak ditemukan
-            if (!$kelas || !$mapel || !$guru) {
+            if (!$kelas || !$mapel) {
                 continue;
             }
 
@@ -49,7 +49,7 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFail
                 [
                     'kelas_id' => $kelas->id,
                     'mata_pelajaran_id' => $mapel->id,
-                    'guru_id' => $guru->id,
+                    'guru_id' => $guru->id ?? null,
                     'hari' => $hari,
                     'jam_mulai' => $jamMulai,
                     'periode_id' => $this->periodeId,
