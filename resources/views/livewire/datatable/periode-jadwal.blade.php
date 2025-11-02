@@ -41,17 +41,17 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                 TextColumn::make('index')->label('No')->rowIndex()->sortable(false)->searchable(false),
                 TextColumn::make('tahun_ajaran')->label('Tahun Ajaran')->searchable(true),
                 TextColumn::make('semester')->label('Semester')->searchable(true),
-                TextColumn::make('aktif')->label('Status')
-                    ->formatStateUsing(function ($state, $record) {
-                        $status = $record->aktif ? 'Aktif' : 'Nonaktif';
-                        return $status;
-                    })
-                    ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        '1' => 'success',
-                        '0' => 'danger',
-                    })
-                    ->searchable(true),
+                // TextColumn::make('aktif')->label('Status')
+                //     ->formatStateUsing(function ($state, $record) {
+                //         $status = $record->aktif ? 'Aktif' : 'Nonaktif';
+                //         return $status;
+                //     })
+                //     ->badge()
+                //     ->color(fn(string $state): string => match ($state) {
+                //         '1' => 'success',
+                //         '0' => 'danger',
+                //     })
+                //     ->searchable(true),
             ])
             ->recordActions([
                 Action::make('edit')
