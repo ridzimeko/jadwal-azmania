@@ -3,7 +3,7 @@
     $styleHari =
         'border: 1px solid #000000; height: 28px; width: 40px; background-color:#fee685; vertical-align: center; font-weight: bold;';
     $styleHead =
-        'border: 1px solid #000000; height: 28px; width:110px; background-color: #902C8E; color: #ffffff; text-align:center; vertical-align: center;';
+        'border: 1px solid #000000; height: 28px; width:110px; background-color: #902C8E; color: #ffffff; text-align:center; vertical-align: center; font-weight: bold;';
 @endphp
 
 <table>
@@ -73,7 +73,7 @@
                         <td colspan="{{ count($kelasList) }}" bgcolor="{{ $bg }}"
                             style="{{ $styleTd }} font-weight: 400; color: {{ $textBentrok }};">
                             @if ($item)
-                                {{ $item->mataPelajaran->nama_mapel }}<br>
+                                <span style="font-weight: bold;">{{ $item->mataPelajaran->nama_mapel }}</span><br>
                                 {{ $item->guru->nama_guru ?? null }}
                             @else
                                 -
@@ -89,7 +89,7 @@
                             <td bgcolor="{{ $bg }}"
                                 style="{{ $styleTd }} font-weight: 400; color: {{ $text }};">
                                 @if ($item)
-                                    {{ $item->mataPelajaran->nama_mapel }}<br>
+                                    <span style="font-weight: bold;">{{ $item->mataPelajaran->nama_mapel }}</span><br>
                                     {{ $item->guru->nama_guru ?? null }}
                                 @else
                                     -
