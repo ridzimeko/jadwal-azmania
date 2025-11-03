@@ -17,7 +17,7 @@ class PeriodeFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'tahun_ajaran' => 
         ];
     }
 }
