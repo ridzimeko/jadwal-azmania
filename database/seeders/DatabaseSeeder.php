@@ -28,8 +28,6 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             KelasSeeder::class,
-            PeriodeSeeder::class,
-            DataSeeder::class,
         ]);
     }
 }

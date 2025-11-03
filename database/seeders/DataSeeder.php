@@ -12,6 +12,10 @@ class DataSeeder extends Seeder
 {
     public function run(): void
     {
+         $this->call([
+            PeriodeSeeder::class,
+        ]);
+        
         // Kelas::factory()->count(5)->create();
         JadwalPelajaran::factory()->count(8)->create();
         // Guru::factory()->count(10)->create();
