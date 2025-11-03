@@ -9,13 +9,10 @@ use Livewire\Attributes\Reactive;
 use Livewire\Volt\Component;
 
 new class extends Component {
-    #[Reactive]
     public $periode_id;
 
-    #[Reactive]
     public string $tingkat = 'SMP'; // bisa di-pass lewat route
 
-    #[Reactive]
     public $hari;
 
     public $jadwal;

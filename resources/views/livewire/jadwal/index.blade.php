@@ -211,7 +211,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 <livewire:datatable.jadwal :periode_id="$this->periode_id" />
             </div>
             <div x-cloak x-show="activeTab === 'timeline'">
-                <livewire:datatable.jadwal-matrix lazy :periode_id="$this->periode_id" :hari="$this->filterData['hari']" :tingkat="$this->filterData['tingkat']" />
+                <livewire:datatable.jadwal-matrix lazy :periode_id="$this->periode_id" :hari="$this->filterData['hari']" :tingkat="$this->filterData['tingkat']" wire:key="matrix-{{ md5(json_encode($filterData)) }}" />
             </div>
         </div>
     </div>
