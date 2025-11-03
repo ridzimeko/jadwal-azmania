@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Jadwal Pelajaran {{ $tingkat }}</title>
+    <link rel="icon" href="{{ asset('icon-512.png') }}" type="image/png">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+
     <style>
         body {
             font-family: DejaVu Sans, sans-serif;
@@ -197,7 +200,8 @@
                                     $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                     $textBentrok = $item->is_bentrok ?? null ? 'red' : $text;
                                 @endphp
-                                <td colspan="{{ count($kelasList) }}" style="background-color: {{ $bg }}; color: {{ $textBentrok }}">
+                                <td colspan="{{ count($kelasList) }}"
+                                    style="background-color: {{ $bg }}; color: {{ $textBentrok }}">
                                     @if ($item)
                                         <div><strong>{{ $item->mataPelajaran->nama_mapel }}</strong></div>
                                         <div style="font-size: 12px;">{{ $item->guru->nama_guru ?? null }}</div>

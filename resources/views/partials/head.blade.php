@@ -4,8 +4,9 @@
 <title>{{ $title ?? null ? $title . " - " . config('app.name') : config('app.name') }}</title>
 
 {{-- <link rel="icon" href="/favicon.ico" sizes="any"> --}}
-<link rel="icon" href="/images/logo.png" type="image/png">
-{{-- <link rel="apple-touch-icon" href="/apple-touch-icon.png"> --}}
+<link rel="icon" href="{{ asset('icon-512.png') }}" type="image/png">
+{{-- <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}"> --}}
+<link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
 
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />

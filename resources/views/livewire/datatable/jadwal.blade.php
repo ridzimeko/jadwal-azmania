@@ -97,6 +97,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                         ->action(function ($records) {
                             $records->each->delete(); // hapus semua data yang dipilih
                             Notification::make()->title('Data berhasil dihapus!')->success()->send();
+                            $this->dispatch('refreshJadwalTable');
                         })
                         ->deselectRecordsAfterCompletion(),
                 ])
