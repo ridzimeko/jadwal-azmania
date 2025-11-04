@@ -74,7 +74,7 @@ new class extends Component {
 }; ?>
 
 <div>
-    <flux:modal name="{{ $name }}" class="min-w-[22rem]">
+    <flux:modal name="{{ $name }}" class="w-[90%] md:min-w-[22rem]">
         <form wire:submit.prevent="save">
             <div class="space-y-6">
                 <div class="space-y-1 mb-6">

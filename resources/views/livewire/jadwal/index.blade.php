@@ -198,11 +198,11 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 </flux:tab>
             </flux:tabs>
 
-            <div x-cloak x-show="activeTab === 'timeline'" class="flex items-center gap-4">
+            <div x-cloak x-show="activeTab === 'timeline'" class="flex items-center flex-wrap gap-4">
                 <x-select wire:model.live="filterData.hari" :search="false" :options="JadwalHelper::getHariOptions(true)" placeholder="Pilih hari"
                     class="!w-[140px]" />
                 <x-select wire:model.live="filterData.tingkat" :search="false" :options="[['label' => 'SMP', 'value' => 'smp'], ['label' => 'MA', 'value' => 'ma']]"
-                    placeholder="Pilih tingkat" class="!w-[160px]" />
+                    placeholder="Pilih tingkat" class="!w-[120px]" />
             </div>
         </div>
 
@@ -219,7 +219,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     <x-filament-actions::modals />
 
     {{-- Add Data Modal --}}
-    <flux:modal name="jadwal-modal" class="md:w-[480px] z-[30]" variant="flyout">
+    <flux:modal name="jadwal-modal" class="w-[90%] md:w-[480px] z-[30]" variant="flyout">
         <form wire:submit.prevent="save" class="flex flex-col gap-3 max-w-[768px]">
             <flux:heading size="lg">
                 {{ $isEdit ? 'Ubah Data Jadwal' : 'Tambah Data Jadwal' }}

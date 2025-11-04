@@ -122,7 +122,7 @@ class extends Component implements HasActions, HasSchemas {
     </x-card-heading>
 
     <!-- main content -->
-    <div class="grid grid-cols-3 gap-4 mt-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
 
         @php
         $periodeList = $this->getPeriode();
@@ -140,10 +140,10 @@ class extends Component implements HasActions, HasSchemas {
         @endforeach
     </div>
 
-    <x-filament-actions::modals />
+    {{-- <x-filament-actions::modals /> --}}
 
     {{-- Add Data Modal --}}
-    <flux:modal name="periode-modal" class="md:w-[480px] z-[30]">
+    {{-- <flux:modal name="periode-modal" class="md:w-[480px] z-[30]">
         <form wire:submit.prevent="save" class="flex flex-col gap-4 max-w-[768px]">
             <flux:heading size="lg">
                 {{ $isEdit ? 'Ubah Data' : 'Tambah Data' }} Periode
@@ -164,5 +164,5 @@ class extends Component implements HasActions, HasSchemas {
                 <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>
             </div>
         </form>
-    </flux:modal>
+    </flux:modal> --}}
 </div>

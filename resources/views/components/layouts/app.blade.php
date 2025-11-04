@@ -23,7 +23,7 @@
 <body class="antialiased">
     <div class="flex bg-gray-100 min-h-screen gap-4">
         <x-sidebar />
-        <main class="px-4 lg:py-4 max-w-[1920px] w-full overflow-auto">
+        <main class="p-4 max-w-[1920px] w-full overflow-auto">
             <flux:header class="lg:hidden !px-2">
                 <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
 
