@@ -2,6 +2,7 @@
 
 use App\Imports\GuruImport;
 use App\Imports\JadwalPelajaranImport;
+use App\Imports\KelasImport;
 use App\Imports\MapelImport;
 use Filament\Notifications\Notification;
 use Livewire\Volt\Component;
@@ -24,6 +25,7 @@ new class extends Component {
             'guru' => $this->importGuru($path),
             'jadwal' => $this->importJadwal($path),
             'mapel' => $this->importMapel($path),
+            'kelas' => $this->importKelas($path),
             default => throw new \Exception('Context tidak dikenal'),
         };
         Flux::modal('import-excel')->close();
@@ -44,7 +46,18 @@ new class extends Component {
         $this->dispatch('refreshTable');
     }
 
-    private function importMapel($path)
+    private function importKelas($path)
+    {
+        try {
+        Excel::import(new KelasImport(), $path);
+            Notification::make()->title('Data Kelas berhasil di unggah!')->success()->send();
+            $this->dispatch('refreshTable');
+        } catch (\Throwable $th) {
+            Notification::make()->title('Terjadi error saat import data')->body($th->getMessage())->danger()->persistent()->send();
+        }
+    }
+
+     private function importMapel($path)
     {
         try {
         Excel::import(new MapelImport(), $path);

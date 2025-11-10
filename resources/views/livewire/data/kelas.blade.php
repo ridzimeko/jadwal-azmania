@@ -81,6 +81,9 @@ class extends Component {
 <div class="dash-card">
     <x-card-heading title="Data Kelas">
         <x-slot name="action_buttons">
+            <flux:modal.trigger name="import-excel">
+                <flux:button icon="file-excel" class="!bg-az-green !text-white">Import dari Excel</flux:button>
+            </flux:modal.trigger>
             <flux:button wire:click="openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data
             </flux:button>
         </x-slot>
@@ -118,4 +121,7 @@ class extends Component {
             </div>
         </form>
     </flux:modal>
+
+     {{-- Import Excel Modal --}}
+    <livewire:excel-import-modal context="kelas" />
 </div>
