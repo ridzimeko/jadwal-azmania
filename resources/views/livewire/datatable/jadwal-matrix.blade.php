@@ -123,7 +123,7 @@ new class extends Component {
                                     @if ($items->count() > 0)
                                         @foreach ($items as $item)
                                             @php
-                                                $bg = $item->mataPelajaran->warna ?? '#ffffff';
+                                                $bg = $item->guru->warna ?? '#ffffff';
                                                 $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                             @endphp
                                             <button
@@ -161,7 +161,7 @@ new class extends Component {
                                         @if ($kelasItems->count() > 0)
                                             @foreach ($kelasItems as $item)
                                                 @php
-                                                    $bg = $item->mataPelajaran->warna ?? '#ffffff';
+                                                    $bg = $item->guru->warna ?? '#ffffff';
                                                     $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                                 @endphp
                                                 <button
