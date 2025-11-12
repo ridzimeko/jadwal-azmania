@@ -36,6 +36,7 @@ Route::middleware(['auth'])->group(function () {
         Volt::route('guru', 'data.guru')->name('data.guru');
         Volt::route('kelas', 'data.kelas')->name('data.kelas');
         Volt::route('kegiatan', 'data.kegiatan')->name('data.kegiatan');
+        Volt::route('jam-pelajaran', 'data.jam-pelajaran')->name('data.jam-pelajaran');
     });
 
     Volt::route('atur-admin', 'atur-admin.index')

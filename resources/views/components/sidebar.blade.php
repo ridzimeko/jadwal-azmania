@@ -20,7 +20,7 @@
 
         <flux:sidebar.group expandable icon="pencil-square" heading="Data" class="grid">
             <flux:sidebar.item href="/data/mata-pelajaran">Mata Pelajaran</flux:sidebar.item>
-            {{-- <flux:sidebar.item href="/data/kegiatan">Kegiatan</flux:sidebar.item> --}}
+            <flux:sidebar.item href="/data/jam-pelajaran">Jam Pelajaran</flux:sidebar.item>
             <flux:sidebar.item href="/data/guru">Guru</flux:sidebar.item>
             <flux:sidebar.item href="/data/kelas">Kelas</flux:sidebar.item>
         </flux:sidebar.group>

@@ -63,10 +63,9 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     {
         return [
             'formData.hari' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
-            'formData.jam_mulai' => 'required|date_format:H:i',
-            'formData.jam_selesai' => 'required|date_format:H:i|after:formData.jam_mulai',
             'formData.kelas_id' => 'required|exists:kelas,id',
             'formData.mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
+            'formData.jam_pelajaran_id' => 'required|exists:jam_pelajaran,id',
             'formData.guru_id' => 'nullable|exists:guru,id',
         ];
     }
@@ -77,18 +76,14 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             'formData.hari.required' => 'Hari wajib diisi.',
             'formData.hari.in' => 'Hari harus salah satu dari Senin sampai Minggu.',
 
-            'formData.jam_mulai.required' => 'Jam mulai wajib diisi.',
-            'formData.jam_mulai.date_format' => 'Format jam mulai harus HH:MM (24 jam).',
-
-            'formData.jam_selesai.required' => 'Jam selesai wajib diisi.',
-            'formData.jam_selesai.date_format' => 'Format jam selesai harus HH:MM (24 jam).',
-            'formData.jam_selesai.after' => 'Jam selesai harus lebih besar dari jam mulai.',
-
             'formData.kelas_id.required' => 'Kelas wajib dipilih.',
             'formData.kelas_id.exists' => 'Kelas yang dipilih tidak valid.',
 
             'formData.mata_pelajaran_id.required' => 'Mata pelajaran wajib dipilih.',
             'formData.mata_pelajaran_id.exists' => 'Mata pelajaran yang dipilih tidak valid.',
+
+            'formData.jam_pelajaran_id.required' => 'Jam pelajaran wajib dipilih.',
+            'formData.jam_pelajaran_id.exists' => 'Jam pelajaran yang dipilih tidak valid.',
 
             'formData.guru_id.exists' => 'Guru yang dipilih tidak valid.',
         ];
@@ -264,20 +259,6 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                     placeholder="Pilih hari..." />
                 <flux:error name="formData.hari" />
             </flux:field>
-
-            <!-- <div class="flex flex-row items-center gap-6 w-full">
-                <flux:field class="min-w-[200px]">
-                    <flux:label>Jam Mulai</flux:label>
-                    <x-time-picker name="formData.jam_mulai" wire:model="formData.jam_mulai" class="w-full" />
-                    <flux:error name="formData.jam_mulai" />
-                </flux:field>
-
-                <flux:field class="min-w-[200px]">
-                    <flux:label>Jam Selesai</flux:label>
-                    <x-time-picker name="formData.jam_selesai" wire:model="formData.jam_selesai" class="w-full" />
-                    <flux:error name="formData.jam_selesai" />
-                </flux:field>
-            </div> -->
 
              <flux:field>
                 <flux:label>Jam ke</flux:label>
