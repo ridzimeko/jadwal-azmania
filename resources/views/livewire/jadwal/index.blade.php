@@ -55,7 +55,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
         $this->guruOptions = JadwalHelper::getGuruOptions();
         $this->jamPelajaranOptions = JadwalHelper::getJamPelajaranOptions();
-        $this->filterData['hari'] = 'Senin';
+        // $this->filterData['hari'] = 'Senin';
         $this->filterData['tingkat'] = 'smp';
     }
 

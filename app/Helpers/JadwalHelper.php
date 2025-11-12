@@ -21,13 +21,31 @@ class JadwalHelper
      */
     public static function isAvailable(array $data, ?int $ignoreId = null): array
     {
-        $query = JadwalPelajaran::query()
-            ->where('hari', $data['hari'])
-            ->where(function ($q) use ($data) {
-                $q->where('jam_mulai', '<', $data['jam_selesai'])
-                    ->where('jam_selesai', '>', $data['jam_mulai']);
-            });
+        // Resolve jam_mulai / jam_selesai either from payload or from JamPelajaran model (if jam_pelajaran_id provided)
+        $jamMulai = $data['jam_mulai'] ?? null;
+        $jamSelesai = $data['jam_selesai'] ?? null;
 
+        if (isset($data['jam_pelajaran_id']) && (!$jamMulai || !$jamSelesai)) {
+            $jp = \App\Models\JamPelajaran::find($data['jam_pelajaran_id']);
+            if ($jp) {
+                $jamMulai = $jp->jam_mulai;
+                $jamSelesai = $jp->jam_selesai;
+            }
+        }
+
+        // if we still don't have times, treat as available (no sensible overlap check)
+        if (!$jamMulai || !$jamSelesai) {
+            return ['available' => true, 'bentrok' => collect()];
+        }
+
+        $query = JadwalPelajaran::query()
+            ->with(['guru', 'kelas', 'mataPelajaran', 'jamPelajaran'])
+            ->where('hari', $data['hari'])
+            ->whereHas('jamPelajaran', function ($q) use ($jamMulai, $jamSelesai) {
+                $q->where('jam_mulai', '<', $jamSelesai)
+                  ->where('jam_selesai', '>', $jamMulai);
+            });
+        
         if ($ignoreId) {
             $query->where('id', '!=', $ignoreId);
         }
@@ -48,7 +66,7 @@ class JadwalHelper
             $query->whereRelation('kelas', 'tingkat', $kodeKelas);
         }
 
-        $bentrok = $query->with(['guru', 'kelas', 'mataPelajaran'])->get();
+        $bentrok = $query->get();
 
         if ($bentrok->isNotEmpty()) {
             return [
@@ -56,8 +74,8 @@ class JadwalHelper
                 'bentrok' => $bentrok->map(function ($item) {
                     return [
                         'hari' => $item->hari,
-                        'jam_mulai' => $item->jam_mulai,
-                        'jam_selesai' => $item->jam_selesai,
+                        'jam_mulai' => $item->jamPelajaran->jam_mulai ?? $item->jam_mulai ?? '-',
+                        'jam_selesai' => $item->jamPelajaran->jam_selesai ?? $item->jam_selesai ?? '-',
                         'guru' => $item->guru->nama_guru ?? '-',
                         'kelas' => $item->kelas->nama_kelas ?? '-',
                         'mapel' => $item->mataPelajaran->nama_mapel ?? '-',
