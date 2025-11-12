@@ -4,6 +4,7 @@ namespace App\Imports;
 
 use App\Models\Guru;
 use App\Models\JadwalPelajaran;
+use App\Models\JamPelajaran;
 use App\Models\Kelas;
 use App\Models\MataPelajaran;
 use Illuminate\Support\Collection;
@@ -33,15 +34,13 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFail
             $kelas = Kelas::where('kode_kelas', $row['kode_kelas'] ?? null)->first();
             $mapel = MataPelajaran::where('kode_mapel', $row['kode_mata_pelajaran'] ?? null)->first();
             $guru  = Guru::where('kode_guru', $row['kode_guru_pengajar'] ?? null)->first();
+            $jamMapel = JamPelajaran::where('urutan', $row['jam_ke'] ?? null)->first();
 
             // skip kalau tidak ditemukan
-            if (!$kelas || !$mapel) {
+            if (!$kelas || !$mapel || !$jamMapel) {
                 continue;
             }
 
-            // konversi format jam Excel (angka desimal / serial date)
-            $jamMulai = $this->parseExcelTime($row['jam_mulai']);
-            $jamSelesai = $this->parseExcelTime($row['jam_selesai']);
             $hari = ucfirst(strtolower($row['hari']));
 
             // update or create data
@@ -51,12 +50,9 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFail
                     'mata_pelajaran_id' => $mapel->id,
                     'guru_id' => $guru->id ?? null,
                     'hari' => $hari,
-                    'jam_mulai' => $jamMulai,
+                    'jam_pelajaran_id' => $jamMapel->id,
                     'periode_id' => $this->periodeId,
                 ],
-                [
-                    'jam_selesai' => $jamSelesai,
-                ]
             );
 
             if ($jadwal->wasRecentlyCreated || $jadwal->wasChanged()) {

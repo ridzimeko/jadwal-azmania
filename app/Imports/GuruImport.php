@@ -27,6 +27,7 @@ class GuruImport implements ToModel, WithHeadingRow, WithUpserts, SkipsOnFailure
         return new Guru([
             'kode_guru' => $row['kode_guru'] ?? null,
             'nama_guru' => $row['nama_guru'] ?? null,
+            'warna' => $row['warna'] ?? '#ffffff',
         ]);
     }
 

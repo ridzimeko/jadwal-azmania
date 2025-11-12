@@ -29,7 +29,6 @@ class MapelImport implements ToModel, WithHeadingRow, WithUpserts, SkipsOnError
 
         return new MataPelajaran([
             'kode_mapel' => $row['kode_mapel'] ?? null,
-            'warna' => $row['warna'] ?? '#ffffff',
             'jenis_mapel' => $jenis_mapel_option[$jenis_mapel] ?? null,
             'nama_mapel' => $row['mata_pelajaran'] ?? null,
         ]);
