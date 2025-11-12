@@ -19,7 +19,7 @@ class extends Component {
     {
         return [
             'formData.kode_kelas' => ['required', 'string', 'max:12', Rule::unique('kelas', 'kode_kelas')->ignore($this->formData['id'] ?? null)],
-            'formData.nama_kelas' => ['required', 'string', 'max:15'],
+            'formData.nama_kelas' => ['required', 'string', 'max:20'],
         ];
     }
 

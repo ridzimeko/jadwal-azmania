@@ -19,6 +19,7 @@ class GuruFactory extends Factory
         return [
             'kode_guru' => $this->faker->unique()->numerify(str_repeat('#', 10)), // max 24, biasanya NIP 18 digit
             'nama_guru' => $this->faker->name(), // contoh: "Budi Santoso"
+            'warna' => $this->faker->hexColor() ?? '#ffffff',
         ];
     }
 }

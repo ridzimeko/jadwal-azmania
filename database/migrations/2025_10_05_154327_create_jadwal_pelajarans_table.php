@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Guru;
+use App\Models\JamPelajaran;
 use App\Models\Kegiatan;
 use App\Models\Kelas;
 use App\Models\MataPelajaran;
@@ -19,11 +20,10 @@ return new class extends Migration
         Schema::create('jadwal_pelajaran', function (Blueprint $table) {
             $table->id();
             $table->enum('hari', ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']);
-            $table->time('jam_mulai');
-            $table->time('jam_selesai');
             $table->foreignIdFor(MataPelajaran::class)->constrained()->onDelete('cascade');
             $table->foreignIdFor(Kelas::class)->nullable()->constrained()->onDelete('set null');
             $table->foreignIdFor(Guru::class)->nullable()->constrained()->onDelete('set null');
+            $table->foreignIdFor(JamPelajaran::class)->constrained()->onDelete('cascade');
             $table->foreignIdFor(Periode::class)->constrained()->onDelete('cascade');
             $table->timestamps();
         });
