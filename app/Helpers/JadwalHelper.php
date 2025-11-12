@@ -74,12 +74,11 @@ class JadwalHelper
     {
 
         $query = JadwalPelajaran::query()
-            ->with(['kelas', 'mataPelajaran', 'guru', 'kegiatan'])
+            ->with(['kelas', 'mataPelajaran', 'guru', 'kegiatan', 'jamPelajaran'])
             ->whereRelation('periode', 'id', $periode)
             ->withBentrok()
             ->orderByDesc('is_bentrok')
-            ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
-            ->orderBy('jam_mulai');
+            ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')");
 
         if ($tingkat) {
             $query->whereRelation('kelas', 'tingkat', $tingkat);
@@ -165,6 +164,17 @@ class JadwalHelper
                 ])
                 ->toArray();
         });
+    }
+
+    public static function getJamPelajaranOptions()
+    {
+        return \App\Models\JamPelajaran::orderBy('jam_mulai')
+            ->get()
+            ->map(fn($j) => [
+                'value' => $j->id,
+                'label' => "{$j->urutan} ({$j->jam_mulai} - {$j->jam_selesai})",
+            ])
+            ->toArray();
     }
 
     public static function getTahunAjaran($id) {

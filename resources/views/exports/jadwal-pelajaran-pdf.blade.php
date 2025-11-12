@@ -196,7 +196,7 @@
                             @if ($isGlobal->count() > 0)
                                 @php
                                     $item = $items->first();
-                                    $bg = $item->mataPelajaran->warna ?? '#ffffff';
+                                    $bg = $item->guru->warna ?? '#ffffff';
                                     $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                     $textBentrok = $item->is_bentrok ?? null ? 'red' : $text;
                                 @endphp
@@ -213,7 +213,7 @@
                                 @foreach ($kelasList as $kelas)
                                     @php
                                         $item = $items->firstWhere('kelas_id', $kelas->id);
-                                        $bg = $item->mataPelajaran->warna ?? '#ffffff';
+                                        $bg = $item->guru->warna ?? '#ffffff';
                                         $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                         $textBentrok = $item->is_bentrok ?? null ? 'red' : $text;
                                     @endphp

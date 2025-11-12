@@ -24,6 +24,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     public $hariOptions;
     public $kelasOptions;
     public $guruOptions;
+    public $jamPelajaranOptions;
     public $mataPelajaranOptions;
     public $jadwalBentrokList = [];
     public ?array $formData = [
@@ -33,6 +34,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         'kelas_id' => '',
         'mata_pelajaran_id' => '',
         'guru_id' => '',
+        'jam_pelajaran_id' => '',
     ];
     public ?array $filterData = [
         'hari' => '',
@@ -52,6 +54,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
         $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
         $this->guruOptions = JadwalHelper::getGuruOptions();
+        $this->jamPelajaranOptions = JadwalHelper::getJamPelajaranOptions();
         $this->filterData['hari'] = 'Senin';
         $this->filterData['tingkat'] = 'smp';
     }
@@ -101,7 +104,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             'kelas_id' => '',
             'mata_pelajaran_id' => '',
             'guru_id' => '',
-            'periode_id' => '',
+            'jam_pelajaran_id' => '',
         ];
         Flux::modal('jadwal-modal')->show();
     }
@@ -262,7 +265,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 <flux:error name="formData.hari" />
             </flux:field>
 
-            <div class="flex flex-row items-center gap-6 w-full">
+            <!-- <div class="flex flex-row items-center gap-6 w-full">
                 <flux:field class="min-w-[200px]">
                     <flux:label>Jam Mulai</flux:label>
                     <x-time-picker name="formData.jam_mulai" wire:model="formData.jam_mulai" class="w-full" />
@@ -274,7 +277,14 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                     <x-time-picker name="formData.jam_selesai" wire:model="formData.jam_selesai" class="w-full" />
                     <flux:error name="formData.jam_selesai" />
                 </flux:field>
-            </div>
+            </div> -->
+
+             <flux:field>
+                <flux:label>Jam ke</flux:label>
+                <x-select name="formData.jam_pelajaran_id" wire:model="formData.jam_pelajaran_id" :options="$this->jamPelajaranOptions"
+                    placeholder="Pilih jam pelajaran..." />
+                <flux:error name="formData.jam_pelajaran_id" />
+            </flux:field>
 
             <flux:field>
                 <flux:label>Guru Pengajar</flux:label>

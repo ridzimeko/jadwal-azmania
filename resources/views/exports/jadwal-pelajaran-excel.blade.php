@@ -54,8 +54,8 @@
             @php $no = 1; @endphp
             @foreach ($jadwal as $jamLabel => $items)
                 <tr>
-                    <td style="{{ $styleTd }}">{{ $no++ }}</td>
-                    <td style="{{ $styleTd }}">{{ $jamLabel }}</td>
+                    <td style="{{ $styleTd }} width: 40px;">{{ $no++ }}</td>
+                    <td style="{{ $styleTd }} width: 132px;">{{ $jamLabel }}</td>
 
                     @php
                         $isGlobal = $items->filter(function ($item) {
@@ -66,7 +66,7 @@
                     @if ($isGlobal->count() > 0)
                         @php
                             $item = $items->first();
-                            $bg = $item->mataPelajaran->warna ?? '#ffffff';
+                            $bg = $item->guru->warna ?? '#ffffff';
                             $text = \App\Helpers\ColorHelper::getTextColor($bg);
                             $textBentrok = $item->is_bentrok ?? null ? 'red' : $text;
                         @endphp
@@ -83,7 +83,7 @@
                         @foreach ($kelasList as $kelas)
                             @php
                                 $item = $items->firstWhere('kelas_id', $kelas->id);
-                                $bg = $item->mataPelajaran->warna ?? '#ffffff';
+                                $bg = $item->guru->warna ?? '#ffffff';
                                 $text = \App\Helpers\ColorHelper::getTextColor($bg);
                             @endphp
                             <td bgcolor="{{ $bg }}"

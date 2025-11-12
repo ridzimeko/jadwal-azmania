@@ -64,10 +64,13 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                 // TextColumn::make('kategori')->label('Kategori')->searchable(true),
                 TextColumn::make('kelas.nama_kelas')->label('Kelas')->searchable(true),
                 TextColumn::make('hari')->label('Hari')->searchable(true),
-                TextColumn::make('jam')
+                TextColumn::make('jamPelajaran.urutan')
+                    ->label('Jam Ke')
+                    ->searchable(true),
+                TextColumn::make('jamPelajaran')
                     ->label('Jam')
-                    ->getStateUsing(fn($record) => "{$record->jam_mulai} - {$record->jam_selesai}")
-                    ->searchable(['jam_mulai', 'jam_selesai']),
+                    ->formatStateUsing(fn($state, $record) => $record->jamPelajaran ? $record->jamPelajaran->jam_mulai . ' - ' . $record->jamPelajaran->jam_selesai : '-')
+                    ->searchable(true),
                 TextColumn::make('mataPelajaran.nama_mapel')->label('Mata Pelajaran')->searchable(true),
                 TextColumn::make('guru.nama_guru')->label('Guru Pengajar')->searchable(true)->default('-'),
             ])

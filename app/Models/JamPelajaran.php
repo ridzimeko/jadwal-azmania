@@ -10,6 +10,8 @@ class JamPelajaran extends Model
     /** @use HasFactory<\Database\Factories\JamPelajaranFactory> */
     use HasFactory;
 
+    protected $hidden = []; // atau pastikan 'urutan' tidak disembunyikan
+
     protected $fillable = [
         'jam_mulai',
         'jam_selesai',

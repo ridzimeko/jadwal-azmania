@@ -51,7 +51,7 @@ new class extends Component {
         $jadwal = $query->get()->groupBy([
             'hari',
             function ($item) {
-                return $item->jam_mulai . ' - ' . $item->jam_selesai;
+                return $item->jamPelajaran->jam_mulai . ' - ' . $item->jamPelajaran->jam_selesai;
             },
         ]);
 
@@ -132,10 +132,9 @@ new class extends Component {
                                                 wire:click="$parent.openEditJadwal({{ json_encode([
                                                     'id' => $item->id,
                                                     'hari' => $hariKey,
-                                                    'jam_mulai' => $item->jam_mulai,
-                                                    'jam_selesai' => $item->jam_selesai,
                                                     'kelas_id' => $item->kelas_id,
                                                     'mata_pelajaran_id' => $item->mata_pelajaran_id,
+                                                    'jam_pelajaran_id' => $item->jam_pelajaran_id,
                                                     'guru_id' => $item->guru_id,
                                                 ]) }} 
                                                 );">
@@ -171,10 +170,9 @@ new class extends Component {
                                                     wire:click="$parent.openEditJadwal({{ json_encode([
                                                         'id' => $item->id,
                                                         'hari' => $hariKey,
-                                                        'jam_mulai' => $item->jam_mulai,
-                                                        'jam_selesai' => $item->jam_selesai,
                                                         'kelas_id' => $kelas->id,
                                                         'mata_pelajaran_id' => $item->mata_pelajaran_id,
+                                                        'jam_pelajaran_id' => $item->jam_pelajaran_id,
                                                         'guru_id' => $item->guru_id,
                                                     ]) }} 
                                                     );">
@@ -191,10 +189,9 @@ new class extends Component {
                                             <div class="text-gray-400 italic py-4 cursor-pointer hover:bg-green-50 hover:text-green-600 transition rounded"
                                                 wire:click="$parent.openEditJadwal({{ json_encode([
                                                     'hari' => $hariKey,
-                                                    'jam_mulai' => $jam_mapel[0] ?? null,
-                                                    'jam_selesai' => $jam_mapel[1] ?? null,
                                                     'kelas_id' => $kelas->id,
                                                     'mata_pelajaran_id' => null,
+                                                    'jam_pelajaran_id' => null,
                                                     'guru_id' => null,
                                                 ]) }})">
                                                 Tambah +

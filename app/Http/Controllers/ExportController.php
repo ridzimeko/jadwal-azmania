@@ -41,7 +41,7 @@ class ExportController extends Controller
                 ->where('hari', $hari)
                 ->get()
                 ->groupBy(function ($item) {
-                    return $item->jam_mulai . ' - ' . $item->jam_selesai;
+                    return $item->jamPelajaran->jam_mulai . ' - ' . $item->jamPelajaran->jam_selesai;
                 });
 
             if ($jadwal->isNotEmpty()) {
