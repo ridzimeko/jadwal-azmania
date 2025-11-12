@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('kode_guru', 12)->unique();
             $table->string('nama_guru', 45);
+            $table->string('warna', 7)->default('#ffffff');
         });
     }
 
@@ -23,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('gurus');
+        Schema::dropIfExists('guru');
     }
 };

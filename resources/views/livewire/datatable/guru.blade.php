@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\MataPelajaran;
+use App\Models\Guru;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -12,7 +12,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
@@ -21,7 +20,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     use InteractsWithSchemas;
     use InteractsWithTable;
 
-    #[On('refreshMapelTable')]
+    #[On('refreshGuruTable')]
     public function refresh()
     {
         $this->dispatch('$refresh');
@@ -31,7 +30,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     {
         return $table->query(function () {
             //filter tingkat
-            $query = MataPelajaran::query()
+            $query = Guru::query()
                 ->orderBy('id', 'desc');
             return $query;
         })
@@ -39,9 +38,11 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
             ->columns([
                 // Tambahkan kolom nomor urut paling awal
                 TextColumn::make('index')->label('No')->rowIndex()->sortable(false)->searchable(false),
-                TextColumn::make('kode_mapel')->label('Kode Mapel')->searchable(true),
-                TextColumn::make('jenis_mapel')->label('Jenis Mapel')->searchable(true),
-                TextColumn::make('nama_mapel')->label('Mata Pelajaran')->searchable(true),
+                TextColumn::make('kode_guru')->label('Kode Mapel')->searchable(true),
+                TextColumn::make('nama_guru')->label('Jenis Mapel')->searchable(true),
+                TextColumn::make('warna')->label('Warna')->formatStateUsing(
+                    fn($state) => $state ? "<div class='flex items-center gap-2'><span class='inline-block w-6 h-6 rounded' style='background-color: {$state}'></span>{$state}</div>" : '-'
+                )->html()->searchable(true),
             ])
             ->recordActions([
                 Action::make('edit')
@@ -60,10 +61,9 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     ->requiresConfirmation()
                     ->action(function ($record) {
                         $record->delete();
-                        Cache::forget('periode_options');
 
-                        Notification::make()->title('Data mata pelajaran berhasil dihapus')->success()->send();
-                        $this->dispatch('refreshMapelTable');
+                        Notification::make()->title('Data guru berhasil dihapus')->success()->send();
+                        $this->dispatch('refreshGuruTable');
                     }),
             ])
             ->toolbarActions([
@@ -72,15 +72,16 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     ->icon('heroicon-o-trash') // ikon trash 🗑️
                     ->color('danger')
                     ->modalHeading('Hapus Data')
-                    ->modalDescription('Apakah anda yakin ingin menghapus mapel ini? Semua jadwal dengan mapel ini AKAN DIHAPUS!')
+                    ->modalDescription('Apakah anda yakin ingin menghapus data guru ini? Semua jadwal dengan guru ini AKAN DIHAPUS!')
                     ->requiresConfirmation() // muncul modal konfirmasi
                     ->action(function ($records) {
                         $records->each->delete(); // hapus semua data yang dipilih
                         $total = count($records);
                         Notification::make()
-                            ->title($total ? "{$total} Mata pelajaran berhasil dihapus!" : "Mata pelajaran berhasil dihapus!")
+                            ->title($total ? "{$total} data guru berhasil dihapus!" : "data guru berhasil dihapus!")
                             ->success()
                             ->send();
+                        $this->dispatch('refreshGuruTable');
                     })
                     ->deselectRecordsAfterCompletion(),
             ])

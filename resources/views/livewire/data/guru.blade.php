@@ -1,6 +1,10 @@
 <?php
 
+use Filament\Forms\Components\ColorPicker;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Schemas\Schema;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
@@ -9,8 +13,8 @@ use Livewire\Volt\Component;
 
 new
 #[Title('Data Guru')]
-class extends Component {
-    protected $columnDefs = [['name' => 'Kode Guru', 'field' => 'kode_guru'], ['name' => 'Nama Guru', 'field' => 'nama_guru']];
+class extends Component implements HasSchemas{
+        use InteractsWithSchemas;
 
     public array $formData = [
         'nama_guru' => '',
@@ -24,6 +28,7 @@ class extends Component {
         return [
             'formData.kode_guru' => ['required', 'string',  Rule::unique('guru', 'kode_guru')->ignore($this->formData['id'] ?? null)],
             'formData.nama_guru' => ['required', 'string', 'max:40'],
+            'formData.warna' => ['hex_color'],
         ];
     }
 
@@ -34,8 +39,17 @@ class extends Component {
             'formData.kode_guru.unique' => 'Kode Guru ini sudah digunakan oleh guru lain.',
             'formData.nama_guru.required' => 'Nama guru wajib diisi.',
             'formData.nama_guru.max' => 'Nama guru tidak boleh lebih dari 40 karakter.',
+            'formData.warna.hex_color' => 'Warna harus dalam format heksadesimal.',
         ];
     }
+
+     public function form(Schema $schema): Schema
+        {
+            return $schema
+                ->components([
+                    ColorPicker::make('formData.warna')->label('Warna')->placeholder('Pilih warna untuk jadwal')->regex('/^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})\b$/')
+                ]);
+        }
 
     #[On('openAddModal')]
     public function openAddModal()
@@ -44,6 +58,7 @@ class extends Component {
         $this->formData = [
             'nama_guru' => '',
             'kode_guru' => '',
+            'warna' => '',
         ];
         Flux::modal('guru-modal')->show();
     }
@@ -87,7 +102,7 @@ class extends Component {
     </x-card-heading>
 
     {{-- Datatable --}}
-    <livewire:datatable.index actionType="data" :columns="$this->columnDefs" :model="\App\Models\Guru::class" />
+    <livewire:datatable.guru />
 
     {{-- Add Data Modal --}}
     <flux:modal name="guru-modal" class="w-[85%] md:w-[480px]">
@@ -100,6 +115,10 @@ class extends Component {
                 </div>
                 <flux:input wire:model.defer="formData.kode_guru" label="Kode Guru" placeholder="Kode Guru" />
                 <flux:input wire:model.defer="formData.nama_guru" label="Nama Guru" placeholder="Nama Guru" />
+
+                {{-- filament form --}}
+                {{ $this->form }}
+
                 <div class="flex">
                     <flux:spacer />
                     <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>
