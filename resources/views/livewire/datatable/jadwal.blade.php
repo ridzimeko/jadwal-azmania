@@ -70,7 +70,12 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                 TextColumn::make('jamPelajaran')
                     ->label('Jam')
                     ->formatStateUsing(fn($state, $record) => $record->jamPelajaran ? $record->jamPelajaran->jam_mulai . ' - ' . $record->jamPelajaran->jam_selesai : '-')
-                    ->searchable(true),
+                    ->searchable(query: function ($query, $search) {
+                        $query->whereHas('jamPelajaran', function ($q) use ($search) {
+                            $q->where('jam_mulai', 'like', "%{$search}%")
+                                ->orWhere('jam_selesai', 'like', "%{$search}%");
+                        });
+                    }),
                 TextColumn::make('mataPelajaran.nama_mapel')->label('Mata Pelajaran')->searchable(true),
                 TextColumn::make('guru.nama_guru')->label('Guru Pengajar')->searchable(true)->default('-'),
             ])

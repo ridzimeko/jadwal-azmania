@@ -153,7 +153,7 @@ new class extends Component {
                                 @foreach ($kelasList as $kelas)
                                     @php
                                         $kelasItems = $items->where('kelas_id', $kelas->id);
-                                        $jam_mapel = array_map('trim', explode('-', $jamLabel));
+                                        $jam_pelajaran_id = $items->first()?->jam_pelajaran_id;
                                     @endphp
                                     <td
                                         class="px-4 py-2 border text-center align-top {{ $kelasItems->first()?->is_bentrok ? 'bg-red-100 text-red-700' : '' }}">
@@ -191,7 +191,7 @@ new class extends Component {
                                                     'hari' => $hariKey,
                                                     'kelas_id' => $kelas->id,
                                                     'mata_pelajaran_id' => null,
-                                                    'jam_pelajaran_id' => null,
+                                                    'jam_pelajaran_id' => $jam_pelajaran_id,
                                                     'guru_id' => null,
                                                 ]) }})">
                                                 Tambah +
