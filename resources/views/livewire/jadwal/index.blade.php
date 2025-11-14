@@ -26,6 +26,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     public $guruOptions;
     public $jamPelajaranOptions;
     public $mataPelajaranOptions;
+    public $jpErrorMsg = '';
     public $jadwalBentrokList = [];
     public ?array $formData = [
         'hari' => '',
@@ -126,6 +127,16 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             return;
         }
 
+        $jpCheck = JadwalHelper::validateJp(
+            $this->formData['mata_pelajaran_id'],
+            $this->periode_id,
+        );
+
+        if (!$jpCheck['valid']) {
+            $this->jpErrorMsg = $jpCheck['message'];
+            return;
+        }
+
         $result = [
             ...JadwalHelper::empty_to_null($this->formData),
             'periode_id' => $this->periode_id,
@@ -138,6 +149,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         }
 
         $this->jadwalBentrokList = [];
+        $this->jpErrorMsg = '';
         Notification::make()->title('Jadwal Berhasil Tersimpan')->success()->send();
         Flux::modal('jadwal-modal')->close();
         $this->dispatch('refreshJadwalTable');
@@ -243,7 +255,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 <flux:label>Nama Mata Pelajaran</flux:label>
                 <x-select name="formData.mata_pelajaran_id" wire:model="formData.mata_pelajaran_id" :options="$mataPelajaranOptions"
                     placeholder="Pilih mata pelajaran..." />
-                <flux:error name="formData.mata_pelajaran_id" />
+                <flux:error :message="$this->jpErrorMsg" name="formData.mata_pelajaran_id" />
             </flux:field>
 
             <flux:field>

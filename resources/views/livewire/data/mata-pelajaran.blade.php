@@ -9,92 +9,82 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 
-new
-    #[Title('Mata Pelajaran')]
-    class extends Component {
+new #[Title('Mata Pelajaran')] class extends Component {
+    public array $formData = [
+        'kode_mapel' => '',
+        'nama_mapel' => '',
+        'jenis_mapel' => '',
+        'jp_per_pekan' => '',
+    ];
+    public bool $isEdit = false;
 
-        public array $formData = [
+    protected function rules(): array
+    {
+        return [
+            'formData.kode_mapel' => ['required', 'string', 'max:12', Rule::unique('mata_pelajaran', 'kode_mapel')->ignore($this->formData['id'] ?? null)],
+            'formData.nama_mapel' => ['required', 'string', 'max:40'],
+            'formData.jenis_mapel' => 'required|string|in:KBM,Non KBM',
+            'formData.jp_per_pekan' => 'integer|required|gt:0',
+        ];
+    }
+
+    protected function messages(): array
+    {
+        return [
+            'formData.kode_mapel.required' => 'Kode mata pelajaran wajib diisi.',
+            'formData.kode_mapel.string' => 'Kode mata pelajaran harus berupa teks.',
+            'formData.kode_mapel.max' => 'Kode mata pelajaran tidak boleh lebih dari 12 karakter.',
+            'formData.kode_mapel.unique' => 'Kode mata pelajaran sudah terdaftar, gunakan kode lain.',
+
+            'formData.nama_mapel.required' => 'Nama mata pelajaran wajib diisi.',
+            'formData.nama_mapel.string' => 'Nama mata pelajaran harus berupa teks.',
+            'formData.nama_mapel.max' => 'Nama mata pelajaran tidak boleh lebih dari 40 karakter.',
+
+            'formData.jenis_mapel.required' => 'Jenis Mapel wajib diisi.',
+            'formData.jenis_mapel.string' => 'Jenis Mapel harus berupa teks.',
+            'formData.jenis_mapel.in' => 'Jenis Mapel harus salah satu dari: KBM, Non KBM.',
+
+            'formData.jp_per_pekan.integer' => 'JP per Pekan harus berupa angka.',
+            'formData.jp_per_pekan.required' => 'JP per Pekan wajib diisi.',
+        ];
+    }
+
+    #[On('openAddModal')]
+    public function openAddModal()
+    {
+        $this->isEdit = false;
+        $this->formData = [
             'kode_mapel' => '',
             'nama_mapel' => '',
             'jenis_mapel' => '',
+            'jp_per_pekan' => '',
         ];
-        public bool $isEdit = false;
+        Flux::modal('mapel-modal')->show();
+    }
 
-        protected function rules(): array
-        {
-            return [
-                'formData.kode_mapel' => [
-                    'required',
-                    'string',
-                    'max:12',
-                    Rule::unique('mata_pelajaran', 'kode_mapel')->ignore($this->formData['id'] ?? null),
-                ],
-                'formData.nama_mapel' => [
-                    'required',
-                    'string',
-                    'max:40',
-                ],
-                'formData.jenis_mapel' => 'required|string|in:KBM,Non KBM',
-            ];
+    #[On('openEditModal')]
+    public function openEditModal($record)
+    {
+        $this->isEdit = true;
+        $this->formData = $record;
+        Flux::modal('mapel-modal')->show();
+    }
+
+    public function save()
+    {
+        $this->validate();
+
+        if ($this->isEdit) {
+            MataPelajaran::find($this->formData['id'])->update($this->formData);
+        } else {
+            MataPelajaran::create($this->formData);
         }
 
-        protected function messages(): array
-        {
-            return [
-                'formData.kode_mapel.required' => 'Kode mata pelajaran wajib diisi.',
-                'formData.kode_mapel.string' => 'Kode mata pelajaran harus berupa teks.',
-                'formData.kode_mapel.max' => 'Kode mata pelajaran tidak boleh lebih dari 12 karakter.',
-                'formData.kode_mapel.unique' => 'Kode mata pelajaran sudah terdaftar, gunakan kode lain.',
-
-                'formData.nama_mapel.required' => 'Nama mata pelajaran wajib diisi.',
-                'formData.nama_mapel.string' => 'Nama mata pelajaran harus berupa teks.',
-                'formData.nama_mapel.max' => 'Nama mata pelajaran tidak boleh lebih dari 40 karakter.',
-
-                'formData.jenis_mapel.required' => 'Jenis Mapel wajib diisi.',
-                'formData.jenis_mapel.string' => 'Jenis Mapel harus berupa teks.',
-                'formData.jenis_mapel.in' => 'Jenis Mapel harus salah satu dari: KBM, Non KBM.',
-            ];
-        }
-
-        #[On('openAddModal')]
-        public function openAddModal()
-        {
-            $this->isEdit = false;
-            $this->formData = [
-                'kode_mapel' => '',
-                'nama_mapel' => '',
-                'warna' => '',
-                'jenis_mapel' => '',
-            ];
-            Flux::modal('mapel-modal')->show();
-        }
-
-        #[On('openEditModal')]
-        public function openEditModal($record)
-        {
-            $this->isEdit = true;
-            $this->formData = $record;
-            Flux::modal('mapel-modal')->show();
-        }
-
-        public function save()
-        {
-            $this->validate();
-
-            if ($this->isEdit) {
-                MataPelajaran::find($this->formData['id'])->update($this->formData);
-            } else {
-                MataPelajaran::create($this->formData);
-            }
-
-            Notification::make()
-                ->title('Mata Pelajaran Tersimpan')
-                ->success()
-                ->send();
-            Flux::modal('mapel-modal')->close();
-            $this->dispatch('refreshMapelTable');
-        }
-    };
+        Notification::make()->title('Mata Pelajaran Tersimpan')->success()->send();
+        Flux::modal('mapel-modal')->close();
+        $this->dispatch('refreshMapelTable');
+    }
+};
 ?>
 
 <div class="dash-card">
@@ -119,22 +109,21 @@ new
                         {{ $isEdit ? 'Ubah Data Mata Pelajaran' : 'Tambah Data Mata Pelajaran' }}
                     </flux:heading>
                 </div>
+                <flux:field>
+                    <flux:label>Jenis Mapel</flux:label>
+                    <x-select name="formData.jenis_mapel" wire:model="formData.jenis_mapel" :search="false"
+                        :options="[['label' => 'KBM', 'value' => 'KBM'], ['label' => 'Non KBM', 'value' => 'Non KBM']]" placeholder="Pilih jenis mata pelajaran" />
+                    <flux:error name="formData.jenis_mapel" />
+                </flux:field>
+
                 <flux:input wire:model.defer="formData.kode_mapel" label="Kode Mapel" placeholder="Kode Mapel" />
                 <flux:input wire:model.defer="formData.nama_mapel" label="Nama Mapel" placeholder="Nama Mapel" />
 
                 <flux:field>
-                    <flux:label>Jenis Mapel</flux:label>
-                    <x-select
-                        name="formData.jenis_mapel"
-                        wire:model="formData.jenis_mapel"
-                        :search="false"
-                        :options="[
-                        ['label' => 'KBM', 'value' => 'KBM'],
-                        ['label' => 'Non KBM', 'value' => 'Non KBM'],
-                    ]"
-                        placeholder="Pilih jenis mata pelajaran"
-                        clearable />
-                    <flux:error name="formData.jenis_mapel" />
+                    <flux:label>Jatah Per Pekan</flux:label>
+                    <flux:input wire:model.defer="formData.jp_per_pekan" placeholder="Jatah Per Pekan" />
+                    <flux:error name="formData.jp_per_pekan" />
+                    {{-- <flux:description>Ketik "0" jika tidak ingin mengatur jatah</flux:description> --}}
                 </flux:field>
 
                 <div class="flex">

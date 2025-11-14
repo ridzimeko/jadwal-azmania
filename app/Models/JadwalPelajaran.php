@@ -56,6 +56,16 @@ class JadwalPelajaran extends Model
             }]);
     }
 
+    public function jadwalMapelSama()
+    {
+        return $this->hasMany(JadwalPelajaran::class, 'mata_pelajaran_id', 'mata_pelajaran_id')
+            ->whereColumn('periode_id', 'jadwal_pelajaran.periode_id');
+    }
+
+    public function scopeWithJpTerpakai($query)
+    {
+        return $query->withCount('jadwalMapelSama as jp_terpakai');
+    }
 
     public function getKelasNamaAttribute()
     {

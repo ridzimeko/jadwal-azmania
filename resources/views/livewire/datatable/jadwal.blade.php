@@ -56,7 +56,18 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                 // }
                 return $query;
             })
-            ->recordClasses(fn(JadwalPelajaran $record) => $record->is_bentrok ? 'bg-red-100 text-red-700 font-semibold dark:bg-red-900/20' : '')
+            ->recordClasses(function (JadwalPelajaran $record) {
+                if ($record->is_bentrok) {
+                    return 'bg-red-100 text-red-700 font-semibold dark:bg-red-900/20';
+                }
+                if (
+                    // ($record->mataPelajaran->jp_per_pekan > 0) &&
+                    ($record->jp_terpakai > $record->mataPelajaran->jp_per_pekan)
+                ) {
+                    return 'bg-yellow-100 text-yellow-700 font-semibold dark:bg-yellow-900/20';
+                }
+                return '';
+            })
             ->searchable()
             ->columns([
                 // Tambahkan kolom nomor urut paling awal

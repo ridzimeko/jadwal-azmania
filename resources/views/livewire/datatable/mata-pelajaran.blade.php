@@ -41,6 +41,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                 TextColumn::make('index')->label('No')->rowIndex()->sortable(false)->searchable(false),
                 TextColumn::make('kode_mapel')->label('Kode Mapel')->searchable(true),
                 TextColumn::make('jenis_mapel')->label('Jenis Mapel')->searchable(true),
+                TextColumn::make('jp_per_pekan')->label('Jatah Per Pekan')->searchable(true),
                 TextColumn::make('nama_mapel')->label('Mata Pelajaran')->searchable(true),
             ])
             ->recordActions([
