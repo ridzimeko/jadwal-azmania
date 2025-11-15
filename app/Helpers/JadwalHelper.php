@@ -133,12 +133,24 @@ class JadwalHelper
 
     public static function getMapelOptions()
     {
-        return Cache::remember("mapel_options", 60 * 60, function () {
             return MataPelajaran::orderBy('nama_mapel')
                 ->get()
                 ->map(fn($g) => ['value' => $g->id, 'label' => $g->nama_mapel])
                 ->toArray();
-        });
+    }
+
+    public static function getMapelWithJpOptions($periodeId)
+    {
+        return MataPelajaran::orderBy('nama_mapel')
+            ->withCount(['jadwal as jp_terpakai' => function ($q) use ($periodeId) {
+                $q->where('periode_id', $periodeId);
+            }])
+            ->get()
+            ->map(fn($g) => [
+                'value' => $g->id,
+                'label' => "{$g->nama_mapel} (JP Terpakai: {$g->jp_terpakai}/{$g->jp_per_pekan})",
+            ])
+            ->toArray();
     }
 
     public static function getPeriodeOptions()

@@ -20,4 +20,9 @@ class MataPelajaran extends Model
     protected $table = 'mata_pelajaran';
 
     public $timestamps = false;
+
+    public function jadwal()
+    {
+        return $this->hasMany(JadwalPelajaran::class, 'mata_pelajaran_id');
+    }
 }

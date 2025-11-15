@@ -9,6 +9,7 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Flux\Flux;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
@@ -25,7 +26,6 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     public $kelasOptions;
     public $guruOptions;
     public $jamPelajaranOptions;
-    public $mataPelajaranOptions;
     public $jpErrorMsg = '';
     public $jadwalBentrokList = [];
     public ?array $formData = [
@@ -52,7 +52,6 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         }
 
         $this->hariOptions = JadwalHelper::getHariOptions();
-        $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
         $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
         $this->guruOptions = JadwalHelper::getGuruOptions();
         $this->jamPelajaranOptions = JadwalHelper::getJamPelajaranOptions();
@@ -88,6 +87,12 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
             'formData.guru_id.exists' => 'Guru yang dipilih tidak valid.',
         ];
+    }
+
+    #[Computed]
+    public function mataPelajaranOptions()
+    {
+        return JadwalHelper::getMapelWithJpOptions($this->periode_id);
     }
 
     public function openAddJadwalModal()
@@ -253,7 +258,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
             <flux:field>
                 <flux:label>Nama Mata Pelajaran</flux:label>
-                <x-select name="formData.mata_pelajaran_id" wire:model="formData.mata_pelajaran_id" :options="$mataPelajaranOptions"
+                <x-select name="formData.mata_pelajaran_id" wire:model="formData.mata_pelajaran_id" :options="$this->mataPelajaranOptions"
                     placeholder="Pilih mata pelajaran..." />
                 <flux:error :message="$this->jpErrorMsg" name="formData.mata_pelajaran_id" />
             </flux:field>
