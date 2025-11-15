@@ -9,10 +9,12 @@ use Illuminate\Contracts\Validation\ValidationRule;
 class JatahJpRule implements ValidationRule
 {
     protected $periodeId;
+    protected $jadwalId;
 
-    public function __construct($periodeId)
+    public function __construct($periodeId, $jadwalId = null)
     {
         $this->periodeId = $periodeId;
+        $this->jadwalId = $jadwalId;
     }
     
     /**
@@ -22,7 +24,7 @@ class JatahJpRule implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-         $result = JadwalHelper::validateJp($value, $this->periodeId);
+         $result = JadwalHelper::validateJp($value, $this->periodeId, $this->jadwalId);
 
         if (!$result['valid']) {
             $fail($result['message']);
