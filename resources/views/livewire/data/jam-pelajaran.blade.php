@@ -1,23 +1,26 @@
 <?php
 
 use App\Models\JamPelajaran;
+use App\Rules\JamPelajaranBentrokRule;
 use Filament\Notifications\Notification;
 use Flux\Flux;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 
 new #[Title('Data Kelas')] class extends Component {
-    protected $columnDefs = [['name' => 'Urutan', 'field' => 'urutan'], ['name' => 'Jam Mulai', 'field' => 'jam_mulai'], ['name' => 'Jam Selesai', 'field' => 'jam_selesai']];
+    protected $columnDefs = [['name' => 'Jam Ke', 'field' => 'urutan'], ['name' => 'Jam Mulai', 'field' => 'jam_mulai'], ['name' => 'Jam Selesai', 'field' => 'jam_selesai']];
 
     public ?array $formData = null;
+    public array $jamBentrokList = [];
     public bool $isEdit = false;
 
     protected function rules(): array
     {
         return [
-            'formData.urutan' => ['required', 'integer', 'max:12', 'unique:jam_pelajaran,urutan'],
-            'formData.jam_mulai' => 'required|date_format:H:i',
+            'formData.urutan' => ['required', 'integer', 'max_digits:2',  Rule::unique('jam_pelajaran', 'urutan')->ignore($this->formData['id'] ?? null)],
+            'formData.jam_mulai' => ['required', 'date_format:H:i'],
             'formData.jam_selesai' => 'required|date_format:H:i|after:formData.jam_mulai',
         ];
     }
@@ -25,10 +28,10 @@ new #[Title('Data Kelas')] class extends Component {
     protected function messages(): array
     {
         return [
-            'formData.urutan.required' => 'Urutan wajib diisi.',
-            'formData.urutan.string' => 'Urutan harus berupa teks.',
-            'formData.urutan.max' => 'Urutan tidak boleh lebih dari 12 karakter.',
-            'formData.urutan.unique' => 'Urutan sudah terdaftar, gunakan kode lain.',
+            'formData.urutan.required' => 'Urutan jam wajib diisi.',
+            'formData.urutan.string' => 'Urutan jam harus berupa teks.',
+            'formData.urutan.max_digits' => 'Urutan jam tidak boleh lebih dari :max digit.',
+            'formData.urutan.unique' => 'Urutan jam sudah terdaftar',
 
             'formData.jam_mulai.required' => 'Jam mulai wajib diisi.',
             'formData.jam_mulai.date_format' => 'Format jam mulai harus HH:MM (24 jam).',
@@ -37,6 +40,24 @@ new #[Title('Data Kelas')] class extends Component {
             'formData.jam_selesai.date_format' => 'Format jam selesai harus HH:MM (24 jam).',
             'formData.jam_selesai.after' => 'Jam selesai harus lebih besar dari jam mulai.',
         ];
+    }
+
+    public function validateJamBentrok()
+    {
+        $this->jamBentrokList = [];
+
+        $exists = JamPelajaran::when($this->formData['id'], fn($q) => $q->where('id', '!=', $this->formData['id']))
+            ->where(function ($q) {
+                $q->where('jam_mulai', '<', $this->formData['jam_selesai'])
+                    ->where('jam_selesai', '>', $this->formData['jam_mulai']);
+            })
+            ->get();
+
+        if ($exists->count() > 0) {
+            foreach ($exists as $jam) {
+                $this->jamBentrokList[] = "Jam Ke-{$jam->urutan} ({$jam->jam_mulai} - {$jam->jam_selesai})";
+            }
+        }
     }
 
     #[On('openAddModal')]
@@ -62,6 +83,13 @@ new #[Title('Data Kelas')] class extends Component {
     public function save()
     {
         $this->validate();
+
+        $this->validateJamBentrok();
+
+        // Jika ada bentrok, jangan lanjut
+        if (count($this->jamBentrokList) > 0) {
+            return;
+        }
 
         if ($this->isEdit) {
             JamPelajaran::find($this->formData['id'])->update([
@@ -100,7 +128,22 @@ new #[Title('Data Kelas')] class extends Component {
                         {{ $isEdit ? 'Ubah Data' : 'Tambah Data' }} Jam Pelajaran
                     </flux:heading>
                 </div>
-                <flux:input wire:model.defer="formData.urutan" label="Urutan Jam" placeholder="Urutan Jam" />
+
+                @if (count($this->jamBentrokList) >= 1)
+                <flux:callout variant="danger" icon="x-circle" heading="Terdapat jam pelajaran yang bentrok!">
+                    <flux:callout.text>
+                        <ul>
+                            @foreach ($this->jamBentrokList as $jam)
+                            <li>
+                                <div>• {{ $jam }}</div>
+                            </li>
+                            @endforeach
+                        </ul>
+                    </flux:callout.text>
+                </flux:callout>
+                @endif
+
+                <flux:input wire:model.defer="formData.urutan" label="Jam Ke" placeholder="Jam Ke" />
 
                 <div class="flex flex-row items-center gap-6 w-full">
                     <flux:field class="min-w-[200px]">
