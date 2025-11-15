@@ -2,7 +2,6 @@
 
 use App\Helpers\JadwalHelper;
 use App\Models\JadwalPelajaran;
-use App\Models\Periode;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -21,7 +20,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     protected $columnDefs = [['name' => 'Kelas', 'field' => 'kelas_nama'], ['name' => 'Hari', 'field' => 'hari'], ['name' => 'Jam Mulai', 'field' => 'jam_mulai'], ['name' => 'Jam Selesai', 'field' => 'jam_selesai'], ['name' => 'Mata Pelajaran', 'field' => 'mapel_nama'], ['name' => 'Guru Pengajar', 'field' => 'guru_nama']];
 
     public $periode_id;
-    public $currentPeriode;
+    public $tahunAjaran;
     public $hariOptions;
     public $kelasOptions;
     public $guruOptions;
@@ -46,9 +45,9 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
     public function mount()
     {
-        $this->currentPeriode = Periode::query()->where('id', $this->periode_id)->first();
+        $this->tahunAjaran = JadwalHelper::getTahunAjaran($this->periode_id);
 
-        if (!$this->currentPeriode) {
+        if (!$this->tahunAjaran) {
             abort(404, 'Jadwal dengan periode ini tidak ditemukan.');
         }
 
@@ -180,7 +179,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 ?>
 
 <div class="dash-card">
-    <x-card-heading title="Jadwal Pelajaran" description="Tahun Ajaran {{ $this?->currentPeriode?->tahun_ajaran }} Semester {{ $this?->currentPeriode?->semester }}">
+    <x-card-heading title="Jadwal Pelajaran" description="Periode Tahun Ajaran {{ $this->tahunAjaran }}">
         <x-slot name="action_buttons">
             <flux:modal.trigger name="import-excel">
                 <flux:button icon="file-excel" class="!bg-az-green !text-white">Import dari Excel</flux:button>

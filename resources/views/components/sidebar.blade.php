@@ -13,26 +13,9 @@
     <flux:sidebar.nav>
         <flux:sidebar.item icon="home" href="/">Beranda</flux:sidebar.item>
 
-        <flux:sidebar.item icon="calendar" href="/jadwal/periode">Periode Jadwal</flux:sidebar.item>
-
-        @php
-            $periodeList = \App\Models\Periode::orderBy('tahun_ajaran', 'desc')->get();
-        @endphp
         <flux:sidebar.group expandable icon="book" heading="Jadwal" class="grid">
-            @if (count($periodeList) >= 1)
-                @foreach ($periodeList as $periode)
-                    <flux:sidebar.item href="/jadwal/pelajaran/detail/{{ $periode->id }}">
-                        {{ $periode->tahun_ajaran }}
-                    </flux:sidebar.item>
-                @endforeach
-                @if (count($periodeList) > 3)
-                    <flux:sidebar.item href="/jadwal/pelajaran">
-                        Periode lain
-                    </flux:sidebar.item>    
-                @endif
-            @else
-                <flux:sidebar.item class="text-gray-600">Belum ada periode</flux:sidebar.item>
-            @endif
+            <flux:sidebar.item href="/jadwal/periode">Periode</flux:sidebar.item>
+            <flux:sidebar.item :current="Request::is('jadwal/pelajaran*')" href="/jadwal/pelajaran">Pelajaran</flux:sidebar.item>
         </flux:sidebar.group>
 
         <flux:sidebar.group expandable icon="pencil-square" heading="Data" class="grid">
@@ -41,7 +24,7 @@
             <flux:sidebar.item href="/data/guru">Guru</flux:sidebar.item>
             <flux:sidebar.item href="/data/kelas">Kelas</flux:sidebar.item>
         </flux:sidebar.group>
-        @if (auth()->user()->role === 'superadmin')
+        @if(auth()->user()->role === 'superadmin')
             <flux:sidebar.item icon="users" href="/atur-admin">Kelola Admin</flux:sidebar.item>
         @endif
     </flux:sidebar.nav>
