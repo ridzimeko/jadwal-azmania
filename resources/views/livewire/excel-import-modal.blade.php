@@ -43,7 +43,7 @@ new class extends Component {
         }
 
         Notification::make()->title('Data guru berhasil di unggah!')->success()->send();
-        $this->dispatch('refreshTable');
+        $this->dispatch('refreshGuruTable');
     }
 
     private function importKelas($path)

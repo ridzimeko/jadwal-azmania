@@ -38,8 +38,8 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
             ->columns([
                 // Tambahkan kolom nomor urut paling awal
                 TextColumn::make('index')->label('No')->rowIndex()->sortable(false)->searchable(false),
-                TextColumn::make('kode_guru')->label('Kode Mapel')->searchable(true),
-                TextColumn::make('nama_guru')->label('Jenis Mapel')->searchable(true),
+                TextColumn::make('kode_guru')->label('Kode Guru')->searchable(true),
+                TextColumn::make('nama_guru')->label('Nama Guru')->searchable(true),
                 TextColumn::make('warna')->label('Warna')->formatStateUsing(
                     fn($state) => $state ? "<div class='flex items-center gap-2'><span class='inline-block w-6 h-6 rounded' style='background-color: {$state}'></span>{$state}</div>" : '-'
                 )->html()->searchable(true),
