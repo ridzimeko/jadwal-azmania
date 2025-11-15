@@ -2,6 +2,7 @@
 
 use App\Helpers\JadwalHelper;
 use App\Models\JadwalPelajaran;
+use App\Rules\JatahJpRule;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -26,7 +27,6 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     public $kelasOptions;
     public $guruOptions;
     public $jamPelajaranOptions;
-    public $jpErrorMsg = '';
     public $jadwalBentrokList = [];
     public ?array $formData = [
         'hari' => '',
@@ -64,7 +64,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         return [
             'formData.hari' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
             'formData.kelas_id' => 'required|exists:kelas,id',
-            'formData.mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
+            'formData.mata_pelajaran_id' => ['required', 'exists:mata_pelajaran,id', new JatahJpRule($this->periode_id)],
             'formData.jam_pelajaran_id' => 'required|exists:jam_pelajaran,id',
             'formData.guru_id' => 'nullable|exists:guru,id',
         ];
@@ -132,16 +132,6 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             return;
         }
 
-        $jpCheck = JadwalHelper::validateJp(
-            $this->formData['mata_pelajaran_id'],
-            $this->periode_id,
-        );
-
-        if (!$jpCheck['valid']) {
-            $this->jpErrorMsg = $jpCheck['message'];
-            return;
-        }
-
         $result = [
             ...JadwalHelper::empty_to_null($this->formData),
             'periode_id' => $this->periode_id,
@@ -154,7 +144,6 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         }
 
         $this->jadwalBentrokList = [];
-        $this->jpErrorMsg = '';
         Notification::make()->title('Jadwal Berhasil Tersimpan')->success()->send();
         Flux::modal('jadwal-modal')->close();
         $this->dispatch('refreshJadwalTable');
@@ -260,7 +249,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 <flux:label>Nama Mata Pelajaran</flux:label>
                 <x-select name="formData.mata_pelajaran_id" wire:model="formData.mata_pelajaran_id" :options="$this->mataPelajaranOptions"
                     placeholder="Pilih mata pelajaran..." />
-                <flux:error :message="$this->jpErrorMsg" name="formData.mata_pelajaran_id" />
+                <flux:error name="formData.mata_pelajaran_id" />
             </flux:field>
 
             <flux:field>
