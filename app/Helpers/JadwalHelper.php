@@ -187,15 +187,13 @@ class JadwalHelper
 
     public static function getGuruOptions()
     {
-        return Cache::remember('guru_options', 60 * 60, function () {
-            return Guru::orderBy('nama_guru')
-                ->get()
-                ->map(fn($g) => [
-                    'value' => $g->id,
-                    'label' => $g->nama_guru,
-                ])
-                ->toArray();
-        });
+        return Guru::orderBy('nama_guru')
+            ->get()
+            ->map(fn($g) => [
+                'value' => $g->id,
+                'label' => $g->nama_guru,
+            ])
+            ->toArray();
     }
 
     public static function getJamPelajaranOptions()
