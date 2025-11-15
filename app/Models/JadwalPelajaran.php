@@ -56,6 +56,18 @@ class JadwalPelajaran extends Model
             }]);
     }
 
+    public function scopeWithOverJp($query) {
+        return $query
+            ->with(['mataPelajaran'])
+            ->addSelect(['is_over_jp' => function ($sub) {
+                $sub->selectRaw('CASE WHEN mp.jp_per_pekan > 0 AND COUNT(jp2.id) > mp.jp_per_pekan THEN 1 ELSE 0 END')
+                    ->from('jadwal_pelajaran as jp2')
+                    ->join('mata_pelajaran as mp', 'mp.id', '=', 'jadwal_pelajaran.mata_pelajaran_id')
+                    ->whereColumn('jp2.mata_pelajaran_id', 'jadwal_pelajaran.mata_pelajaran_id')
+                    ->whereColumn('jp2.periode_id', 'jadwal_pelajaran.periode_id');
+            }]);
+    }
+
     public function jadwalMapelSama()
     {
         return $this->hasMany(JadwalPelajaran::class, 'mata_pelajaran_id', 'mata_pelajaran_id')

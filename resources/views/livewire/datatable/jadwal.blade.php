@@ -14,6 +14,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Reactive;
 use Livewire\Volt\Component;
@@ -60,10 +61,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                 if ($record->is_bentrok) {
                     return 'bg-red-100 text-red-700 font-semibold dark:bg-red-900/20';
                 }
-                if (
-                    // ($record->mataPelajaran->jp_per_pekan > 0) &&
-                    ($record->jp_terpakai > $record->mataPelajaran->jp_per_pekan)
-                ) {
+                if ($record->is_over_jp) {
                     return 'bg-yellow-100 text-yellow-700 font-semibold dark:bg-yellow-900/20';
                 }
                 return '';

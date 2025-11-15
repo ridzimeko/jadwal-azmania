@@ -95,8 +95,9 @@ class JadwalHelper
             ->with(['kelas', 'mataPelajaran', 'guru', 'kegiatan', 'jamPelajaran'])
             ->whereRelation('periode', 'id', $periode)
             ->withBentrok()
-            ->withJpTerpakai()
+            ->withOverJp()
             ->orderByDesc('is_bentrok')
+            ->orderByDesc('is_over_jp')
             ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')");
 
         if ($tingkat) {
