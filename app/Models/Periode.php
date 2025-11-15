@@ -22,3 +22,5 @@ class Periode extends Model
         return $query->find($id)->first()->tahun_ajaran;
     }
 }
+
+
