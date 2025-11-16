@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\JamPelajaran;
-use App\Rules\JamPelajaranBentrokRule;
 use Filament\Notifications\Notification;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
@@ -46,7 +45,7 @@ new #[Title('Data Kelas')] class extends Component {
     {
         $this->jamBentrokList = [];
 
-        $exists = JamPelajaran::when($this->formData['id'], fn($q) => $q->where('id', '!=', $this->formData['id']))
+        $exists = JamPelajaran::when($this->formData['id'] ?? null, fn($q) => $q->where('id', '!=', $this->formData['id'] ?? null))
             ->where(function ($q) {
                 $q->where('jam_mulai', '<', $this->formData['jam_selesai'])
                     ->where('jam_selesai', '>', $this->formData['jam_mulai']);
