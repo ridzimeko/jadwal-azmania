@@ -89,12 +89,6 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         ];
     }
 
-    #[Computed(cache: false)]
-    public function mataPelajaranOptions()
-    {
-        return JadwalHelper::getMapelWithJpOptions($this->periode_id);
-    }
-
     public function openAddJadwalModal()
     {
         $this->isEdit = false;
@@ -247,8 +241,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
             <flux:field>
                 <flux:label>Nama Mata Pelajaran</flux:label>
-                <x-select name="formData.mata_pelajaran_id" wire:model="formData.mata_pelajaran_id" :options="$this->mataPelajaranOptions"
-                    placeholder="Pilih mata pelajaran..." />
+                <livewire:mapel-option wire:model="formData.mata_pelajaran_id" :periodeId="$this->periode_id" placeholder="Pilih mata pelajaran..." />
                 <flux:error name="formData.mata_pelajaran_id" />
             </flux:field>
 
