@@ -89,7 +89,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         ];
     }
 
-    #[Computed]
+    #[Computed(cache: false)]
     public function mataPelajaranOptions()
     {
         return JadwalHelper::getMapelWithJpOptions($this->periode_id);
