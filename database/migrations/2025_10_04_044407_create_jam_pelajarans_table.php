@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('jam_pelajaran', function (Blueprint $table) {
             $table->id();
-            $table->integer('urutan')->unique();
+            $table->string('urutan')->unique();
             $table->time('jam_mulai');
             $table->time('jam_selesai');
             $table->timestamps();

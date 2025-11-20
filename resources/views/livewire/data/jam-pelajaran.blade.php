@@ -18,7 +18,7 @@ new #[Title('Data Kelas')] class extends Component {
     protected function rules(): array
     {
         return [
-            'formData.urutan' => ['required', 'integer', 'max_digits:2',  Rule::unique('jam_pelajaran', 'urutan')->ignore($this->formData['id'] ?? null)],
+            'formData.urutan' => ['required', Rule::unique('jam_pelajaran', 'urutan')->ignore($this->formData['id'] ?? null)],
             'formData.jam_mulai' => ['required', 'date_format:H:i'],
             'formData.jam_selesai' => 'required|date_format:H:i|after:formData.jam_mulai',
         ];
