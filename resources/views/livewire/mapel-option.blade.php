@@ -3,6 +3,7 @@
 use App\Helpers\JadwalHelper;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Modelable;
+use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
 new class extends Component {
@@ -11,14 +12,29 @@ new class extends Component {
     public $search = true;
     public $clearable = false;
     public $periodeId;
-    
+    public $mataPelajaranOptions = [];
+
     #[Modelable]
     public $value;
 
     #[Computed()]
-    public function mataPelajaranOptions()
+    public function getMapelOptions()
     {
         return JadwalHelper::getMapelWithJpOptions($this->periodeId);
+    }
+
+    #[On('reload-mapel-options')]
+    public function updatedPeriodeId()
+    {
+        $this->mataPelajaranOptions = $this->getMapelOptions();
+
+        // Reset value biar ikut berubah
+        $this->value = null;
+    }
+
+    public function mount()
+    {
+        $this->mataPelajaranOptions = $this->getMapelOptions();
     }
 }; ?>
 
@@ -28,7 +44,7 @@ new class extends Component {
         search: '',
         value: $wire.entangle('value'),
         selectedLabel: '',
-        options: {{ json_encode($this->mataPelajaranOptions) }},
+        options: $wire.entangle('mataPelajaranOptions'),
         init() {
             this.setSelectedLabel();
             this.$watch('value', () => this.setSelectedLabel());
@@ -53,8 +69,7 @@ new class extends Component {
             this.selectedLabel = found ? found.label : '';
         }
     }"
-    class="relative w-full"
-    >
+    class="relative w-full">
     <!-- Trigger -->
     <div class="relative">
         <button
