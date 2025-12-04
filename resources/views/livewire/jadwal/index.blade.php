@@ -141,6 +141,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         Notification::make()->title('Jadwal Berhasil Tersimpan')->success()->send();
         Flux::modal('jadwal-modal')->close();
         $this->dispatch('refreshJadwalTable');
+        $this->dispatch('reload-mapel-options');
     }
 
     public function deleteAction(): Action
