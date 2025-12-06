@@ -7,9 +7,10 @@ Project Jadwal Azmania adalah aplikasi manajemen jadwal berbasis Laravel.
 
 ### 1. Clone repository
 
-git clone [https://github.com/username/jadwal-azmania.git](https://github.com/username/jadwal-azmania.git)
+```
+git clone https://github.com/ridzimeko/jadwal-azmania.git
 cd jadwal-azmania
-
+```
 
 atau download sebagai ZIP lalu ekstrak.
 
