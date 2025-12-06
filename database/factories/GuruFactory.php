@@ -17,9 +17,9 @@ class GuruFactory extends Factory
     public function definition(): array
     {
         return [
-            'nip' => $this->faker->unique()->numerify(str_repeat('#', 18)), // max 24, biasanya NIP 18 digit
+            'kode_guru' => $this->faker->unique()->numerify(str_repeat('#', 10)), // max 24, biasanya NIP 18 digit
             'nama_guru' => $this->faker->name(), // contoh: "Budi Santoso"
-            'warna' => sprintf('#%06X', mt_rand(0xAAAAAA, 0xFFFFFF)),
+            'warna' => $this->faker->hexColor() ?? '#ffffff',
         ];
     }
 }

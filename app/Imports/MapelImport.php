@@ -7,8 +7,9 @@ use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithUpserts;
 
-class MapelImport implements ToModel, WithHeadingRow, SkipsOnError
+class MapelImport implements ToModel, WithHeadingRow, WithUpserts, SkipsOnError
 {
     /**
     * @param array $row
@@ -20,9 +21,22 @@ class MapelImport implements ToModel, WithHeadingRow, SkipsOnError
 
     public function model(array $row)
     {
+        $jenis_mapel = strtolower($row['jenis_mapel'] ?? '');
+        $jenis_mapel_option = [
+            'kbm' => 'KBM',
+            'non kbm' => 'Non KBM',
+        ];
+
         return new MataPelajaran([
-            'kode_mapel' => $row['kode_mapel'],
-            'nama_mapel' => $row['mata_pelajaran'],
+            'kode_mapel' => $row['kode_mapel'] ?? null,
+            'jenis_mapel' => $jenis_mapel_option[$jenis_mapel] ?? null,
+            'nama_mapel' => $row['mata_pelajaran'] ?? null,
+            'jp_per_pekan' => isset($row['jatah_per_pekan']) ? (int) $row['jatah_per_pekan'] : 0,
         ]);
+    }
+
+    public function uniqueBy()
+    {
+        return 'kode_mapel';
     }
 }

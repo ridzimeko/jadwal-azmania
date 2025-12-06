@@ -14,13 +14,13 @@
         <flux:sidebar.item icon="home" href="/">Beranda</flux:sidebar.item>
 
         <flux:sidebar.group expandable icon="book" heading="Jadwal" class="grid">
-            <flux:sidebar.item href="/jadwal/smp">SMP</flux:sidebar.item>
-            <flux:sidebar.item href="/jadwal/ma">MA</flux:sidebar.item>
-            <flux:sidebar.item href="/jadwal/tetap">Kegiatan Tetap</flux:sidebar.item>
+            <flux:sidebar.item href="/jadwal/periode">Periode</flux:sidebar.item>
+            <flux:sidebar.item :current="Request::is('jadwal/pelajaran*')" href="/jadwal/pelajaran">Pelajaran</flux:sidebar.item>
         </flux:sidebar.group>
 
         <flux:sidebar.group expandable icon="pencil-square" heading="Data" class="grid">
             <flux:sidebar.item href="/data/mata-pelajaran">Mata Pelajaran</flux:sidebar.item>
+            <flux:sidebar.item href="/data/jam-pelajaran">Jam Pelajaran</flux:sidebar.item>
             <flux:sidebar.item href="/data/guru">Guru</flux:sidebar.item>
             <flux:sidebar.item href="/data/kelas">Kelas</flux:sidebar.item>
         </flux:sidebar.group>

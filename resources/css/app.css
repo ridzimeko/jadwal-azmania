@@ -31,16 +31,9 @@
 
 @variant dark (&:where(.dark-theme, .dark-theme *));
 
-@font-face {
-    font-family: "Manrope";
-    src: url("/resources/fonts/Manrope-VariableFont_wght.ttf") format("ttf");
-    font-weight: normal;
-    font-style: normal;
-  }
-
 
 .dash-card {
-    @apply p-6 flex flex-col gap-6 w-full bg-white rounded-lg overflow-auto
+    @apply p-4 md:p-6 flex flex-col gap-6 w-full bg-white rounded-lg overflow-auto
 }
 
 [data-flux-sidebar-item][data-current] {

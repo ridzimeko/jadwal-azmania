@@ -2,6 +2,7 @@
 
 use App\Imports\GuruImport;
 use App\Imports\JadwalPelajaranImport;
+use App\Imports\KelasImport;
 use App\Imports\MapelImport;
 use Filament\Notifications\Notification;
 use Livewire\Volt\Component;
@@ -11,6 +12,7 @@ use Maatwebsite\Excel\Facades\Excel;
 new class extends Component {
     public $context;
     public $name = 'import-excel';
+    public $periodeId;
 
     public function save()
     {
@@ -23,6 +25,7 @@ new class extends Component {
             'guru' => $this->importGuru($path),
             'jadwal' => $this->importJadwal($path),
             'mapel' => $this->importMapel($path),
+            'kelas' => $this->importKelas($path),
             default => throw new \Exception('Context tidak dikenal'),
         };
         Flux::modal('import-excel')->close();
@@ -30,46 +33,69 @@ new class extends Component {
 
     private function importGuru($path)
     {
-        Excel::import(new GuruImport(), $path);
+        $guru = new GuruImport();
+        $guru->import($path);
+        $errors = $guru->errors();
 
-        Notification::make()
-        ->title('Data guru berhasil di unggah!')
-        ->success()
-        ->send();
-        $this->dispatch('refreshTable');
+        if (count($errors) >= 1) {
+            Notification::make()->title('Terjadi error saat import data')->danger()->persistent()->send();
+            return;
+        }
+
+        Notification::make()->title('Data guru berhasil di unggah!')->success()->send();
+        $this->dispatch('refreshGuruTable');
     }
 
-    private function importMapel($path)
+    private function importKelas($path)
     {
-        Excel::import(new MapelImport(), $path);
+        try {
+        Excel::import(new KelasImport(), $path);
+            Notification::make()->title('Data Kelas berhasil di unggah!')->success()->send();
+            $this->dispatch('refreshTable');
+        } catch (\Throwable $th) {
+            Notification::make()->title('Terjadi error saat import data')->body($th->getMessage())->danger()->persistent()->send();
+        }
+    }
 
-        Notification::make()
-        ->title('Data Mata Pelajaran berhasil di unggah!')
-        ->success()
-        ->send();
-        $this->dispatch('refreshTable');
+     private function importMapel($path)
+    {
+        try {
+        Excel::import(new MapelImport(), $path);
+            Notification::make()->title('Data Mata Pelajaran berhasil di unggah!')->success()->send();
+            $this->dispatch('refreshMapelTable');
+        } catch (\Throwable $th) {
+            Notification::make()->title('Terjadi error saat import data')->body($th->getMessage())->danger()->persistent()->send();
+        }
     }
 
     private function importJadwal($path)
     {
-        Excel::import(new JadwalPelajaranImport(), $path);
+        try {
+            $mapel = new JadwalPelajaranImport($this->periodeId);
+            $mapel->import($path);
 
-        Notification::make()
-        ->title('Jadwal Pelajaran berhasil di unggah!')
-        ->success()
-        ->send();
-        $this->dispatch('refreshTable');
+            Notification::make()
+                ->title('Jadwal Pelajaran berhasil di unggah!')
+                ->body("Total data yang diimport: {$mapel->getImportedCount()}")
+                ->success()
+                ->send();
+            $this->dispatch('refreshJadwalTable');
+        } catch (\Throwable $th) {
+            Notification::make()->title('Terjadi error saat import data')->body($th->getMessage())->danger()->persistent()->send();
+        }
     }
 }; ?>
 
 <div>
-    <flux:modal name="{{ $name }}" class="min-w-[22rem]">
+    <flux:modal name="{{ $name }}" class="w-[90%] md:w-[32rem]">
         <form wire:submit.prevent="save">
             <div class="space-y-6">
                 <div class="space-y-1 mb-6">
                     <flux:heading size="lg">Import Data</flux:heading>
                     <flux:text class="whitespace-normal">Silakan unduh berkas
-                        <flux:badge as="button" x-on:click="window.location.href='{{ route('download.template', $this->context) }}'" color="green" icon="file-excel" size="sm">Template Excel
+                        <flux:badge as="button"
+                            x-on:click="window.location.href='{{ route('download.template', $this->context) }}'"
+                            color="green" icon="file-excel" size="sm">Template Excel
                         </flux:badge> untuk melakukan import data.
                     </flux:text>
                 </div>
@@ -80,39 +106,10 @@ new class extends Component {
                         <flux:button variant="ghost">Batal</flux:button>
                     </flux:modal.close>
                     <flux:button type="submit" variant="filled"
-                        class="!bg-primary !text-white disabled:text-gray-700 !disabled:bg-primary/40">Unggah data
+                        class="!bg-primary !text-white disabled:text-gray-700 !disabled:bg-primary/40">Unggah Data
                     </flux:button>
                 </div>
             </div>
         </form>
     </flux:modal>
-{{--
-    <flux:modal name="confirm-duplicate" class="min-w-[22rem]">
-        <form wire:submit.prevent="save">
-            <div class="space-y-6">
-                <div class="space-y-1 mb-6">
-                    <flux:heading size="lg">Konfirmasi Import</flux:heading>
-                    <flux:text class="whitespace-normal">
-                        Ada {{ count($duplicates) }} data duplikat. Apakah anda yakin ingin melanjutkan? Data berikut
-                        akan dilewati:
-                    </flux:text>
-                    <ul>
-                        @foreach ($duplicates as $d)
-                            <li>{{ $d[0] }} - {{ $d[1] }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-                <div class="flex gap-2">
-                    <flux:spacer />
-                    <flux:modal.close>
-                        <flux:button variant="ghost">Batal</flux:button>
-                    </flux:modal.close>
-                    <flux:button type="submit" variant="filled"
-                        class="!bg-yellow-600 !text-white disabled:text-gray-700 !disabled:bg-primary/40">
-                        Lanjutkan
-                    </flux:button>
-                </div>
-            </div>
-        </form>
-    </flux:modal>
-</div> --}}
+</div>

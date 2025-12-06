@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jadwal_tetap', function (Blueprint $table) {
+        Schema::create('jam_pelajaran', function (Blueprint $table) {
             $table->id();
-            $table->string('nama', 40);
+            $table->string('urutan')->unique();
             $table->time('jam_mulai');
             $table->time('jam_selesai');
             $table->timestamps();
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jadwal_tetaps');
+        Schema::dropIfExists('jam_pelajaran');
     }
 };

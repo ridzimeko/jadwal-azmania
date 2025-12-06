@@ -8,16 +8,17 @@ use Filament\Schemas\Schema;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 
-new class extends Component implements HasSchemas {
-    use InteractsWithSchemas;
-
-    protected $columnDefs = [['name' => 'NIP', 'field' => 'nip'], ['name' => 'Nama Guru', 'field' => 'nama_guru']];
+new
+#[Title('Data Guru')]
+class extends Component implements HasSchemas{
+        use InteractsWithSchemas;
 
     public array $formData = [
         'nama_guru' => '',
-        'nip' => '',
+        'kode_guru' => '',
         'warna' => ''
     ];
     public bool $isEdit = false;
@@ -25,31 +26,30 @@ new class extends Component implements HasSchemas {
     protected function rules(): array
     {
         return [
-            'formData.nip' => ['required', 'digits_between:8,20',  Rule::unique('guru', 'nip')->ignore($this->formData['id'] ?? null)],
+            'formData.kode_guru' => ['required', 'string',  Rule::unique('guru', 'kode_guru')->ignore($this->formData['id'] ?? null)],
             'formData.nama_guru' => ['required', 'string', 'max:40'],
-            'formData.warna' => ['hex_color']
+            'formData.warna' => ['hex_color'],
         ];
     }
 
     protected function messages(): array
     {
         return [
-            'formData.nip.required' => 'NIP wajib diisi.',
-            'formData.nip.digits_between' => 'NIP harus terdiri dari 8 hingga 20 angka.',
-            'formData.nip.unique' => 'NIP ini sudah digunakan oleh guru lain.',
+            'formData.kode_guru.required' => 'Kode Guru wajib diisi.',
+            'formData.kode_guru.unique' => 'Kode Guru ini sudah digunakan oleh guru lain.',
             'formData.nama_guru.required' => 'Nama guru wajib diisi.',
             'formData.nama_guru.max' => 'Nama guru tidak boleh lebih dari 40 karakter.',
-            'formData.warna.hex_color' => 'Warna harus dalam format heksadesimal.'
+            'formData.warna.hex_color' => 'Warna harus dalam format heksadesimal.',
         ];
     }
 
-    public function form(Schema $schema): Schema
-    {
-        return $schema
-            ->components([
-                ColorPicker::make('formData.warna')->label('Warna')->placeholder('Pilih warna untuk jadwal')->regex('/^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})\b$/')
-            ]);
-    }
+     public function form(Schema $schema): Schema
+        {
+            return $schema
+                ->components([
+                    ColorPicker::make('formData.warna')->label('Warna')->placeholder('Pilih warna untuk jadwal')->regex('/^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})\b$/')
+                ]);
+        }
 
     #[On('openAddModal')]
     public function openAddModal()
@@ -57,7 +57,8 @@ new class extends Component implements HasSchemas {
         $this->isEdit = false;
         $this->formData = [
             'nama_guru' => '',
-            'nip' => '',
+            'kode_guru' => '',
+            'warna' => '',
         ];
         Flux::modal('guru-modal')->show();
     }
@@ -96,15 +97,15 @@ new class extends Component implements HasSchemas {
             <flux:modal.trigger name="import-excel">
                 <flux:button icon="file-excel" class="!bg-az-green !text-white">Import dari Excel</flux:button>
             </flux:modal.trigger>
-            <flux:button @click="$wire.openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data</flux:button>
+            <flux:button wire:click="openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data</flux:button>
         </x-slot>
     </x-card-heading>
 
     {{-- Datatable --}}
-    <livewire:datatable.index actionType="data" :columns="$this->columnDefs" :model="\App\Models\Guru::class" />
+    <livewire:datatable.guru />
 
     {{-- Add Data Modal --}}
-    <flux:modal name="guru-modal" class="md:w-96">
+    <flux:modal name="guru-modal" class="w-[85%] md:w-[480px]">
         <form wire:submit.prevent="save">
             <div class="space-y-4">
                 <div>
@@ -112,9 +113,12 @@ new class extends Component implements HasSchemas {
                         {{ $isEdit ? 'Ubah Data Guru' : 'Tambah Data Guru' }}
                     </flux:heading>
                 </div>
-                <flux:input wire:model.defer="formData.nip" label="NIP" placeholder="NIP" />
+                <flux:input wire:model.defer="formData.kode_guru" label="Kode Guru" placeholder="Kode Guru" />
                 <flux:input wire:model.defer="formData.nama_guru" label="Nama Guru" placeholder="Nama Guru" />
+
+                {{-- filament form --}}
                 {{ $this->form }}
+
                 <div class="flex">
                     <flux:spacer />
                     <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>

@@ -23,6 +23,7 @@ class JadwalPelajaranExport implements FromView, WithTitle, WithDrawings
     public function view(): View
     {
         $kelasList = Kelas::where('tingkat', $this->tingkat)
+            ->whereNotIn('kode_kelas', ['SMP', 'MA'])
             ->orderBy('nama_kelas')
             ->get();
 
@@ -31,13 +32,12 @@ class JadwalPelajaranExport implements FromView, WithTitle, WithDrawings
         // Ambil semua jadwal berdasarkan hari
         $jadwalPerHari = collect();
         foreach ($hariList as $hari) {
-            $jadwal = JadwalPelajaran::with(['guru', 'mataPelajaran', 'kelas'])
+            $jadwal = JadwalPelajaran::with(['guru', 'mataPelajaran', 'kelas', 'jamPelajaran'])
                 ->whereRelation('kelas', 'tingkat', $this->tingkat)
                 ->where('hari', $hari)
-                ->orderBy('jam_mulai')
                 ->get()
                 ->groupBy(function ($item) {
-                    return $item->jam_mulai . ' - ' . $item->jam_selesai;
+                    return $item->jamPelajaran->jam_mulai . ' - ' . $item->jamPelajaran->jam_selesai;
                 });
 
             if ($jadwal->isNotEmpty()) {

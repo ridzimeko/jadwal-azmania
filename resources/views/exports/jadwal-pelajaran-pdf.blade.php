@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Jadwal Pelajaran {{ $tingkat }}</title>
+    <link rel="icon" href="{{ asset('icon-512.png') }}" type="image/png">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+
     <style>
         body {
             font-family: DejaVu Sans, sans-serif;
@@ -100,7 +103,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
-            page-break-inside: avoid;
+            /* page-break-inside: avoid; */
         }
 
         th,
@@ -167,7 +170,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th id="hari" colspan="{{ 2 + $kelasList->count() }}">{{ $hari ?? 'wkwkwk' }}</th>
+                        <th id="hari" colspan="{{ 2 + $kelasList->count() }}">{{ $hari ?? '' }}</th>
                     </tr>
                     <tr>
                         <th style="width: 40px;">No</th>
@@ -183,22 +186,47 @@
                         <tr>
                             <td>{{ $no++ }}</td>
                             <td>{{ $jamLabel }}</td>
-                            @foreach ($kelasList as $kelas)
+
+                            @php
+                                $isGlobal = $items->filter(function ($item) {
+                                    return in_array($item->kelas?->kode_kelas, ['SMP', 'MA']);
+                                });
+                            @endphp
+
+                            @if ($isGlobal->count() > 0)
                                 @php
-                                    $item = $items->firstWhere('kelas_id', $kelas->id);
+                                    $item = $items->first();
                                     $bg = $item->guru->warna ?? '#ffffff';
                                     $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                     $textBentrok = $item->is_bentrok ?? null ? 'red' : $text;
                                 @endphp
-                                <td style="background-color: {{ $bg }}; color: {{ $textBentrok }}">
+                                <td colspan="{{ count($kelasList) }}"
+                                    style="background-color: {{ $bg }}; color: {{ $textBentrok }}">
                                     @if ($item)
                                         <div><strong>{{ $item->mataPelajaran->nama_mapel }}</strong></div>
-                                        <div style="font-size: 12px;">{{ $item->guru->nama_guru }}</div>
+                                        <div style="font-size: 12px;">{{ $item->guru->nama_guru ?? null }}</div>
                                     @else
                                         <span style="color: #999;">-</span>
                                     @endif
                                 </td>
-                            @endforeach
+                            @else
+                                @foreach ($kelasList as $kelas)
+                                    @php
+                                        $item = $items->firstWhere('kelas_id', $kelas->id);
+                                        $bg = $item->guru->warna ?? '#ffffff';
+                                        $text = \App\Helpers\ColorHelper::getTextColor($bg);
+                                        $textBentrok = $item->is_bentrok ?? null ? 'red' : $text;
+                                    @endphp
+                                    <td style="background-color: {{ $bg }}; color: {{ $textBentrok }}">
+                                        @if ($item)
+                                            <div><strong>{{ $item->mataPelajaran->nama_mapel }}</strong></div>
+                                            <div style="font-size: 12px;">{{ $item->guru->nama_guru ?? null }}</div>
+                                        @else
+                                            <span style="color: #999;">-</span>
+                                        @endif
+                                    </td>
+                                @endforeach
+                            @endif
                         </tr>
                     @endforeach
                 </tbody>

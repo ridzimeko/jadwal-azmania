@@ -1,37 +1,30 @@
 <?php
 
+use App\Models\MataPelajaran;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Contracts\HasSchemas;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 
-new class extends Component {
-    protected $columnDefs = [
-        ['name' => 'Kode Mapel', 'field' => 'kode_mapel'],
-        ['name' => 'Mata Pelajaran', 'field' => 'nama_mapel'],
-    ];
-
+new #[Title('Mata Pelajaran')] class extends Component {
     public array $formData = [
         'kode_mapel' => '',
         'nama_mapel' => '',
+        'jenis_mapel' => '',
+        'jp_per_pekan' => '',
     ];
     public bool $isEdit = false;
 
     protected function rules(): array
     {
         return [
-            'formData.kode_mapel' => [
-                'required',
-                'string',
-                'max:12',
-                Rule::unique('mata_pelajaran', 'kode_mapel')->ignore($this->formData['id'] ?? null),
-            ],
-            'formData.nama_mapel' => [
-                'required',
-                'string',
-                'max:40',
-            ],
+            'formData.kode_mapel' => ['required', 'string', 'max:12', Rule::unique('mata_pelajaran', 'kode_mapel')->ignore($this->formData['id'] ?? null)],
+            'formData.nama_mapel' => ['required', 'string', 'max:40'],
+            'formData.jenis_mapel' => 'required|string|in:KBM,Non KBM',
+            'formData.jp_per_pekan' => 'integer|required|gt:0',
         ];
     }
 
@@ -46,6 +39,13 @@ new class extends Component {
             'formData.nama_mapel.required' => 'Nama mata pelajaran wajib diisi.',
             'formData.nama_mapel.string' => 'Nama mata pelajaran harus berupa teks.',
             'formData.nama_mapel.max' => 'Nama mata pelajaran tidak boleh lebih dari 40 karakter.',
+
+            'formData.jenis_mapel.required' => 'Jenis Mapel wajib diisi.',
+            'formData.jenis_mapel.string' => 'Jenis Mapel harus berupa teks.',
+            'formData.jenis_mapel.in' => 'Jenis Mapel harus salah satu dari: KBM, Non KBM.',
+
+            'formData.jp_per_pekan.integer' => 'JP per Pekan harus berupa angka.',
+            'formData.jp_per_pekan.required' => 'JP per Pekan wajib diisi.',
         ];
     }
 
@@ -56,6 +56,8 @@ new class extends Component {
         $this->formData = [
             'kode_mapel' => '',
             'nama_mapel' => '',
+            'jenis_mapel' => '',
+            'jp_per_pekan' => '',
         ];
         Flux::modal('mapel-modal')->show();
     }
@@ -73,17 +75,14 @@ new class extends Component {
         $this->validate();
 
         if ($this->isEdit) {
-            \App\Models\MataPelajaran::find($this->formData['id'])->update($this->formData);
+            MataPelajaran::find($this->formData['id'])->update($this->formData);
         } else {
-            \App\Models\MataPelajaran::create($this->formData);
+            MataPelajaran::create($this->formData);
         }
 
-        Notification::make()
-        ->title('Mata Pelajaran Tersimpan')
-        ->success()
-        ->send();
+        Notification::make()->title('Mata Pelajaran Tersimpan')->success()->send();
         Flux::modal('mapel-modal')->close();
-        $this->dispatch('refreshTable');
+        $this->dispatch('refreshMapelTable');
     }
 };
 ?>
@@ -94,15 +93,15 @@ new class extends Component {
             <flux:modal.trigger name="import-excel">
                 <flux:button icon="file-excel" class="!bg-az-green !text-white">Import dari Excel</flux:button>
             </flux:modal.trigger>
-            <flux:button @click="$wire.openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data</flux:button>
+            <flux:button wire:click="openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data</flux:button>
         </x-slot>
     </x-card-heading>
 
     {{-- Datatable --}}
-    <livewire:datatable.index actionType="data" :columns="$this->columnDefs" :model="\App\Models\MataPelajaran::class" />
+    <livewire:datatable.mata-pelajaran />
 
     {{-- Add Data Modal --}}
-    <flux:modal name="mapel-modal" class="md:w-96">
+    <flux:modal name="mapel-modal" class="w-[85%] md:w-[480px]">
         <form wire:submit.prevent="save">
             <div class="space-y-4">
                 <div>
@@ -110,8 +109,23 @@ new class extends Component {
                         {{ $isEdit ? 'Ubah Data Mata Pelajaran' : 'Tambah Data Mata Pelajaran' }}
                     </flux:heading>
                 </div>
+                <flux:field>
+                    <flux:label>Jenis Mapel</flux:label>
+                    <x-select name="formData.jenis_mapel" wire:model="formData.jenis_mapel" :search="false"
+                        :options="[['label' => 'KBM', 'value' => 'KBM'], ['label' => 'Non KBM', 'value' => 'Non KBM']]" placeholder="Pilih jenis mata pelajaran" />
+                    <flux:error name="formData.jenis_mapel" />
+                </flux:field>
+
                 <flux:input wire:model.defer="formData.kode_mapel" label="Kode Mapel" placeholder="Kode Mapel" />
                 <flux:input wire:model.defer="formData.nama_mapel" label="Nama Mapel" placeholder="Nama Mapel" />
+
+                <flux:field>
+                    <flux:label>Jatah Per Pekan</flux:label>
+                    <flux:input wire:model.defer="formData.jp_per_pekan" placeholder="Jatah Per Pekan" />
+                    <flux:error name="formData.jp_per_pekan" />
+                    {{-- <flux:description>Ketik "0" jika tidak ingin mengatur jatah</flux:description> --}}
+                </flux:field>
+
                 <div class="flex">
                     <flux:spacer />
                     <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>
@@ -120,6 +134,6 @@ new class extends Component {
         </form>
     </flux:modal>
 
-     {{-- Import Excel Modal --}}
-     <livewire:excel-import-modal context="mapel" />
+    {{-- Import Excel Modal --}}
+    <livewire:excel-import-modal context="mapel" />
 </div>

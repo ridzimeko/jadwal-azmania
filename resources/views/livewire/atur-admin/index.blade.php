@@ -4,9 +4,12 @@ use Filament\Notifications\Notification;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 
-new class extends Component
+new
+#[Title('Kelola Admin')]
+class extends Component
 {
     protected $columnDefs = [
         ['name' => 'Nama Akun', 'field' => 'nama'],
@@ -105,7 +108,7 @@ new class extends Component
 <div class="dash-card">
     <x-card-heading title="Data Akun Admin">
         <x-slot name="action_buttons">
-            <flux:button @click="$wire.openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data
+            <flux:button wire:click="openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data
             </flux:button>
         </x-slot>
     </x-card-heading>
@@ -116,7 +119,7 @@ new class extends Component
     <livewire:atur-admin._change-password />
 
     {{-- Admin Modal --}}
-    <flux:modal name="admin-modal" class="md:w-[520px]">
+    <flux:modal name="admin-modal" class="w-[85%] md:w-[520px]">
         <form wire:submit.prevent="save">
             <div class="space-y-3">
                 <div>

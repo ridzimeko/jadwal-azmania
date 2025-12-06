@@ -4,9 +4,12 @@ use Filament\Notifications\Notification;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
 
-new class extends Component {
+new
+#[Title('Data Kelas')]
+class extends Component {
     protected $columnDefs = [['name' => 'Kode Kelas', 'field' => 'kode_kelas'], ['name' => 'Tingkat', 'field' => 'tingkat'], ['name' => 'Kelas', 'field' => 'nama_kelas']];
 
     public ?array $formData = null;
@@ -16,7 +19,7 @@ new class extends Component {
     {
         return [
             'formData.kode_kelas' => ['required', 'string', 'max:12', Rule::unique('kelas', 'kode_kelas')->ignore($this->formData['id'] ?? null)],
-            'formData.nama_kelas' => ['required', 'string', 'max:15'],
+            'formData.nama_kelas' => ['required', 'string', 'max:20'],
         ];
     }
 
@@ -78,16 +81,19 @@ new class extends Component {
 <div class="dash-card">
     <x-card-heading title="Data Kelas">
         <x-slot name="action_buttons">
-            <flux:button @click="$wire.openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data
+            <flux:modal.trigger name="import-excel">
+                <flux:button icon="file-excel" class="!bg-az-green !text-white">Import dari Excel</flux:button>
+            </flux:modal.trigger>
+            <flux:button wire:click="openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data
             </flux:button>
         </x-slot>
     </x-card-heading>
 
     {{-- Datatable --}}
-    <livewire:datatable.index actionType="data" :columns="$this->columnDefs" :model="\App\Models\Kelas::class" />
+    <livewire:datatable.index actionType="data" :columns="$this->columnDefs" :model="\App\Models\Kelas::class" scope="noTingkat" />
 
     {{-- Add Data Modal --}}
-    <flux:modal name="kelas-modal" class="md:w-96">
+    <flux:modal name="kelas-modal" class="w-[85%] md:w-[480px]">
         <form wire:submit.prevent="save">
             <div class="space-y-4">
                 <div>
@@ -115,4 +121,7 @@ new class extends Component {
             </div>
         </form>
     </flux:modal>
+
+     {{-- Import Excel Modal --}}
+    <livewire:excel-import-modal context="kelas" />
 </div>

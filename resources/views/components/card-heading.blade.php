@@ -4,7 +4,7 @@
     'action_buttons' => null
 ])
 
-<header {{ $attributes->merge(['class' => "flex justify-between gap-4"])}}>
+<header {{ $attributes->merge(['class' => "flex justify-between gap-4 flex-wrap"])}}>
     <div class="flex flex-col gap-2">
         <h2 class="text-3xl font-bold">{{ $title }}</h2>
         @if ($description)
@@ -13,7 +13,7 @@
     </div>
 
     <!-- Actions Button -->
-    <div>
+    <div class="flex items-center gap-2 flex-wrap">
        {{ $action_buttons ?? '' }}
     </div>
 </header>

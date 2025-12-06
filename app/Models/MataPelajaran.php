@@ -13,9 +13,16 @@ class MataPelajaran extends Model
     protected $fillable = [
         'kode_mapel',
         'nama_mapel',
+        'jenis_mapel',
+        'jp_per_pekan',
     ];
 
     protected $table = 'mata_pelajaran';
 
     public $timestamps = false;
+
+    public function jadwal()
+    {
+        return $this->hasMany(JadwalPelajaran::class, 'mata_pelajaran_id');
+    }
 }
