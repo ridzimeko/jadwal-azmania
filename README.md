@@ -55,6 +55,15 @@ Digunakan agar bisa melakukan upload file import Excel
 
 ---
 
+### 7. install library js dan css 
+
+Untuk menginstall gunakan nodejs untuk melakukan build file css dan javascript
+
+```
+npm install
+npm run build
+```
+
 ## Login Default
 ```
 Email   : superadmin@azmania_id
