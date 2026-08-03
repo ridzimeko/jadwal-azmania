@@ -4,7 +4,7 @@ use App\Helpers\JadwalHelper;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Modelable;
 use Livewire\Attributes\On;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new class extends Component {
     public $placeholder = 'Pilih item...';
@@ -38,8 +38,7 @@ new class extends Component {
     }
 }; ?>
 
-<div
-    x-data="{
+<div x-data="{
         open: false,
         search: '',
         value: $wire.entangle('value'),
@@ -68,18 +67,16 @@ new class extends Component {
             const found = this.options.find(o => o.value == this.value);
             this.selectedLabel = found ? found.label : '';
         }
-    }"
-    class="relative w-full">
+    }" class="relative w-full">
     <!-- Trigger -->
     <div class="relative">
-        <button
-            type="button"
-            @click="open = !open"
+        <button type="button" @click="open = !open"
             class="flex w-full justify-between items-center rounded-lg shadow-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 py-2.5 px-4 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary">
             <span x-text="selectedLabel || '{{ $this->placeholder }}'"></span>
             <div class="flex items-center gap-2">
                 @if($this->clearable)
-                <flux:icon x-cloak x-show="selectedLabel" x-on:click.stop="clear()" name="x-mark" class="w-4 h-4 text-gray-400" />
+                    <flux:icon x-cloak x-show="selectedLabel" x-on:click.stop="clear()" name="x-mark"
+                        class="w-4 h-4 text-gray-400" />
                 @endif
                 <flux:icon name="chevron-down" class="w-4 h-4 text-gray-400" />
             </div>
@@ -87,30 +84,22 @@ new class extends Component {
     </div>
 
     <!-- Dropdown -->
-    <div
-        x-cloak
-        x-show="open"
-        @click.away="open = false"
-        x-transition
+    <div x-cloak x-show="open" @click.away="open = false" x-transition
         class="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg">
         <!-- Search input -->
         @if($this->search)
-        <div class="border-b border-gray-200 dark:border-gray-700">
-            <input
-                type="text"
-                x-model="search"
-                placeholder="{{ $this->searchPlaceholder }}"
-                class="w-full p-2 rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 focus:ring-2 !focus:ring-primary !focus:border-primary" />
-        </div>
+            <div class="border-b border-gray-200 dark:border-gray-700">
+                <input type="text" x-model="search" placeholder="{{ $this->searchPlaceholder }}"
+                    class="w-full p-2 rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 focus:ring-2 !focus:ring-primary !focus:border-primary" />
+            </div>
         @endif
 
         <!-- Option list -->
         <ul class="max-h-48 overflow-y-auto py-1 text-sm text-gray-700 dark:text-gray-200">
             <template x-for="option in filteredOptions" :key="option.value">
-                <li
-                    @click="select(option.value, option.label)"
-                    class="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
-                    x-text="option.label"></li>
+                <li @click="select(option.value, option.label)"
+                    class="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800" x-text="option.label">
+                </li>
             </template>
 
             <template x-if="filteredOptions.length === 0">

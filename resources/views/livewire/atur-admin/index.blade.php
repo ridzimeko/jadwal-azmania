@@ -5,12 +5,11 @@ use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new
-#[Title('Kelola Admin')]
-class extends Component
-{
+    #[Title('Kelola Admin')]
+    class extends Component {
     protected $columnDefs = [
         ['name' => 'Nama Akun', 'field' => 'nama'],
         ['name' => 'Username', 'field' => 'username'],
@@ -130,19 +129,21 @@ class extends Component
                 <flux:input wire:model.defer="formData.nama" label="Nama Admin" placeholder="Nama Admin" />
                 <flux:input wire:model.defer="formData.username" label="Username" placeholder="Username" />
                 @if (!$this->isEdit)
-                <flux:input wire:model.defer="formData.password" type="password" label="Password" placeholder="Password" />
+                    <flux:input wire:model.defer="formData.password" type="password" label="Password"
+                        placeholder="Password" />
                 @endif
 
                 <flux:field>
                     <flux:label>Role Admin</flux:label>
 
                     @php
-                    $adminOptions = collect(['admin', 'superadmin'])
-                    ->map(fn($hari) => ['label' => $hari, 'value' => $hari])
-                    ->toArray();
+                        $adminOptions = collect(['admin', 'superadmin'])
+                            ->map(fn($hari) => ['label' => $hari, 'value' => $hari])
+                            ->toArray();
                     @endphp
 
-                    <x-select name="role" wire:model="formData.role" :search="false" :options="$adminOptions" placeholder="Pilih Role Admin" />
+                    <x-select name="role" wire:model="formData.role" :search="false" :options="$adminOptions"
+                        placeholder="Pilih Role Admin" />
                     <flux:error name="formData.role" />
                 </flux:field>
 

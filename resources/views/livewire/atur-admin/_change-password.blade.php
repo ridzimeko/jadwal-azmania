@@ -3,10 +3,9 @@
 use Filament\Notifications\Notification;
 use Flux\Flux;
 use Livewire\Attributes\On;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
-new class extends Component
-{
+new class extends Component {
     public ?array $formData = [
         'password' => '',
         'password_confirm' => '',
@@ -48,8 +47,8 @@ new class extends Component
         $this->dispatch('refreshTable');
     }
 
-     #[On('openUpdatePasswordModal')]
-     public function openUpdatePasswordModal($record)
+    #[On('openUpdatePasswordModal')]
+    public function openUpdatePasswordModal($record)
     {
         $this->formData = $record;
         Flux::modal('update-admin-password-modal')->show();
@@ -66,8 +65,10 @@ new class extends Component
                     Ubah Kata Sandi Admin
                 </flux:heading>
             </div>
-            <flux:input wire:model.defer="formData.password" type="password" label="Kata Sandi" placeholder="Kata Sandi" />
-            <flux:input wire:model.defer="formData.password_confirm" type="password" label="Konfirmasi Kata Sandi" placeholder="Ketik ulang kata sandi" />
+            <flux:input wire:model.defer="formData.password" type="password" label="Kata Sandi"
+                placeholder="Kata Sandi" />
+            <flux:input wire:model.defer="formData.password_confirm" type="password" label="Konfirmasi Kata Sandi"
+                placeholder="Ketik ulang kata sandi" />
 
             <div class="flex mt-8">
                 <flux:spacer />

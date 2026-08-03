@@ -7,7 +7,7 @@ use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new #[Title('Mata Pelajaran')] class extends Component {
     public array $formData = [
@@ -112,7 +112,8 @@ new #[Title('Mata Pelajaran')] class extends Component {
                 <flux:field>
                     <flux:label>Jenis Mapel</flux:label>
                     <x-select name="formData.jenis_mapel" wire:model="formData.jenis_mapel" :search="false"
-                        :options="[['label' => 'KBM', 'value' => 'KBM'], ['label' => 'Non KBM', 'value' => 'Non KBM']]" placeholder="Pilih jenis mata pelajaran" />
+                        :options="[['label' => 'KBM', 'value' => 'KBM'], ['label' => 'Non KBM', 'value' => 'Non KBM']]"
+                        placeholder="Pilih jenis mata pelajaran" />
                     <flux:error name="formData.jenis_mapel" />
                 </flux:field>
 

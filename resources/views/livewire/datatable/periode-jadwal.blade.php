@@ -14,7 +14,7 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\On;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new class extends Component implements HasActions, HasSchemas, HasTable {
     use InteractsWithActions;

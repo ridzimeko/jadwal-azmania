@@ -10,10 +10,10 @@ use Filament\Schemas\Contracts\HasSchemas;
 use Flux\Flux;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new #[Title('Periode Jadwal')]
-class extends Component implements HasActions, HasSchemas {
+    class extends Component implements HasActions, HasSchemas {
     use InteractsWithActions;
     use InteractsWithSchemas;
 
@@ -125,18 +125,18 @@ class extends Component implements HasActions, HasSchemas {
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
 
         @php
-        $periodeList = $this->getPeriode();
+            $periodeList = $this->getPeriode();
         @endphp
 
         @foreach ($periodeList as $periode)
-        <a href="{{ route('jadwal.index', ['periode_id' => $periode->id]) }}" aria-label="Latest on our blog">
-            <flux:card size="sm" class="relative hover:bg-zinc-50 dark:hover:bg-zinc-700">
-                <div class="w-[90%]">
-                    <flux:heading class="flex items-center gap-2">{{ $periode->tahun_ajaran }}</flux:heading>
-                    <flux:text class="mt-2">{{ $periode->semester }}</flux:text>
-                </div>
-            </flux:card>
-        </a>
+            <a href="{{ route('jadwal.index', ['periode_id' => $periode->id]) }}" aria-label="Latest on our blog">
+                <flux:card size="sm" class="relative hover:bg-zinc-50 dark:hover:bg-zinc-700">
+                    <div class="w-[90%]">
+                        <flux:heading class="flex items-center gap-2">{{ $periode->tahun_ajaran }}</flux:heading>
+                        <flux:text class="mt-2">{{ $periode->semester }}</flux:text>
+                    </div>
+                </flux:card>
+            </a>
         @endforeach
     </div>
 
@@ -153,7 +153,8 @@ class extends Component implements HasActions, HasSchemas {
 
             <flux:field>
                 <flux:label>Semester</flux:label>
-                <x-select wire:model="formData.semester" :search="false" :options="[['label' => 'Ganjil', 'value' => 'ganjil'], ['label' => 'Genap', 'value' => 'genap']]"
+                <x-select wire:model="formData.semester" :search="false"
+                    :options="[['label' => 'Ganjil', 'value' => 'ganjil'], ['label' => 'Genap', 'value' => 'genap']]"
                     placeholder="Pilih Semester" />
                 <flux:error name="formData.semester" />
             </flux:field>

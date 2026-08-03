@@ -11,91 +11,90 @@ use Flux\Flux;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new
     #[Title('Periode Jadwal')]
     class extends Component implements HasActions, HasSchemas {
-        use InteractsWithActions;
-        use InteractsWithSchemas;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
 
-        public ?array $formData = [
+    public ?array $formData = [
+        'tahun_ajaran' => '',
+        'semester' => '',
+    ];
+    public bool $isEdit = false;
+
+    // public function mount()
+    // {
+    //     $this->hariOptions = JadwalHelper::getHariOptions();
+    //     $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
+    //     $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
+    //     $this->guruOptions = JadwalHelper::getGuruOptions();
+    // }
+
+    protected function rules(): array
+    {
+        return [
+            'formData.tahun_ajaran' => 'required|string',
+            'formData.semester' => 'required|string',
+        ];
+    }
+
+    protected function messages(): array
+    {
+        return [
+            'formData.tahun_ajaran.required' => 'Tahun Ajaran wajib diisi.',
+            'formData.tahun_ajaran.string' => 'Tahun Ajaran harus berupa teks.',
+
+            'formData.semester.required' => 'Semester wajib diisi.',
+            'formData.semester.string' => 'Semester harus berupa teks.',
+        ];
+    }
+
+    public function openAddPeriode()
+    {
+        $this->isEdit = false;
+        $this->formData = [
             'tahun_ajaran' => '',
             'semester' => '',
         ];
-        public bool $isEdit = false;
+        Flux::modal('periode-modal')->show();
+    }
 
-        // public function mount()
-        // {
-        //     $this->hariOptions = JadwalHelper::getHariOptions();
-        //     $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
-        //     $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
-        //     $this->guruOptions = JadwalHelper::getGuruOptions();
-        // }
-
-        protected function rules(): array
-        {
-            return [
-                'formData.tahun_ajaran' => 'required|string',
-                'formData.semester' => 'required|string',
-            ];
-        }
-
-        protected function messages(): array
-        {
-            return [
-                'formData.tahun_ajaran.required' => 'Tahun Ajaran wajib diisi.',
-                'formData.tahun_ajaran.string' => 'Tahun Ajaran harus berupa teks.',
-
-                'formData.semester.required' => 'Semester wajib diisi.',
-                'formData.semester.string' => 'Semester harus berupa teks.',
-            ];
-        }
-
-        public function openAddPeriode()
-        {
+    #[On('openEditPeriode')]
+    public function openEditPeriode($record)
+    {
+        if ($record['id'] ?? null) {
+            $this->isEdit = true;
+        } else {
             $this->isEdit = false;
-            $this->formData = [
-                'tahun_ajaran' => '',
-                'semester' => '',
-            ];
-            Flux::modal('periode-modal')->show();
+        }
+        $this->formData = $record;
+        Flux::modal('periode-modal')->show();
+    }
+
+    public function save()
+    {
+        $this->validate();
+
+        if ($this->isEdit) {
+            Periode::find($this->formData['id'])->update($this->formData);
+        } else {
+            Periode::create($this->formData);
         }
 
-        #[On('openEditPeriode')]
-        public function openEditPeriode($record)
-        {
-            if ($record['id'] ?? null) {
-                $this->isEdit = true;
-            } else {
-                $this->isEdit = false;
-            }
-            $this->formData = $record;
-            Flux::modal('periode-modal')->show();
-        }
+        Cache::forget('periode_options');
 
-        public function save()
-        {
-            $this->validate();
-
-            if ($this->isEdit) {
-                Periode::find($this->formData['id'])->update($this->formData);
-            } else {
-                Periode::create($this->formData);
-            }
-
-            Cache::forget('periode_options');
-
-            Notification::make()->title('Periode Berhasil Tersimpan')->success()->send();
-            Flux::modal('periode-modal')->close();
-            $this->dispatch('refreshPeriodeTable');
-        }
-    };
+        Notification::make()->title('Periode Berhasil Tersimpan')->success()->send();
+        Flux::modal('periode-modal')->close();
+        $this->dispatch('refreshPeriodeTable');
+    }
+};
 ?>
 
 <div class="dash-card">
-    <x-card-heading title="Periode Jadwal"
-        description="Manajemen periode jadwal pelajaran">
+    <x-card-heading title="Periode Jadwal" description="Manajemen periode jadwal pelajaran">
         <x-slot name="action_buttons">
             <flux:button icon="plus" wire:click="openAddPeriode" class="!bg-primary !text-white">
                 Tambah Data
@@ -118,27 +117,19 @@ new
 
             <flux:field>
                 <flux:label>Semester</flux:label>
-                <x-select
-                    wire:model="formData.semester"
-                    :search="false"
-                    :options="[
-                    ['label' => 'Ganjil', 'value' => 'ganjil'],
-                    ['label' => 'Genap', 'value' => 'genap'],
-                ]"
-                    placeholder="Pilih Semester" />
+                <x-select wire:model="formData.semester" :search="false" :options="[
+        ['label' => 'Ganjil', 'value' => 'ganjil'],
+        ['label' => 'Genap', 'value' => 'genap'],
+    ]" placeholder="Pilih Semester" />
                 <flux:error name="formData.semester" />
             </flux:field>
 
             {{-- <flux:field>
                 <flux:label>Status</flux:label>
-                <x-select
-                    wire:model="formData.aktif"
-                    :search="false"
-                    :options="[
+                <x-select wire:model="formData.aktif" :search="false" :options="[
                     ['label' => 'Aktif', 'value' => '1'],
                     ['label' => 'Nonaktif', 'value' => '0'],
-                ]"
-                    placeholder="Pilih Semester" />
+                ]" placeholder="Pilih Semester" />
                 <flux:error name="formData.semester" />
             </flux:field> --}}
 

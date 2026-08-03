@@ -10,12 +10,12 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Validate;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new
-#[Title('Login')]
-#[Layout('components.layouts.auth')]
-class extends Component {
+    #[Title('Login')]
+    #[Layout('layouts.auth')]
+    class extends Component {
     #[Validate('required|string')]
     public string $username = '';
 

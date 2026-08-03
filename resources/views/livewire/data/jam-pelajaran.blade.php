@@ -6,7 +6,7 @@ use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new #[Title('Data Kelas')] class extends Component {
     protected $columnDefs = [['name' => 'Jam Ke', 'field' => 'urutan'], ['name' => 'Jam Mulai', 'field' => 'jam_mulai'], ['name' => 'Jam Selesai', 'field' => 'jam_selesai']];
@@ -129,17 +129,17 @@ new #[Title('Data Kelas')] class extends Component {
                 </div>
 
                 @if (count($this->jamBentrokList) >= 1)
-                <flux:callout variant="danger" icon="x-circle" heading="Terdapat jam pelajaran yang bentrok!">
-                    <flux:callout.text>
-                        <ul>
-                            @foreach ($this->jamBentrokList as $jam)
-                            <li>
-                                <div>• {{ $jam }}</div>
-                            </li>
-                            @endforeach
-                        </ul>
-                    </flux:callout.text>
-                </flux:callout>
+                    <flux:callout variant="danger" icon="x-circle" heading="Terdapat jam pelajaran yang bentrok!">
+                        <flux:callout.text>
+                            <ul>
+                                @foreach ($this->jamBentrokList as $jam)
+                                    <li>
+                                        <div>• {{ $jam }}</div>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </flux:callout.text>
+                    </flux:callout>
                 @endif
 
                 <flux:input wire:model.defer="formData.urutan" label="Jam Ke" placeholder="Jam Ke" />
@@ -153,7 +153,8 @@ new #[Title('Data Kelas')] class extends Component {
 
                     <flux:field class="min-w-[200px]">
                         <flux:label>Jam Selesai</flux:label>
-                        <x-time-picker name="formData.jam_selesai" wire:model.defer="formData.jam_selesai" class="w-full" />
+                        <x-time-picker name="formData.jam_selesai" wire:model.defer="formData.jam_selesai"
+                            class="w-full" />
                         <flux:error name="formData.jam_selesai" />
                     </flux:field>
                 </div>

@@ -1,7 +1,7 @@
 <?php
 
 use App\Helpers\JadwalHelper;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new class extends Component {
     public $name = 'export-jadwal';
@@ -11,7 +11,7 @@ new class extends Component {
         'filetype' => '',
     ];
 
-    
+
     public function mount()
     {
         $this->formData['filetype'] = "pdf";
@@ -58,8 +58,7 @@ new class extends Component {
 
                 <flux:field>
                     <flux:label>Tingkat</flux:label>
-                    <x-select wire:model="formData.tingkat" :search="false" :options="[['label' => 'SMP', 'value' => 'smp'], ['label' => 'MA', 'value' => 'ma']]" value="smp"
-                        placeholder="Pilih tingkat" />
+                    <x-select wire:model="formData.tingkat" :search="false" :options="[['label' => 'SMP', 'value' => 'smp'], ['label' => 'MA', 'value' => 'ma']]" value="smp" placeholder="Pilih tingkat" />
                     <flux:error name="formData.tingkat" />
                 </flux:field>
 

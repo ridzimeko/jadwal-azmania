@@ -4,7 +4,7 @@ use App\Models\User;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new class extends Component {
     public ?array $formData = [
@@ -60,7 +60,8 @@ new class extends Component {
         ];
     }
 
-    public function save() {
+    public function save()
+    {
         $this->validate();
 
         $form = [
@@ -75,9 +76,9 @@ new class extends Component {
         User::find($this->formData['id'])->update($form);
 
         Notification::make()
-        ->title('Pengaturan berhasil disimpan!')
-        ->success()
-        ->send();
+            ->title('Pengaturan berhasil disimpan!')
+            ->success()
+            ->send();
     }
 }; ?>
 
@@ -87,7 +88,8 @@ new class extends Component {
     <form wire:submit="save" class="max-w-[560px] flex flex-col gap-4">
         <flux:input wire:model.defer="formData.nama" label="Nama" placeholder="Nama" />
         <flux:input wire:model.defer="formData.password" type="password" label="Password" placeholder="***********" />
-        <flux:input wire:model.defer="formData.password_confirm" type="password" label="Konfirmasi Password" placeholder="***********" />
+        <flux:input wire:model.defer="formData.password_confirm" type="password" label="Konfirmasi Password"
+            placeholder="***********" />
         <flux:button type="submit" variant="filled" class="!bg-primary !text-white !mt-6 !w-fit">Simpan</flux:button>
     </form>
 </div>

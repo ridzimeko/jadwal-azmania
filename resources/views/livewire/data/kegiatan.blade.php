@@ -9,11 +9,11 @@ use Filament\Schemas\Schema;
 use Flux\Flux;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new
-#[Title('Data Kegiatan')]
-class extends Component implements HasSchemas {
+    #[Title('Data Kegiatan')]
+    class extends Component implements HasSchemas {
     use InteractsWithSchemas;
 
     public ?array $formData = [

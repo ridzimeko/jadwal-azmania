@@ -13,7 +13,7 @@ use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, HasSchemas {
     use InteractsWithActions;
@@ -198,10 +198,9 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             </flux:tabs>
 
             <div x-cloak x-show="activeTab === 'timeline'" class="flex items-center flex-wrap gap-4">
-                <x-select wire:model.live="filterData.hari" :search="false" :options="JadwalHelper::getHariOptions(true)" placeholder="Pilih hari"
-                    class="!w-[140px]" />
-                <x-select wire:model.live="filterData.tingkat" :search="false" :options="[['label' => 'SMP', 'value' => 'smp'], ['label' => 'MA', 'value' => 'ma']]"
-                    placeholder="Pilih tingkat" class="!w-[120px]" />
+                <x-select wire:model.live="filterData.hari" :search="false"
+                    :options="JadwalHelper::getHariOptions(true)" placeholder="Pilih hari" class="!w-[140px]" />
+                <x-select wire:model.live="filterData.tingkat" :search="false" :options="[['label' => 'SMP', 'value' => 'smp'], ['label' => 'MA', 'value' => 'ma']]" placeholder="Pilih tingkat" class="!w-[120px]" />
             </div>
         </div>
 
@@ -210,7 +209,8 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 <livewire:datatable.jadwal :periode_id="$this->periode_id" />
             </div>
             <div x-cloak x-show="activeTab === 'timeline'">
-                <livewire:datatable.jadwal-matrix lazy :periode_id="$this->periode_id" :hari="$this->filterData['hari']" :tingkat="$this->filterData['tingkat']" wire:key="matrix-{{ md5(json_encode($filterData)) }}" />
+                <livewire:datatable.jadwal-matrix lazy :periode_id="$this->periode_id" :hari="$this->filterData['hari']"
+                    :tingkat="$this->filterData['tingkat']" wire:key="matrix-{{ md5(json_encode($filterData)) }}" />
             </div>
         </div>
     </div>
@@ -242,7 +242,8 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
             <flux:field>
                 <flux:label>Nama Mata Pelajaran</flux:label>
-                <livewire:mapel-option wire:model="formData.mata_pelajaran_id" :periodeId="$this->periode_id" placeholder="Pilih mata pelajaran..." />
+                <livewire:mapel-option wire:model="formData.mata_pelajaran_id" :periodeId="$this->periode_id"
+                    placeholder="Pilih mata pelajaran..." />
                 <flux:error name="formData.mata_pelajaran_id" />
             </flux:field>
 
@@ -260,10 +261,10 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 <flux:error name="formData.hari" />
             </flux:field>
 
-             <flux:field>
+            <flux:field>
                 <flux:label>Jam ke</flux:label>
-                <x-select name="formData.jam_pelajaran_id" wire:model="formData.jam_pelajaran_id" :options="$this->jamPelajaranOptions"
-                    placeholder="Pilih jam pelajaran..." />
+                <x-select name="formData.jam_pelajaran_id" wire:model="formData.jam_pelajaran_id"
+                    :options="$this->jamPelajaranOptions" placeholder="Pilih jam pelajaran..." />
                 <flux:error name="formData.jam_pelajaran_id" />
             </flux:field>
 
@@ -276,11 +277,10 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
             <div class="flex mt-8">
                 @if ($this->isEdit)
-                    <flux:button variant="primary" color="red" icon="trash"
-                        x-on:click="() => {
-                        $flux.modals().close()
-                        $wire.mountAction('delete', { jadwal: '{{ $this->formData['id'] ?? null }}' })
-                    }">
+                    <flux:button variant="primary" color="red" icon="trash" x-on:click="() => {
+                            $flux.modals().close()
+                            $wire.mountAction('delete', { jadwal: '{{ $this->formData['id'] ?? null }}' })
+                        }">
                         Hapus</flux:button>
                 @endif
                 <flux:spacer />

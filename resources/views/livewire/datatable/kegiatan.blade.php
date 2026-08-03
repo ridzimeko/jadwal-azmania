@@ -15,7 +15,7 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Livewire\Attributes\On;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new class extends Component implements HasActions, HasSchemas, HasTable {
     use InteractsWithActions;
@@ -41,10 +41,10 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                 TextColumn::make('index')->label('No')->rowIndex()->sortable(false)->searchable(false),
                 TextColumn::make('nama_kegiatan')->label('Nama Kegiatan')->searchable(true),
                 TextColumn::make('global')->label('Semua Kelas')
-                ->formatStateUsing(function ($record) {
-                    return $record->global ? 'Ya' : 'Tidak';
-                })
-                ->searchable(true),
+                    ->formatStateUsing(function ($record) {
+                        return $record->global ? 'Ya' : 'Tidak';
+                    })
+                    ->searchable(true),
                 TextColumn::make('warna')->label('Warna')->searchable(true),
             ])
             ->recordActions([

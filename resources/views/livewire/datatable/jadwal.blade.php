@@ -17,7 +17,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Reactive;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new class extends Component implements HasActions, HasSchemas, HasTable {
     use InteractsWithActions;

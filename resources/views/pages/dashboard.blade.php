@@ -1,4 +1,26 @@
-<x-layouts.app title="Beranda">
+<?php
+
+use Livewire\Component;
+
+new class extends Component {
+    public $totalMataPelajaran;
+    public $totalKelas;
+    public $totalGuru;
+    public $totalUsers;
+    public $periode;
+
+    public function mount()
+    {
+        $this->totalMataPelajaran = \App\Models\MataPelajaran::count();
+        $this->totalKelas = \App\Models\Kelas::count();
+        $this->totalGuru = \App\Models\Guru::count();
+        $this->totalUsers = \App\Models\User::count();
+        $this->periode = \App\Models\Periode::latest()->first();
+    }
+};
+?>
+
+<div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <x-stat-card title="Mata Pelajaran" :total="$totalMataPelajaran" icon="book-open" />
         <x-stat-card title="Kelas" :total="$totalKelas" icon="building-library" />
@@ -11,7 +33,7 @@
 
         {{-- Datatable --}}
         <div>
-            <livewire:datatable.jadwal :periode_id="$periode?->id" :useEdit="false"  />
+            <livewire:datatable.jadwal :periode_id="$periode?->id" :useEdit="false" />
         </div>
     </div>
-</x-layouts.app>
+</div>

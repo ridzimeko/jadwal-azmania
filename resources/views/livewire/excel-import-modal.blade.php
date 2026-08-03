@@ -5,7 +5,7 @@ use App\Imports\JadwalPelajaranImport;
 use App\Imports\KelasImport;
 use App\Imports\MapelImport;
 use Filament\Notifications\Notification;
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Flux\Flux;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -49,7 +49,7 @@ new class extends Component {
     private function importKelas($path)
     {
         try {
-        Excel::import(new KelasImport(), $path);
+            Excel::import(new KelasImport(), $path);
             Notification::make()->title('Data Kelas berhasil di unggah!')->success()->send();
             $this->dispatch('refreshTable');
         } catch (\Throwable $th) {
@@ -57,10 +57,10 @@ new class extends Component {
         }
     }
 
-     private function importMapel($path)
+    private function importMapel($path)
     {
         try {
-        Excel::import(new MapelImport(), $path);
+            Excel::import(new MapelImport(), $path);
             Notification::make()->title('Data Mata Pelajaran berhasil di unggah!')->success()->send();
             $this->dispatch('refreshMapelTable');
         } catch (\Throwable $th) {

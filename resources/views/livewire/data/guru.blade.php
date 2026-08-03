@@ -9,12 +9,12 @@ use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new
-#[Title('Data Guru')]
-class extends Component implements HasSchemas{
-        use InteractsWithSchemas;
+    #[Title('Data Guru')]
+    class extends Component implements HasSchemas {
+    use InteractsWithSchemas;
 
     public array $formData = [
         'nama_guru' => '',
@@ -26,7 +26,7 @@ class extends Component implements HasSchemas{
     protected function rules(): array
     {
         return [
-            'formData.kode_guru' => ['required', 'string',  Rule::unique('guru', 'kode_guru')->ignore($this->formData['id'] ?? null)],
+            'formData.kode_guru' => ['required', 'string', Rule::unique('guru', 'kode_guru')->ignore($this->formData['id'] ?? null)],
             'formData.nama_guru' => ['required', 'string', 'max:40'],
             'formData.warna' => ['hex_color'],
         ];
@@ -43,13 +43,13 @@ class extends Component implements HasSchemas{
         ];
     }
 
-     public function form(Schema $schema): Schema
-        {
-            return $schema
-                ->components([
-                    ColorPicker::make('formData.warna')->label('Warna')->placeholder('Pilih warna untuk jadwal')->regex('/^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})\b$/')
-                ]);
-        }
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                ColorPicker::make('formData.warna')->label('Warna')->placeholder('Pilih warna untuk jadwal')->regex('/^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})\b$/')
+            ]);
+    }
 
     #[On('openAddModal')]
     public function openAddModal()

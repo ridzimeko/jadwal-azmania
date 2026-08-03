@@ -5,11 +5,11 @@ use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new
-#[Title('Data Kelas')]
-class extends Component {
+    #[Title('Data Kelas')]
+    class extends Component {
     protected $columnDefs = [['name' => 'Kode Kelas', 'field' => 'kode_kelas'], ['name' => 'Tingkat', 'field' => 'tingkat'], ['name' => 'Kelas', 'field' => 'nama_kelas']];
 
     public ?array $formData = null;
@@ -90,7 +90,8 @@ class extends Component {
     </x-card-heading>
 
     {{-- Datatable --}}
-    <livewire:datatable.index actionType="data" :columns="$this->columnDefs" :model="\App\Models\Kelas::class" scope="noTingkat" />
+    <livewire:datatable.index actionType="data" :columns="$this->columnDefs" :model="\App\Models\Kelas::class"
+        scope="noTingkat" />
 
     {{-- Add Data Modal --}}
     <flux:modal name="kelas-modal" class="w-[85%] md:w-[480px]">
@@ -122,6 +123,6 @@ class extends Component {
         </form>
     </flux:modal>
 
-     {{-- Import Excel Modal --}}
+    {{-- Import Excel Modal --}}
     <livewire:excel-import-modal context="kelas" />
 </div>

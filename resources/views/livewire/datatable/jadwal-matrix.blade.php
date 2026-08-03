@@ -6,7 +6,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Reactive;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new class extends Component {
     public $periode_id;
@@ -78,8 +78,8 @@ new class extends Component {
             <thead class="bg-primary text-white">
                 @if ($this->hari)
                     <tr>
-                        <th colspan="{{ 2 + count($kelasList) }}"
-                            class="bg-[#fee685] text-black px-4 py-2 border text-center">{{ $this->hari }}</th>
+                        <th colspan="{{ 2 + count($kelasList) }}" class="bg-[#fee685] text-black px-4 py-2 border text-center">
+                            {{ $this->hari }}</th>
                     </tr>
                 @endif
                 <tr>
@@ -126,10 +126,8 @@ new class extends Component {
                                                 $bg = $item->guru->warna ?? '#ffffff';
                                                 $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                             @endphp
-                                            <button
-                                                class="w-full mb-2 p-2 rounded cursor-pointer hover:bg-yellow-100 transition"
-                                                style="background-color: {{ $bg }}; color: {{ $text }}"
-                                                wire:click="$parent.openEditJadwal({{ json_encode([
+                                            <button class="w-full mb-2 p-2 rounded cursor-pointer hover:bg-yellow-100 transition"
+                                                style="background-color: {{ $bg }}; color: {{ $text }}" wire:click="$parent.openEditJadwal({{ json_encode([
                                                     'id' => $item->id,
                                                     'hari' => $hariKey,
                                                     'kelas_id' => $item->kelas_id,
@@ -137,7 +135,7 @@ new class extends Component {
                                                     'jam_pelajaran_id' => $item->jam_pelajaran_id,
                                                     'guru_id' => $item->guru_id,
                                                 ]) }} 
-                                                );">
+                                                                        );">
                                                 <div class="font-semibold">{{ $item->mataPelajaran->nama_mapel }}</div>
                                                 <div class="text-xs">{{ $item->guru->nama_guru ?? null }}</div>
                                             </button>
@@ -164,18 +162,16 @@ new class extends Component {
                                                     $bg = $item->guru->warna ?? '#ffffff';
                                                     $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                                 @endphp
-                                                <button
-                                                    class="mb-2 p-2 rounded cursor-pointer hover:bg-yellow-100 transition"
-                                                    style="background-color: {{ $bg }}; color: {{ $text }}"
-                                                    wire:click="$parent.openEditJadwal({{ json_encode([
-                                                        'id' => $item->id,
-                                                        'hari' => $hariKey,
-                                                        'kelas_id' => $kelas->id,
-                                                        'mata_pelajaran_id' => $item->mata_pelajaran_id,
-                                                        'jam_pelajaran_id' => $item->jam_pelajaran_id,
-                                                        'guru_id' => $item->guru_id,
-                                                    ]) }} 
-                                                    );">
+                                                <button class="mb-2 p-2 rounded cursor-pointer hover:bg-yellow-100 transition"
+                                                    style="background-color: {{ $bg }}; color: {{ $text }}" wire:click="$parent.openEditJadwal({{ json_encode([
+                                                            'id' => $item->id,
+                                                            'hari' => $hariKey,
+                                                            'kelas_id' => $kelas->id,
+                                                            'mata_pelajaran_id' => $item->mata_pelajaran_id,
+                                                            'jam_pelajaran_id' => $item->jam_pelajaran_id,
+                                                            'guru_id' => $item->guru_id,
+                                                        ]) }} 
+                                                                                );">
                                                     <div class="font-semibold">{{ $item->mataPelajaran->nama_mapel }}</div>
                                                     <div class="text-xs">{{ $item->guru->nama_guru ?? null }}</div>
                                                 </button>
