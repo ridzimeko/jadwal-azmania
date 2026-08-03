@@ -7,30 +7,30 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth'])->group(function () {
     Route::livewire('/', 'pages::dashboard')->name('dashboard');
 
-    Route::redirect('settings', 'settings/profile');
+    Route::redirect('settings', 'pages::settings/profile');
 
-    Route::livewire('pengaturan/akun', 'pengaturan.akun')->name('pengaturan.akun');
+    Route::livewire('pengaturan/akun', 'pages::pengaturan.akun')->name('pengaturan.akun');
 
     Route::group(['prefix' => '/jadwal'], function () {
-        Route::livewire('pelajaran', 'jadwal.periode')
+        Route::livewire('pelajaran', 'pages::jadwal.periode')
             ->name('jadwal.periode');
 
-        Route::livewire('pelajaran/detail/{periode_id}', 'jadwal.index')
+        Route::livewire('pelajaran/detail/{periode_id}', 'pages::jadwal.index')
             ->name('jadwal.index');
 
-        Route::livewire('periode', 'jadwal.periode-old')
+        Route::livewire('periode', 'pages::jadwal.periode-old')
             ->name('jadwal.periode');
     });
 
     Route::group(['prefix' => '/data'], function () {
-        Route::livewire('mata-pelajaran', 'data.mata-pelajaran')->name('data.mata-pelajaran');
-        Route::livewire('guru', 'data.guru')->name('data.guru');
-        Route::livewire('kelas', 'data.kelas')->name('data.kelas');
-        Route::livewire('kegiatan', 'data.kegiatan')->name('data.kegiatan');
-        Route::livewire('jam-pelajaran', 'data.jam-pelajaran')->name('data.jam-pelajaran');
+        Route::livewire('mata-pelajaran', 'pages::data.mata-pelajaran')->name('data.mata-pelajaran');
+        Route::livewire('guru', 'pages::data.guru')->name('data.guru');
+        Route::livewire('kelas', 'pages::data.kelas')->name('data.kelas');
+        Route::livewire('kegiatan', 'pages::data.kegiatan')->name('data.kegiatan');
+        Route::livewire('jam-pelajaran', 'pages::data.jam-pelajaran')->name('data.jam-pelajaran');
     });
 
-    Route::livewire('atur-admin', 'atur-admin.index')
+    Route::livewire('atur-admin', 'pages::atur-admin.index')
         ->name('atur-admin')
         ->middleware(RoleMiddleware::class . ':superadmin');
 

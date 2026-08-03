@@ -115,7 +115,7 @@ new
     {{-- Datatable --}}
     <livewire:datatable.index actionType="admin" :columns="$this->columnDefs" :model="\App\Models\User::class" />
 
-    <livewire:atur-admin._change-password />
+    <livewire:pages::atur-admin._change-password />
 
     {{-- Admin Modal --}}
     <flux:modal name="admin-modal" class="w-[85%] md:w-[520px]">
