@@ -34,6 +34,9 @@ Route::middleware(['auth'])->group(function () {
         ->name('atur-admin')
         ->middleware(RoleMiddleware::class . ':superadmin');
 
+    Route::livewire('log-aktivitas', 'pages::log-aktivitas.index')
+        ->name('log-aktivitas');
+
     Route::get('/download/template/{type}', function ($type) {
         $filename = "template_{$type}.xlsx";
         $path = public_path("templates/{$filename}");

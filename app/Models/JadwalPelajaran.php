@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +10,14 @@ use Illuminate\Database\Eloquent\Model;
 class JadwalPelajaran extends Model
 {
     /** @use HasFactory<\Database\Factories\JadwalPelajaranFactory> */
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    public function getLogDisplayName(): string
+    {
+        $mapel = $this->mataPelajaran?->nama_mapel ?? 'Mapel #' . $this->mata_pelajaran_id;
+        $kelas = $this->kelas?->nama_kelas ?? 'Kelas #' . $this->kelas_id;
+        return "{$this->hari} - {$mapel} ({$kelas})";
+    }
 
     protected $fillable = [
         'hari',

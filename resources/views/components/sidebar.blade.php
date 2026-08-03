@@ -27,6 +27,7 @@
         @if(auth()->user()->role === 'superadmin')
             <flux:sidebar.item icon="users" href="/atur-admin">Kelola Admin</flux:sidebar.item>
         @endif
+        <flux:sidebar.item icon="clipboard-document-list" href="/log-aktivitas" :current="Request::is('log-aktivitas*')">Log Aktivitas</flux:sidebar.item>
     </flux:sidebar.nav>
 
     <flux:sidebar.spacer />

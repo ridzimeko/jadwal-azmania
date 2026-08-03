@@ -4,6 +4,7 @@ use App\Imports\GuruImport;
 use App\Imports\JadwalPelajaranImport;
 use App\Imports\KelasImport;
 use App\Imports\MapelImport;
+use App\Models\ActivityLog;
 use Filament\Notifications\Notification;
 use Livewire\Component;
 use Flux\Flux;
@@ -34,13 +35,21 @@ new class extends Component {
     private function importGuru($path)
     {
         $guru = new GuruImport();
-        $guru->import($path);
+        ActivityLog::withoutLogs(function () use ($guru, $path) {
+            $guru->import($path);
+        });
         $errors = $guru->errors();
 
         if (count($errors) >= 1) {
             Notification::make()->title('Terjadi error saat import data')->danger()->persistent()->send();
             return;
         }
+
+        ActivityLog::record(
+            action: 'create',
+            description: 'Import data Guru dari berkas Excel',
+            module: 'Guru'
+        );
 
         Notification::make()->title('Data guru berhasil di unggah!')->success()->send();
         $this->dispatch('refreshGuruTable');
@@ -49,7 +58,16 @@ new class extends Component {
     private function importKelas($path)
     {
         try {
-            Excel::import(new KelasImport(), $path);
+            ActivityLog::withoutLogs(function () use ($path) {
+                Excel::import(new KelasImport(), $path);
+            });
+
+            ActivityLog::record(
+                action: 'create',
+                description: 'Import data Kelas dari berkas Excel',
+                module: 'Kelas'
+            );
+
             Notification::make()->title('Data Kelas berhasil di unggah!')->success()->send();
             $this->dispatch('refreshTable');
         } catch (\Throwable $th) {
@@ -60,7 +78,16 @@ new class extends Component {
     private function importMapel($path)
     {
         try {
-            Excel::import(new MapelImport(), $path);
+            ActivityLog::withoutLogs(function () use ($path) {
+                Excel::import(new MapelImport(), $path);
+            });
+
+            ActivityLog::record(
+                action: 'create',
+                description: 'Import data Mata Pelajaran dari berkas Excel',
+                module: 'Mata Pelajaran'
+            );
+
             Notification::make()->title('Data Mata Pelajaran berhasil di unggah!')->success()->send();
             $this->dispatch('refreshMapelTable');
         } catch (\Throwable $th) {
@@ -71,12 +98,22 @@ new class extends Component {
     private function importJadwal($path)
     {
         try {
-            $mapel = new JadwalPelajaranImport($this->periodeId);
-            $mapel->import($path);
+            $importedCount = 0;
+            ActivityLog::withoutLogs(function () use ($path, &$importedCount) {
+                $mapel = new JadwalPelajaranImport($this->periodeId);
+                $mapel->import($path);
+                $importedCount = $mapel->getImportedCount();
+            });
+
+            ActivityLog::record(
+                action: 'create',
+                description: "Import data Jadwal Pelajaran dari berkas Excel ({$importedCount} data)",
+                module: 'Jadwal Pelajaran'
+            );
 
             Notification::make()
                 ->title('Jadwal Pelajaran berhasil di unggah!')
-                ->body("Total data yang diimport: {$mapel->getImportedCount()}")
+                ->body("Total data yang diimport: {$importedCount}")
                 ->success()
                 ->send();
             $this->dispatch('refreshJadwalTable');
