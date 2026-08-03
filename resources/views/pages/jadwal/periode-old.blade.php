@@ -9,6 +9,7 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Flux\Flux;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -35,8 +36,16 @@ new
 
     protected function rules(): array
     {
+        $semester = ucfirst($this->formData['semester'] ?? '');
+
         return [
-            'formData.tahun_ajaran' => 'required|string',
+            'formData.tahun_ajaran' => [
+                'required',
+                'string',
+                Rule::unique('periode', 'tahun_ajaran')
+                    ->where('semester', $semester)
+                    ->ignore($this->formData['id'] ?? null),
+            ],
             'formData.semester' => 'required|string',
         ];
     }
@@ -46,6 +55,7 @@ new
         return [
             'formData.tahun_ajaran.required' => 'Tahun Ajaran wajib diisi.',
             'formData.tahun_ajaran.string' => 'Tahun Ajaran harus berupa teks.',
+            'formData.tahun_ajaran.unique' => 'Kombinasi Tahun Ajaran dan Semester ini sudah terdaftar.',
 
             'formData.semester.required' => 'Semester wajib diisi.',
             'formData.semester.string' => 'Semester harus berupa teks.',
@@ -79,9 +89,15 @@ new
         $this->validate();
 
         if ($this->isEdit) {
-            Periode::find($this->formData['id'])->update($this->formData);
+            Periode::find($this->formData['id'])->update([
+                ...$this->formData,
+                'semester' => ucfirst($this->formData['semester'] ?? 'Ganjil'),
+            ]);
         } else {
-            Periode::create($this->formData);
+            Periode::create([
+                ...$this->formData,
+                'semester' => ucfirst($this->formData['semester'] ?? 'Ganjil'),
+            ]);
         }
 
         Cache::forget('periode_options');
@@ -118,8 +134,8 @@ new
             <flux:field>
                 <flux:label>Semester</flux:label>
                 <x-select wire:model="formData.semester" :search="false" :options="[
-        ['label' => 'Ganjil', 'value' => 'ganjil'],
-        ['label' => 'Genap', 'value' => 'genap'],
+        ['label' => 'Ganjil', 'value' => 'Ganjil'],
+        ['label' => 'Genap', 'value' => 'Genap'],
     ]" placeholder="Pilih Semester" />
                 <flux:error name="formData.semester" />
             </flux:field>

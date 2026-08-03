@@ -15,7 +15,6 @@ class MataPelajaran extends Model
         'kode_mapel',
         'nama_mapel',
         'jenis_mapel',
-        'jp_per_pekan',
     ];
 
     protected $table = 'mata_pelajaran';

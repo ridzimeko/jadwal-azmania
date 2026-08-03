@@ -95,10 +95,8 @@ class JadwalHelper
             ->with(['kelas', 'mataPelajaran', 'guru', 'kegiatan', 'jamPelajaran'])
             ->whereRelation('periode', 'id', $periode)
             ->withBentrok()
-            ->withOverJp()
             ->orderByDesc('is_bentrok')
-            ->orderByDesc('is_over_jp')
-            ->orderByRaw("FIELD(hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')");
+            ->orderByRaw("CASE hari WHEN 'Senin' THEN 1 WHEN 'Selasa' THEN 2 WHEN 'Rabu' THEN 3 WHEN 'Kamis' THEN 4 WHEN 'Jumat' THEN 5 WHEN 'Sabtu' THEN 6 WHEN 'Minggu' THEN 7 ELSE 8 END");
 
         if ($tingkat) {
             $query->whereRelation('kelas', 'tingkat', $tingkat);
@@ -109,7 +107,7 @@ class JadwalHelper
 
     public static function getKelasOptions(?string $tingkat = null, bool $showAllTingkat = true)
     {
-        $options = $query = Kelas::orderByRaw("FIELD(kode_kelas, 'SMP', 'MA') DESC")
+        $options = $query = Kelas::orderByRaw("CASE kode_kelas WHEN 'SMP' THEN 1 WHEN 'MA' THEN 2 ELSE 3 END")
             ->orderBy('nama_kelas');
 
         if ($tingkat) {
@@ -141,16 +139,7 @@ class JadwalHelper
 
     public static function getMapelWithJpOptions($periodeId)
     {
-        return MataPelajaran::orderBy('nama_mapel')
-            ->withCount(['jadwal as jp_terpakai' => function ($q) use ($periodeId) {
-                $q->where('periode_id', $periodeId);
-            }])
-            ->get()
-            ->map(fn($g) => [
-                'value' => $g->id,
-                'label' => "{$g->nama_mapel} (JP Terpakai: {$g->jp_terpakai}/{$g->jp_per_pekan})",
-            ])
-            ->toArray();
+        return static::getMapelOptions();
     }
 
     public static function getPeriodeOptions()
@@ -221,55 +210,5 @@ class JadwalHelper
     public static function empty_to_null(array $data): array
     {
         return array_map(fn($v) => $v === '' ? null : $v, $data);
-    }
-
-    /**
-     * Cek apakah JP mapel masih tersedia
-     * 
-     * @return bool
-     */
-    public static function jpAvailable($mataPelajaranId, $periodeId, $exceptJadwalId = null)
-    {
-        $mapel = MataPelajaran::find($mataPelajaranId);
-
-        if (!$mapel) {
-            return false;
-        }
-
-        // Hitung JP terpakai
-        $jpTerpakai = JadwalPelajaran::where('mata_pelajaran_id', $mataPelajaranId)
-            ->where('periode_id', $periodeId)
-            ->when($exceptJadwalId, function ($q) use ($exceptJadwalId) {
-                $q->where('id', '!=', $exceptJadwalId);   // ← exclude jadwal yang sedang diedit
-            })
-            ->count();
-
-        // if ($mapel->jp_per_pekan == 0) {
-        //     return true; // unlimited
-        // }
-
-        return $jpTerpakai < $mapel->jp_per_pekan;
-    }
-
-
-    /**
-     * Cek dan throw error jika JP sudah habis
-     */
-    public static function validateJp($mataPelajaranId, $periodeId, $exceptJadwalId = null)
-    {
-        if (!self::jpAvailable($mataPelajaranId, $periodeId, $exceptJadwalId)) {
-
-            $mapel = MataPelajaran::find($mataPelajaranId);
-
-            return [
-                'valid' => false,
-                'message' => "Jatah JP untuk mapel {$mapel->nama_mapel} sudah habis.",
-            ];
-        }
-
-        return [
-            'valid' => true,
-            'message' => '',
-        ];
     }
 }

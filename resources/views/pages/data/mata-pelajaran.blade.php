@@ -14,7 +14,6 @@ new #[Title('Mata Pelajaran')] class extends Component {
         'kode_mapel' => '',
         'nama_mapel' => '',
         'jenis_mapel' => '',
-        'jp_per_pekan' => '',
     ];
     public bool $isEdit = false;
 
@@ -24,7 +23,6 @@ new #[Title('Mata Pelajaran')] class extends Component {
             'formData.kode_mapel' => ['required', 'string', 'max:12', Rule::unique('mata_pelajaran', 'kode_mapel')->ignore($this->formData['id'] ?? null)],
             'formData.nama_mapel' => ['required', 'string', 'max:40'],
             'formData.jenis_mapel' => 'required|string|in:KBM,Non KBM',
-            'formData.jp_per_pekan' => 'integer|required|gt:0',
         ];
     }
 
@@ -43,9 +41,6 @@ new #[Title('Mata Pelajaran')] class extends Component {
             'formData.jenis_mapel.required' => 'Jenis Mapel wajib diisi.',
             'formData.jenis_mapel.string' => 'Jenis Mapel harus berupa teks.',
             'formData.jenis_mapel.in' => 'Jenis Mapel harus salah satu dari: KBM, Non KBM.',
-
-            'formData.jp_per_pekan.integer' => 'JP per Pekan harus berupa angka.',
-            'formData.jp_per_pekan.required' => 'JP per Pekan wajib diisi.',
         ];
     }
 
@@ -57,7 +52,6 @@ new #[Title('Mata Pelajaran')] class extends Component {
             'kode_mapel' => '',
             'nama_mapel' => '',
             'jenis_mapel' => '',
-            'jp_per_pekan' => '',
         ];
         Flux::modal('mapel-modal')->show();
     }
@@ -119,13 +113,6 @@ new #[Title('Mata Pelajaran')] class extends Component {
 
                 <flux:input wire:model.defer="formData.kode_mapel" label="Kode Mapel" placeholder="Kode Mapel" />
                 <flux:input wire:model.defer="formData.nama_mapel" label="Nama Mapel" placeholder="Nama Mapel" />
-
-                <flux:field>
-                    <flux:label>Jatah Per Pekan</flux:label>
-                    <flux:input wire:model.defer="formData.jp_per_pekan" placeholder="Jatah Per Pekan" />
-                    <flux:error name="formData.jp_per_pekan" />
-                    {{-- <flux:description>Ketik "0" jika tidak ingin mengatur jatah</flux:description> --}}
-                </flux:field>
 
                 <div class="flex">
                     <flux:spacer />

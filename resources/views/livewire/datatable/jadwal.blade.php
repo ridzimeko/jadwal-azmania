@@ -61,9 +61,6 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                 if ($record->is_bentrok) {
                     return 'bg-red-100 text-red-700 font-semibold dark:bg-red-900/20';
                 }
-                if ($record->is_over_jp) {
-                    return 'bg-yellow-100 text-yellow-700 font-semibold dark:bg-yellow-900/20';
-                }
                 return '';
             })
             ->searchable()

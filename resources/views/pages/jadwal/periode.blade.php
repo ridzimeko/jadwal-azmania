@@ -8,6 +8,7 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Flux\Flux;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -33,8 +34,16 @@ new #[Title('Periode Jadwal')]
 
     protected function rules(): array
     {
+        $semester = ucfirst($this->formData['semester'] ?? '');
+
         return [
-            'formData.tahun_ajaran' => 'required|string',
+            'formData.tahun_ajaran' => [
+                'required',
+                'string',
+                Rule::unique('periode', 'tahun_ajaran')
+                    ->where('semester', $semester)
+                    ->ignore($this->formData['id'] ?? null),
+            ],
             'formData.semester' => 'required|string',
         ];
     }
@@ -44,6 +53,7 @@ new #[Title('Periode Jadwal')]
         return [
             'formData.tahun_ajaran.required' => 'Tahun Ajaran wajib diisi.',
             'formData.tahun_ajaran.string' => 'Tahun Ajaran harus berupa teks.',
+            'formData.tahun_ajaran.unique' => 'Kombinasi Tahun Ajaran dan Semester ini sudah terdaftar.',
 
             'formData.semester.required' => 'Semester wajib diisi.',
             'formData.semester.string' => 'Semester harus berupa teks.',
@@ -77,9 +87,15 @@ new #[Title('Periode Jadwal')]
         $this->validate();
 
         if ($this->isEdit) {
-            Periode::find($this->formData['id'])->update($this->formData);
+            Periode::find($this->formData['id'])->update([
+                ...$this->formData,
+                'semester' => ucfirst($this->formData['semester'] ?? 'Ganjil'),
+            ]);
         } else {
-            Periode::create($this->formData);
+            Periode::create([
+                ...$this->formData,
+                'semester' => ucfirst($this->formData['semester'] ?? 'Ganjil'),
+            ]);
         }
 
         Notification::make()->title('Periode Berhasil Tersimpan')->success()->send();
@@ -154,7 +170,7 @@ new #[Title('Periode Jadwal')]
             <flux:field>
                 <flux:label>Semester</flux:label>
                 <x-select wire:model="formData.semester" :search="false"
-                    :options="[['label' => 'Ganjil', 'value' => 'ganjil'], ['label' => 'Genap', 'value' => 'genap']]"
+                    :options="[['label' => 'Ganjil', 'value' => 'Ganjil'], ['label' => 'Genap', 'value' => 'Genap']]"
                     placeholder="Pilih Semester" />
                 <flux:error name="formData.semester" />
             </flux:field>

@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('mata_pelajaran', function (Blueprint $table) {
-            $table->id();
-            $table->string('kode_mapel', 12)->unique();
-            $table->string('nama_mapel', 40);
-            $table->enum('jenis_mapel', ['KBM', 'Non KBM']);
+        Schema::table('mata_pelajaran', function (Blueprint $table) {
+            if (Schema::hasColumn('mata_pelajaran', 'jp_per_pekan')) {
+                $table->dropColumn('jp_per_pekan');
+            }
         });
     }
 
@@ -24,6 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('mata_pelajaran');
+        Schema::table('mata_pelajaran', function (Blueprint $table) {
+            $table->integer('jp_per_pekan')->default(0);
+        });
     }
 };

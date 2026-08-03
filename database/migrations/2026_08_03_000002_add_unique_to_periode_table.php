@@ -11,13 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('periode', function (Blueprint $table) {
-            $table->id();
-            $table->string('tahun_ajaran'); // contoh: 2025/2026
-            $table->enum('semester', ['Ganjil', 'Genap']);
-            $table->boolean('aktif')->default(false);
+        Schema::table('periode', function (Blueprint $table) {
             $table->unique(['tahun_ajaran', 'semester']);
-            $table->timestamps();
         });
     }
 
@@ -26,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('periode');
+        Schema::table('periode', function (Blueprint $table) {
+            $table->dropUnique(['tahun_ajaran', 'semester']);
+        });
     }
 };

@@ -2,7 +2,6 @@
 
 use App\Helpers\JadwalHelper;
 use App\Models\JadwalPelajaran;
-use App\Rules\JatahJpRule;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -64,7 +63,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         return [
             'formData.hari' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
             'formData.kelas_id' => 'required|exists:kelas,id',
-            'formData.mata_pelajaran_id' => ['required', 'exists:mata_pelajaran,id', new JatahJpRule($this->periode_id, $this->formData['id'] ?? null)],
+            'formData.mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
             'formData.jam_pelajaran_id' => 'required|exists:jam_pelajaran,id',
             'formData.guru_id' => 'nullable|exists:guru,id',
         ];
