@@ -99,7 +99,7 @@ class JadwalHelper
             ->orderByRaw("CASE hari WHEN 'Senin' THEN 1 WHEN 'Selasa' THEN 2 WHEN 'Rabu' THEN 3 WHEN 'Kamis' THEN 4 WHEN 'Jumat' THEN 5 WHEN 'Sabtu' THEN 6 WHEN 'Minggu' THEN 7 ELSE 8 END");
 
         if ($tingkat) {
-            $query->whereRelation('kelas', 'tingkat', $tingkat);
+            $query->whereRelation('kelas', 'tingkat', strtoupper($tingkat));
         }
 
         return $query;
@@ -111,7 +111,7 @@ class JadwalHelper
             ->orderBy('nama_kelas');
 
         if ($tingkat) {
-            $query->where('tingkat', $tingkat);
+            $query->where('tingkat', strtoupper($tingkat));
         }
 
         if (!$showAllTingkat) {

@@ -183,16 +183,16 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         </x-slot>
     </x-card-heading>
 
-    <div x-data="{ activeTab: 'tabel' }">
+    <div x-data="{ activeTab: 'timeline' }">
         <div class="flex items-center justify-between gap-4 flex-wrap">
             <flux:tabs variant="segmented">
-                <flux:tab icon="list-bullet" x-on:click="activeTab = 'tabel'"
-                    x-bind:data-selected="activeTab === 'tabel'">
-                    Tabel
-                </flux:tab>
                 <flux:tab icon="calendar-days" x-on:click="activeTab = 'timeline'"
                     x-bind:data-selected="activeTab === 'timeline'">
                     Timeline
+                </flux:tab>
+                <flux:tab icon="list-bullet" x-on:click="activeTab = 'tabel'"
+                    x-bind:data-selected="activeTab === 'tabel'">
+                    Tabel
                 </flux:tab>
             </flux:tabs>
 
@@ -205,7 +205,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
         <div class="mt-4">
             <div x-show="activeTab === 'tabel'">
-                <livewire:datatable.jadwal :periode_id="$this->periode_id" />
+                <livewire:datatable.jadwal lazy :periode_id="$this->periode_id" />
             </div>
             <div x-cloak x-show="activeTab === 'timeline'">
                 <livewire:datatable.jadwal-matrix lazy :periode_id="$this->periode_id" :hari="$this->filterData['hari']"

@@ -33,6 +33,11 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     public $useEdit = true;
     public $useHariIni;
 
+    public function placeholder()
+    {
+        return view('components.loading');
+    }
+
     public function mount($tingkat = null)
     {
         $this->tingkat = $tingkat;

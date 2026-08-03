@@ -12,7 +12,7 @@ class PeriodeSeeder extends Seeder
      */
     public function run(): void
     {
-        Periode::create([
+        Periode::firstOrCreate([
             'tahun_ajaran' => '2025/2026',
             'semester' => 'Ganjil',
         ]);

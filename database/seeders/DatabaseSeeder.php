@@ -15,19 +15,29 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'nama' => 'Superadmin Azmania',
-            'username' => 'superadmin@azmania_id',
-            'role' => 'superadmin'
-        ]);
+        User::firstOrCreate(
+            ['username' => 'superadmin@azmania_id'],
+            [
+                'nama' => 'Superadmin Azmania',
+                'role' => 'superadmin',
+                'password' => bcrypt('password'),
+            ]
+        );
 
-        User::factory()->create([
-            'nama' => 'Bagian Kurikulum',
-            'username' => 'kurikulum@azmania_id',
-        ]);
+        User::firstOrCreate(
+            ['username' => 'kurikulum@azmania_id'],
+            [
+                'nama' => 'Bagian Kurikulum',
+                'password' => bcrypt('password'),
+            ]
+        );
 
         $this->call([
+            PeriodeSeeder::class,
+            JamPelajaranSeeder::class,
             KelasSeeder::class,
+            GuruSeeder::class,
+            MataPelajaranSeeder::class,
         ]);
     }
 }
