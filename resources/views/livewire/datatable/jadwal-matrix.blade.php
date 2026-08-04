@@ -74,6 +74,12 @@ new class extends Component {
         return $map;
     }
 
+    #[Computed]
+    public function getGlobalKelasMap()
+    {
+        return Kelas::whereIn('kode_kelas', ['SMP', 'MA'])->pluck('id', 'kode_kelas')->toArray();
+    }
+
     #[On('refreshJadwalTable')]
     public function refresh()
     {
@@ -150,6 +156,7 @@ new class extends Component {
         $jamList = $this->getJamPelajaran();
         $hariList = $this->getHariList();
         $jadwalMap = $this->getJadwalMap();
+        $globalKelasMap = $this->getGlobalKelasMap();
         $allJamIds = $jamList->pluck('id')->values()->toArray();
 
         // Hitung statistik slot
@@ -295,9 +302,9 @@ new class extends Component {
                                 // Cek apakah ada jadwal global (SMP / MA) di jam & hari ini
                                 $globalItems = collect();
                                 foreach (['SMP', 'MA'] as $globalKode) {
-                                    $gKelas = \App\Models\Kelas::where('kode_kelas', $globalKode)->first();
-                                    if ($gKelas) {
-                                        $gKey = $hariKey . '_' . $jam->id . '_' . $gKelas->id;
+                                    $gKelasId = $globalKelasMap[$globalKode] ?? null;
+                                    if ($gKelasId) {
+                                        $gKey = $hariKey . '_' . $jam->id . '_' . $gKelasId;
                                         if (!empty($jadwalMap[$gKey])) {
                                             $globalItems = $globalItems->concat($jadwalMap[$gKey]);
                                         }
