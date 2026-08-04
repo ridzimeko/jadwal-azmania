@@ -26,6 +26,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     public $guruOptions;
     public $jamPelajaranOptions;
     public $jadwalBentrokList = [];
+    public $availableSlotsList = [];
     public ?array $formData = [
         'hari' => '',
         'jam_mulai' => '',
@@ -100,6 +101,8 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     public function openAddJadwalModal()
     {
         $this->isEdit = false;
+        $this->jadwalBentrokList = [];
+        $this->availableSlotsList = [];
         $this->formData = [
             'hari' => '',
             'jam_mulai' => '',
@@ -116,6 +119,8 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     #[On('openEditJadwal')]
     public function openEditJadwal($record)
     {
+        $this->jadwalBentrokList = [];
+        $this->availableSlotsList = [];
         if ($record['id'] ?? null) {
             $this->isEdit = true;
             $record['jam_pelajaran_ids'] = isset($record['jam_pelajaran_id']) ? [(string) $record['jam_pelajaran_id']] : [];
@@ -133,6 +138,253 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         Flux::modal('jadwal-modal')->show();
     }
 
+    public function prepareBentrokListWithSlots(array $rawList)
+    {
+        $prepared = [];
+        foreach ($rawList as $index => $item) {
+            $data = $item['data'] ?? [
+                'hari' => $item['hari'] ?? $this->formData['hari'] ?? 'Senin',
+                'kelas_id' => $item['kelas_id'] ?? $this->formData['kelas_id'] ?? null,
+                'mata_pelajaran_id' => $item['mata_pelajaran_id'] ?? $this->formData['mata_pelajaran_id'] ?? null,
+                'guru_id' => $item['guru_id'] ?? $this->formData['guru_id'] ?? null,
+                'periode_id' => $this->periode_id,
+            ];
+
+            $selectedHari = $data['hari'] ?? 'Senin';
+            $availableSlots = [];
+            if (!empty($data['kelas_id']) && !empty($selectedHari)) {
+                $data['hari'] = $selectedHari;
+                $availableSlots = JadwalHelper::findAvailableSlots($data)->toArray();
+            }
+
+            $prepared[] = array_merge($item, [
+                'index' => $index,
+                'data' => $data,
+                'selected_hari' => $selectedHari,
+                'available_slots' => $availableSlots,
+                'selected_slot_id' => null,
+            ]);
+        }
+        return $prepared;
+    }
+
+    #[On('openBentrokSummaryModal')]
+    public function openBentrokSummaryModal($bentrokList)
+    {
+        $this->jadwalBentrokList = $this->prepareBentrokListWithSlots($bentrokList);
+        $this->availableSlotsList = [];
+        Flux::modal('jadwal-bentrok-modal')->show();
+    }
+
+    public function changeHariForBentrokItem($itemIndex, $newHari)
+    {
+        if (isset($this->jadwalBentrokList[$itemIndex])) {
+            $this->jadwalBentrokList[$itemIndex]['selected_hari'] = $newHari;
+            $this->jadwalBentrokList[$itemIndex]['data']['hari'] = $newHari;
+            $this->jadwalBentrokList[$itemIndex]['selected_slot_id'] = null;
+
+            $data = $this->jadwalBentrokList[$itemIndex]['data'];
+            if (!empty($data['kelas_id']) && !empty($newHari)) {
+                $this->jadwalBentrokList[$itemIndex]['available_slots'] = JadwalHelper::findAvailableSlots($data)->toArray();
+            } else {
+                $this->jadwalBentrokList[$itemIndex]['available_slots'] = [];
+            }
+        }
+    }
+
+    public function getTakenSlotsMap()
+    {
+        $taken = [];
+        foreach ($this->jadwalBentrokList as $item) {
+            $hari = $item['selected_hari'] ?? $item['data']['hari'] ?? null;
+            $slotId = $item['selected_slot_id'] ?? null;
+            if ($hari && $slotId) {
+                $kelasId = $item['data']['kelas_id'] ?? null;
+                $guruId = $item['data']['guru_id'] ?? null;
+                $taken["{$hari}_{$slotId}"] = true;
+                if ($kelasId) {
+                    $taken["{$hari}_{$slotId}_k_{$kelasId}"] = true;
+                }
+                if ($guruId) {
+                    $taken["{$hari}_{$slotId}_g_{$guruId}"] = true;
+                }
+            }
+        }
+        return $taken;
+    }
+
+    public function selectSlotForBentrokItem($itemIndex, $slotId)
+    {
+        if (isset($this->jadwalBentrokList[$itemIndex])) {
+            if (($this->jadwalBentrokList[$itemIndex]['selected_slot_id'] ?? null) == $slotId) {
+                $this->jadwalBentrokList[$itemIndex]['selected_slot_id'] = null;
+            } else {
+                $this->jadwalBentrokList[$itemIndex]['selected_slot_id'] = (string) $slotId;
+            }
+        }
+    }
+
+    public function saveBentrokAllocations()
+    {
+        if (empty($this->jadwalBentrokList)) {
+            return;
+        }
+
+        $savedCount = 0;
+        $taken = [];
+
+        foreach ($this->jadwalBentrokList as $item) {
+            $data = $item['data'] ?? [];
+            $hari = $item['selected_hari'] ?? $data['hari'] ?? 'Senin';
+            $data['hari'] = $hari;
+
+            $slotId = $item['selected_slot_id'] ?? null;
+
+            if (!$slotId && !empty($item['available_slots'])) {
+                // Pick first available slot not in $taken
+                foreach ($item['available_slots'] as $avail) {
+                    $sId = (string) $avail['id'];
+                    $kId = $data['kelas_id'] ?? null;
+                    $gId = $data['guru_id'] ?? null;
+
+                    $isTaken = isset($taken["{$hari}_{$sId}"]) ||
+                        ($kId && isset($taken["{$hari}_{$sId}_k_{$kId}"])) ||
+                        ($gId && isset($taken["{$hari}_{$sId}_g_{$gId}"]));
+
+                    if (!$isTaken) {
+                        $slotId = $sId;
+                        break;
+                    }
+                }
+            }
+
+            if (!$slotId) {
+                continue;
+            }
+
+            if (empty($data['kelas_id']) || empty($data['mata_pelajaran_id']) || empty($data['hari'])) {
+                continue;
+            }
+
+            $data['jam_pelajaran_id'] = $slotId;
+            unset($data['jam_pelajaran_ids']);
+
+            JadwalPelajaran::create(JadwalHelper::empty_to_null($data));
+
+            $kId = $data['kelas_id'] ?? null;
+            $gId = $data['guru_id'] ?? null;
+            $taken["{$hari}_{$slotId}"] = true;
+            if ($kId) $taken["{$hari}_{$slotId}_k_{$kId}"] = true;
+            if ($gId) $taken["{$hari}_{$slotId}_g_{$gId}"] = true;
+
+            $savedCount++;
+        }
+
+        $this->jadwalBentrokList = [];
+        $this->availableSlotsList = [];
+
+        if ($savedCount > 0) {
+            Notification::make()
+                ->title("{$savedCount} Jadwal Berhasil Dialokasikan!")
+                ->success()
+                ->send();
+        } else {
+            Notification::make()
+                ->title("Tidak ada slot jam yang dipilih.")
+                ->warning()
+                ->send();
+            return;
+        }
+
+        Flux::modal('jadwal-bentrok-modal')->close();
+        Flux::modal('jadwal-modal')->close();
+        $this->dispatch('refreshJadwalTable');
+        $this->dispatch('reload-mapel-options');
+    }
+
+    public function autoResolveBentrok()
+    {
+        if (empty($this->jadwalBentrokList)) {
+            return;
+        }
+
+        $resolvedCount = 0;
+        $allDays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        $taken = [];
+
+        foreach ($this->jadwalBentrokList as $item) {
+            $data = $item['data'] ?? null;
+            if (!$data) {
+                $data = [
+                    'hari' => $item['selected_hari'] ?? $item['hari'] ?? $this->formData['hari'] ?? 'Senin',
+                    'kelas_id' => $item['kelas_id'] ?? $this->formData['kelas_id'] ?? null,
+                    'mata_pelajaran_id' => $item['mata_pelajaran_id'] ?? $this->formData['mata_pelajaran_id'] ?? null,
+                    'guru_id' => $item['guru_id'] ?? $this->formData['guru_id'] ?? null,
+                    'periode_id' => $this->periode_id,
+                ];
+            }
+
+            if (empty($data['kelas_id']) || empty($data['mata_pelajaran_id'])) {
+                continue;
+            }
+
+            $currentHari = $item['selected_hari'] ?? $data['hari'] ?? 'Senin';
+            $searchDays = array_unique(array_merge([$currentHari], $allDays));
+
+            foreach ($searchDays as $day) {
+                $data['hari'] = $day;
+                $available = JadwalHelper::findAvailableSlots($data);
+
+                $validSlot = $available->first(function ($s) use ($taken, $day, $data) {
+                    $sId = (string) $s['id'];
+                    $kId = $data['kelas_id'] ?? null;
+                    $gId = $data['guru_id'] ?? null;
+
+                    return !isset($taken["{$day}_{$sId}"]) &&
+                        (!$kId || !isset($taken["{$day}_{$sId}_k_{$kId}"])) &&
+                        (!$gId || !isset($taken["{$day}_{$sId}_g_{$gId}"]));
+                });
+
+                if ($validSlot) {
+                    $sId = (string) $validSlot['id'];
+                    $kId = $data['kelas_id'] ?? null;
+                    $gId = $data['guru_id'] ?? null;
+
+                    $data['jam_pelajaran_id'] = $sId;
+                    unset($data['jam_pelajaran_ids']);
+                    JadwalPelajaran::create(JadwalHelper::empty_to_null($data));
+
+                    $taken["{$day}_{$sId}"] = true;
+                    if ($kId) $taken["{$day}_{$sId}_k_{$kId}"] = true;
+                    if ($gId) $taken["{$day}_{$sId}_g_{$gId}"] = true;
+
+                    $resolvedCount++;
+                    break;
+                }
+            }
+        }
+
+        $this->jadwalBentrokList = [];
+        $this->availableSlotsList = [];
+
+        if ($resolvedCount > 0) {
+            Notification::make()
+                ->title("{$resolvedCount} Jadwal Berhasil Dialokasikan Otomatis!")
+                ->success()
+                ->send();
+        } else {
+            Notification::make()
+                ->title("Tidak ada slot jam kosong yang tersedia di hari manapun.")
+                ->danger()
+                ->send();
+        }
+
+        Flux::modal('jadwal-bentrok-modal')->close();
+        Flux::modal('jadwal-modal')->close();
+        $this->dispatch('refreshJadwalTable');
+        $this->dispatch('reload-mapel-options');
+    }
+
     public function save()
     {
         $this->validate();
@@ -141,6 +393,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             $jadwal = JadwalHelper::isAvailable($this->formData, $this->formData['id'] ?? null);
             if (!$jadwal['available']) {
                 $this->jadwalBentrokList = $jadwal['bentrok'];
+                $this->availableSlotsList = JadwalHelper::findAvailableSlots($this->formData, $this->formData['id'] ?? null)->toArray();
                 return;
             }
 
@@ -169,6 +422,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
             if ($allBentrok->isNotEmpty()) {
                 $this->jadwalBentrokList = $allBentrok->unique('id')->values()->toArray();
+                $this->availableSlotsList = JadwalHelper::findAvailableSlots($this->formData)->toArray();
                 return;
             }
 
@@ -187,10 +441,26 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         }
 
         $this->jadwalBentrokList = [];
+        $this->availableSlotsList = [];
         Notification::make()->title('Jadwal Berhasil Tersimpan')->success()->send();
         Flux::modal('jadwal-modal')->close();
         $this->dispatch('refreshJadwalTable');
         $this->dispatch('reload-mapel-options');
+    }
+
+    public function selectAlternativeSlot($slotId)
+    {
+        if ($this->isEdit) {
+            $this->formData['jam_pelajaran_id'] = (string) $slotId;
+        } else {
+            $jamIds = $this->formData['jam_pelajaran_ids'] ?? [];
+            if (!in_array((string) $slotId, $jamIds)) {
+                $jamIds[] = (string) $slotId;
+            }
+            $this->formData['jam_pelajaran_ids'] = array_values(array_unique($jamIds));
+        }
+
+        $this->jadwalBentrokList = [];
     }
 
     public function deleteAction(): Action
@@ -274,19 +544,43 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             </flux:heading>
 
             @if (count($this->jadwalBentrokList) >= 1)
-                <flux:callout variant="danger" icon="x-circle" heading="Jadwal terjadi bentrok dengan:">
-                    <flux:callout.text>
-                        <ul>
-                            @foreach ($this->jadwalBentrokList as $jadwal)
-                                <li>
-                                    <div>{{ $jadwal['kelas'] }} {{ $jadwal['jam_mulai'] }} -
-                                        {{ $jadwal['jam_selesai'] }} ({{ $jadwal['guru'] }} / {{ $jadwal['mapel'] }})
-                                    </div>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </flux:callout.text>
-                </flux:callout>
+                <div class="space-y-3 bg-red-50 dark:bg-red-950/40 p-3.5 rounded-xl border border-red-200 dark:border-red-900/50">
+                    <div class="flex items-start gap-2.5 text-red-700 dark:text-red-300">
+                        <flux:icon name="exclamation-triangle" class="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                        <div>
+                            <strong class="font-bold text-sm">Terjadi Bentrok Jadwal:</strong>
+                            <ul class="list-disc list-inside text-xs mt-1 space-y-0.5">
+                                @foreach ($this->jadwalBentrokList as $jadwal)
+                                    <li>
+                                        {{ $jadwal['kelas'] }} ({{ $jadwal['jam_mulai'] }} - {{ $jadwal['jam_selesai'] }}) : {{ $jadwal['guru'] }} - {{ $jadwal['mapel'] }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+
+                    @if (count($this->availableSlotsList) >= 1)
+                        <div class="pt-2.5 border-t border-red-200 dark:border-red-900/40">
+                            <div class="text-xs font-bold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-1.5">
+                                <flux:icon name="sparkles" class="w-4 h-4 text-amber-500" />
+                                <span>Rekomendasi Slot Jam Kosong (Bebas Bentrok):</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5">
+                                @foreach ($this->availableSlotsList as $slot)
+                                    <button type="button" wire:click="selectAlternativeSlot('{{ $slot['id'] }}')"
+                                        class="px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800 transition flex items-center gap-1">
+                                        <flux:icon name="plus-circle" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                                        <span>{{ $slot['label'] }}</span>
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    @else
+                        <div class="pt-2 border-t border-red-200 dark:border-red-900/40 text-xs text-red-600 dark:text-red-400 font-medium">
+                            Tidak ada slot jam kosong lain yang tersedia di hari {{ $this->formData['hari'] ?? '' }} untuk kelas/guru ini.
+                        </div>
+                    @endif
+                </div>
             @endif
 
             <flux:field>
@@ -359,4 +653,125 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     <div>
         <livewire:excel-import-modal context="jadwal" :periodeId="$this->periode_id" />
     </div>
+
+    {{-- Modal Peringatan & Alokasi Solusi Bentrok Jadwal --}}
+    <flux:modal name="jadwal-bentrok-modal" class="w-[90%] md:w-[620px] z-[50]" scroll="null">
+        <div class="space-y-4 p-1">
+            <div class="flex items-center gap-3 text-red-600 dark:text-red-400">
+                <flux:icon name="exclamation-triangle" class="w-7 h-7 shrink-0 text-red-500" />
+                <div>
+                    <flux:heading size="lg" class="text-red-700 dark:text-red-400 font-bold">Resolusi Bentrok Jadwal</flux:heading>
+                    <flux:subheading size="sm">Pilih slot jam kosong yang diinginkan atau gunakan alokasi otomatis.</flux:subheading>
+                </div>
+            </div>
+
+            @php
+                $takenSlotsMap = $this->getTakenSlotsMap();
+            @endphp
+            <div class="space-y-3 max-h-[340px] overflow-y-auto pr-1">
+                @foreach ($this->jadwalBentrokList as $idx => $item)
+                    <div class="bg-red-50/70 dark:bg-red-950/40 p-3.5 rounded-xl border border-red-200/80 dark:border-red-900/50 space-y-2.5">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <div class="text-xs font-bold text-red-800 dark:text-red-300 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                    <span>{{ $item['kelas'] ?? 'Kelas' }}</span>
+                                    <span class="font-normal text-gray-600 dark:text-gray-400">({{ $item['hari'] ?? '' }}, {{ $item['jam_mulai'] ?? '' }} - {{ $item['jam_selesai'] ?? '' }})</span>
+                                </div>
+                                <div class="text-xs text-gray-700 dark:text-gray-300 mt-1">
+                                    Mapel: <strong>{{ $item['mapel'] ?? '-' }}</strong> | Guru: <strong>{{ $item['guru'] ?? '-' }}</strong>
+                                </div>
+                            </div>
+                            @if (!empty($item['selected_slot_id']))
+                                <span class="px-2 py-0.5 text-[11px] font-bold rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+                                    <flux:icon name="check-circle" class="w-3 h-3 text-emerald-600" />
+                                    <span>Jam Terpilih</span>
+                                </span>
+                            @endif
+                        </div>
+
+                        {{-- Day Selector & Selection Pills for Available Empty Slots --}}
+                        <div class="pt-2 border-t border-red-200/60 dark:border-red-900/40 space-y-2">
+                            <div class="flex items-center justify-between gap-2 flex-wrap">
+                                <div class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                                    <flux:icon name="sparkles" class="w-3.5 h-3.5 text-amber-500" />
+                                    <span>Pilih Hari & Slot Kosong:</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <label class="text-[11px] font-medium text-gray-600 dark:text-gray-400">Hari:</label>
+                                    <select wire:change="changeHariForBentrokItem({{ $idx }}, $event.target.value)"
+                                        class="text-xs px-2 py-0.5 rounded-md bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 font-semibold focus:ring-1 focus:ring-primary shadow-xs">
+                                        @foreach (['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'] as $hariOpt)
+                                            <option value="{{ $hariOpt }}" {{ ($item['selected_hari'] ?? '') == $hariOpt ? 'selected' : '' }}>
+                                                {{ $hariOpt }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            @if (!empty($item['available_slots']) && count($item['available_slots']) > 0)
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach ($item['available_slots'] as $slot)
+                                        @php
+                                            $sId = (string) $slot['id'];
+                                            $h = $item['selected_hari'] ?? 'Senin';
+                                            $kId = $item['data']['kelas_id'] ?? null;
+                                            $gId = $item['data']['guru_id'] ?? null;
+
+                                            $isSelected = ($item['selected_slot_id'] ?? null) == $sId;
+                                            $isTakenByOther = !$isSelected && (
+                                                isset($takenSlotsMap["{$h}_{$sId}"]) ||
+                                                ($kId && isset($takenSlotsMap["{$h}_{$sId}_k_{$kId}"])) ||
+                                                ($gId && isset($takenSlotsMap["{$h}_{$sId}_g_{$gId}"]))
+                                            );
+                                        @endphp
+
+                                        @if ($isTakenByOther)
+                                            <button type="button" disabled
+                                                class="px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-200/80 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 border border-gray-300/80 dark:border-gray-700/80 cursor-not-allowed flex items-center gap-1"
+                                                title="Slot ini sudah dipilih untuk alokasi jadwal lain">
+                                                <flux:icon name="lock-closed" class="w-3 h-3 text-gray-400 dark:text-gray-500" />
+                                                <span>{{ $slot['label'] }} (Terpakai)</span>
+                                            </button>
+                                        @else
+                                            <button type="button" wire:click="selectSlotForBentrokItem({{ $idx }}, '{{ $sId }}')"
+                                                class="px-2.5 py-1 rounded-md text-xs font-semibold transition flex items-center gap-1 border {{ $isSelected ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800' }}">
+                                                @if($isSelected)
+                                                    <flux:icon name="check-circle" class="w-3.5 h-3.5 text-white" />
+                                                @else
+                                                    <flux:icon name="plus-circle" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                                                @endif
+                                                <span>{{ $slot['label'] }}</span>
+                                            </button>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="text-[11px] text-red-600 dark:text-red-400 italic">
+                                    Tidak ada slot kosong yang tersedia pada hari <strong>{{ $item['selected_hari'] ?? 'ini' }}</strong>. Silakan pilih hari lain.
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-gray-200 dark:border-gray-800">
+                <flux:modal.close>
+                    <flux:button variant="ghost" size="sm">Tutup</flux:button>
+                </flux:modal.close>
+
+                <div class="flex items-center gap-2">
+                    <flux:button type="button" wire:click="autoResolveBentrok" variant="outline" size="sm" icon="sparkles" class="!text-emerald-700 dark:!text-emerald-300">
+                        Alokasi Otomatis Semua
+                    </flux:button>
+
+                    <flux:button type="button" wire:click="saveBentrokAllocations" variant="filled" color="emerald" size="sm" class="!bg-emerald-600 hover:!bg-emerald-700 !text-white">
+                        Simpan Alokasi Jadwal
+                    </flux:button>
+                </div>
+            </div>
+        </div>
+    </flux:modal>
 </div>

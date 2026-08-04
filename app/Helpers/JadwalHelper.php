@@ -87,6 +87,40 @@ class JadwalHelper
         return ['available' => true, 'bentrok' => collect()];
     }
 
+    /**
+     * Cari semua jam pelajaran yang tersedia (bebas bentrok) untuk kelas & guru tertentu pada hari tertentu.
+     *
+     * @param array $data ['hari', 'kelas_id', 'guru_id', 'periode_id']
+     * @param int|null $ignoreId
+     * @return \Illuminate\Support\Collection
+     */
+    public static function findAvailableSlots(array $data, ?int $ignoreId = null)
+    {
+        $allJam = \App\Models\JamPelajaran::orderBy('urutan')->get();
+        $available = collect();
+
+        foreach ($allJam as $jam) {
+            $testData = array_merge($data, [
+                'jam_pelajaran_id' => $jam->id,
+                'jam_mulai' => $jam->jam_mulai,
+                'jam_selesai' => $jam->jam_selesai,
+            ]);
+
+            $chk = static::isAvailable($testData, $ignoreId);
+            if ($chk['available']) {
+                $available->push([
+                    'id' => (string) $jam->id,
+                    'urutan' => $jam->urutan,
+                    'jam_mulai' => $jam->jam_mulai,
+                    'jam_selesai' => $jam->jam_selesai,
+                    'label' => "Jam {$jam->urutan} ({$jam->jam_mulai} - {$jam->jam_selesai})",
+                ]);
+            }
+        }
+
+        return $available;
+    }
+
 
     public static function getQuery($periode = null, $tingkat = null)
     {

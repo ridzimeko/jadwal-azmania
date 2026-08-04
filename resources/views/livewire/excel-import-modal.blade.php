@@ -99,10 +99,12 @@ new class extends Component {
     {
         try {
             $importedCount = 0;
-            ActivityLog::withoutLogs(function () use ($path, &$importedCount) {
+            $bentrokList = [];
+            ActivityLog::withoutLogs(function () use ($path, &$importedCount, &$bentrokList) {
                 $mapel = new JadwalPelajaranImport($this->periodeId);
                 $mapel->import($path);
                 $importedCount = $mapel->getImportedCount();
+                $bentrokList = $mapel->getBentrokList();
             });
 
             ActivityLog::record(
@@ -111,11 +113,22 @@ new class extends Component {
                 module: 'Jadwal Pelajaran'
             );
 
-            Notification::make()
-                ->title('Jadwal Pelajaran berhasil di unggah!')
-                ->body("Total data yang diimport: {$importedCount}")
-                ->success()
-                ->send();
+            if (count($bentrokList) > 0) {
+                Notification::make()
+                    ->title("Import Selesai ({$importedCount} data), tetapi terdapat " . count($bentrokList) . " bentrok!")
+                    ->warning()
+                    ->persistent()
+                    ->send();
+
+                $this->dispatch('openBentrokSummaryModal', bentrokList: $bentrokList);
+            } else {
+                Notification::make()
+                    ->title('Jadwal Pelajaran berhasil di unggah!')
+                    ->body("Total data yang diimport: {$importedCount}")
+                    ->success()
+                    ->send();
+            }
+
             $this->dispatch('refreshJadwalTable');
         } catch (\Throwable $th) {
             Notification::make()->title('Terjadi error saat import data')->body($th->getMessage())->danger()->persistent()->send();
@@ -123,7 +136,10 @@ new class extends Component {
     }
 }; ?>
 
-<div>
+<div x-data="{ isUploadingFile: false }"
+    x-on:file-uploading.window="isUploadingFile = true"
+    x-on:file-uploaded.window="isUploadingFile = false"
+    x-on:file-upload-error.window="isUploadingFile = false">
     <flux:modal name="{{ $name }}" class="w-[90%] md:w-[32rem]">
         <form wire:submit.prevent="save">
             <div class="space-y-6">
@@ -142,9 +158,15 @@ new class extends Component {
                     <flux:modal.close>
                         <flux:button variant="ghost">Batal</flux:button>
                     </flux:modal.close>
-                    <flux:button type="submit" variant="filled"
-                        class="!bg-primary !text-white disabled:text-gray-700 !disabled:bg-primary/40">Unggah Data
-                    </flux:button>
+                    <button type="submit"
+                        :disabled="isUploadingFile"
+                        wire:loading.attr="disabled"
+                        wire:target="save"
+                        class="px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                        <span wire:loading.remove wire:target="save" x-show="!isUploadingFile">Unggah Data</span>
+                        <span x-show="isUploadingFile" x-cloak>Mengunggah File...</span>
+                        <span wire:loading wire:target="save" x-cloak>Memproses Import...</span>
+                    </button>
                 </div>
             </div>
         </form>

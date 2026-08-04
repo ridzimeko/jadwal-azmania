@@ -20,6 +20,7 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFail
     use Importable, SkipsFailures;
 
     protected int $importedCount = 0;
+    protected array $bentrokList = [];
     protected $periodeId;
 
     public function __construct($periodeId)
@@ -34,7 +35,6 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFail
             $kelas = Kelas::where('kode_kelas', $row['kode_kelas'] ?? null)->first();
             $mapel = MataPelajaran::where('kode_mapel', $row['kode_mata_pelajaran'] ?? null)->first();
             $guru  = Guru::where('kode_guru', $row['kode_guru_pengajar'] ?? null)->first();
-            // $jamMapel = JamPelajaran::where('urutan', $row['jam_ke'] ?? null)->first();
 
             // skip kalau tidak ditemukan
             if (!$kelas || !$mapel) {
@@ -60,17 +60,36 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFail
                     continue;
                 }
 
+                $dataCheck = [
+                    'kelas_id' => $kelas->id,
+                    'mata_pelajaran_id' => $mapel->id,
+                    'guru_id' => $guru->id ?? null,
+                    'hari' => $hari,
+                    'jam_pelajaran_id' => $jamMapel->id,
+                    'periode_id' => $this->periodeId,
+                ];
+
+                $checkAvailability = \App\Helpers\JadwalHelper::isAvailable($dataCheck);
+                if (!$checkAvailability['available']) {
+                    foreach ($checkAvailability['bentrok'] as $b) {
+                        $this->bentrokList[] = [
+                            'kelas' => $b['kelas'],
+                            'jam_mulai' => $b['jam_mulai'],
+                            'jam_selesai' => $b['jam_selesai'],
+                            'guru' => $b['guru'],
+                            'mapel' => $b['mapel'],
+                            'hari' => $hari,
+                            'kelas_id' => $kelas->id,
+                            'mata_pelajaran_id' => $mapel->id,
+                            'guru_id' => $guru->id ?? null,
+                            'periode_id' => $this->periodeId,
+                            'data' => $dataCheck,
+                        ];
+                    }
+                }
+
                 // update or create data
-                $jadwal = JadwalPelajaran::updateOrCreate(
-                    [
-                        'kelas_id' => $kelas->id,
-                        'mata_pelajaran_id' => $mapel->id,
-                        'guru_id' => $guru->id ?? null,
-                        'hari' => $hari,
-                        'jam_pelajaran_id' => $jamMapel->id,
-                        'periode_id' => $this->periodeId,
-                    ],
-                );
+                $jadwal = JadwalPelajaran::updateOrCreate($dataCheck);
 
                 if ($jadwal->wasRecentlyCreated || $jadwal->wasChanged()) {
                     $this->importedCount++;
@@ -82,6 +101,11 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFail
         return [
             'total_imported' => $this->importedCount,
         ];
+    }
+
+    public function getBentrokList(): array
+    {
+        return $this->bentrokList;
     }
 
     protected function parseExcelTime($value)
