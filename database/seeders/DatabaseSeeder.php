@@ -32,6 +32,15 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        User::firstOrCreate(
+            ['username' => 'guru@azmania_id'],
+            [
+                'nama' => 'Guru Azmania',
+                'role' => 'guru',
+                'password' => bcrypt('password'),
+            ]
+        );
+
         $this->call([
             PeriodeSeeder::class,
             JamPelajaranSeeder::class,

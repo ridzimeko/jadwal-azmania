@@ -39,6 +39,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     public ?array $filterData = [
         'hari' => '',
         'tingkat' => '',
+        'guru_id' => '',
     ];
     public bool $isEdit = false;
 
@@ -489,12 +490,14 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 <div class="dash-card">
     <x-card-heading title="Jadwal Pelajaran" description="Periode Tahun Ajaran {{ $this->tahunAjaran }}">
         <x-slot name="action_buttons">
-            <flux:modal.trigger name="import-excel">
-                <flux:button icon="file-excel" class="!bg-az-green !text-white">Import dari Excel</flux:button>
-            </flux:modal.trigger>
-            <flux:button icon="plus" wire:click="openAddJadwalModal" class="!bg-primary !text-white">
-                Tambah Data
-            </flux:button>
+            @if(auth()->user()->role !== 'guru')
+                <flux:modal.trigger name="import-excel">
+                    <flux:button icon="file-excel" class="!bg-az-green !text-white">Import dari Excel</flux:button>
+                </flux:modal.trigger>
+                <flux:button icon="plus" wire:click="openAddJadwalModal" class="!bg-primary !text-white">
+                    Tambah Data
+                </flux:button>
+            @endif
             <flux:modal.trigger name="export-jadwal">
                 <flux:button icon="arrow-down-tray">
                     Unduh Data
@@ -516,10 +519,12 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 </flux:tab>
             </flux:tabs>
 
-            <div x-cloak x-show="activeTab === 'timeline'" class="flex items-center flex-wrap gap-4">
+            <div x-cloak x-show="activeTab === 'timeline'" class="flex items-center flex-wrap gap-3">
                 <x-select wire:model.live="filterData.hari" :search="false"
-                    :options="JadwalHelper::getHariOptions(true)" placeholder="Pilih hari" class="!w-[140px]" />
-                <x-select wire:model.live="filterData.tingkat" :search="false" :options="[['label' => 'SMP', 'value' => 'smp'], ['label' => 'MA', 'value' => 'ma']]" placeholder="Pilih tingkat" class="!w-[120px]" />
+                    :options="JadwalHelper::getHariOptions(true)" placeholder="Pilih hari" class="!w-[130px]" />
+                <x-select wire:model.live="filterData.tingkat" :search="false" :options="[['label' => 'SMP', 'value' => 'smp'], ['label' => 'MA', 'value' => 'ma']]" placeholder="Pilih tingkat" class="!w-[110px]" />
+                <x-select wire:model.live="filterData.guru_id" :search="true"
+                    :options="JadwalHelper::getGuruOptions(true)" placeholder="Filter Guru..." class="!w-[220px]" />
             </div>
         </div>
 
@@ -529,7 +534,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             </div>
             <div x-cloak x-show="activeTab === 'timeline'">
                 <livewire:datatable.jadwal-matrix lazy :periode_id="$this->periode_id" :hari="$this->filterData['hari']"
-                    :tingkat="$this->filterData['tingkat']" wire:key="matrix-{{ md5(json_encode($filterData)) }}" />
+                    :tingkat="$this->filterData['tingkat']" :guru_id="$this->filterData['guru_id']" wire:key="matrix-{{ md5(json_encode($filterData)) }}" />
             </div>
         </div>
     </div>

@@ -11,23 +11,27 @@
     </flux:sidebar.header>
 
     <flux:sidebar.nav>
-        <flux:sidebar.item icon="home" href="/">Beranda</flux:sidebar.item>
+        @if(auth()->user()->role === 'guru')
+            <flux:sidebar.item icon="book-open" href="/jadwal/pelajaran" :current="Request::is('jadwal/pelajaran*')">Jadwal Pelajaran</flux:sidebar.item>
+        @else
+            <flux:sidebar.item icon="home" href="/">Beranda</flux:sidebar.item>
 
-        <flux:sidebar.group expandable icon="book" heading="Jadwal" class="grid">
-            <flux:sidebar.item href="/jadwal/periode">Periode</flux:sidebar.item>
-            <flux:sidebar.item :current="Request::is('jadwal/pelajaran*')" href="/jadwal/pelajaran">Pelajaran</flux:sidebar.item>
-        </flux:sidebar.group>
+            <flux:sidebar.group expandable icon="book" heading="Jadwal" class="grid">
+                <flux:sidebar.item href="/jadwal/periode">Periode</flux:sidebar.item>
+                <flux:sidebar.item :current="Request::is('jadwal/pelajaran*')" href="/jadwal/pelajaran">Pelajaran</flux:sidebar.item>
+            </flux:sidebar.group>
 
-        <flux:sidebar.group expandable icon="pencil-square" heading="Data" class="grid">
-            <flux:sidebar.item href="/data/mata-pelajaran">Mata Pelajaran</flux:sidebar.item>
-            <flux:sidebar.item href="/data/jam-pelajaran">Jam Pelajaran</flux:sidebar.item>
-            <flux:sidebar.item href="/data/guru">Guru</flux:sidebar.item>
-            <flux:sidebar.item href="/data/kelas">Kelas</flux:sidebar.item>
-        </flux:sidebar.group>
-        @if(auth()->user()->role === 'superadmin')
-            <flux:sidebar.item icon="users" href="/atur-admin">Kelola Admin</flux:sidebar.item>
+            <flux:sidebar.group expandable icon="pencil-square" heading="Data" class="grid">
+                <flux:sidebar.item href="/data/mata-pelajaran">Mata Pelajaran</flux:sidebar.item>
+                <flux:sidebar.item href="/data/jam-pelajaran">Jam Pelajaran</flux:sidebar.item>
+                <flux:sidebar.item href="/data/guru">Guru</flux:sidebar.item>
+                <flux:sidebar.item href="/data/kelas">Kelas</flux:sidebar.item>
+            </flux:sidebar.group>
+            @if(auth()->user()->role === 'superadmin')
+                <flux:sidebar.item icon="users" href="/atur-admin">Kelola Admin</flux:sidebar.item>
+            @endif
+            <flux:sidebar.item icon="clipboard-document-list" href="/log-aktivitas" :current="Request::is('log-aktivitas*')">Log Aktivitas</flux:sidebar.item>
         @endif
-        <flux:sidebar.item icon="clipboard-document-list" href="/log-aktivitas" :current="Request::is('log-aktivitas*')">Log Aktivitas</flux:sidebar.item>
     </flux:sidebar.nav>
 
     <flux:sidebar.spacer />
@@ -36,8 +40,10 @@
         <flux:sidebar.profile name="{{ auth()->user()->nama ?? '' }}" avatar:color="amber" />
 
         <flux:menu>
-            <flux:menu.item icon="cog-6-tooth" href="/pengaturan/akun">Pengaturan Akun</flux:menu.item>
-            <flux:menu.separator />
+            @if(auth()->user()->role !== 'guru')
+                <flux:menu.item icon="cog-6-tooth" href="/pengaturan/akun">Pengaturan Akun</flux:menu.item>
+                <flux:menu.separator />
+            @endif
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <flux:menu.item type="submit" variant="danger" icon="arrow-right-start-on-rectangle">

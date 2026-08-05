@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
     Route::livewire('/', 'pages::dashboard')->name('dashboard');
+    Route::livewire('/jadwal-lihat', 'pages::jadwal.view-only')->name('jadwal.view-only');
 
     Route::redirect('settings', 'pages::settings/profile');
 

@@ -14,6 +14,8 @@ new class extends Component {
 
     public $hari;
 
+    public $guru_id = null;
+
     public bool $onlyEmpty = false;
 
     public function placeholder()
@@ -60,6 +62,10 @@ new class extends Component {
             $query->where('hari', $this->hari);
         }
 
+        if ($this->guru_id) {
+            $query->where('guru_id', $this->guru_id);
+        }
+
         $items = $query->get();
 
         $map = [];
@@ -91,6 +97,7 @@ new class extends Component {
 
 <div class="w-full space-y-4"
     x-data="{
+        isGuru: {{ auth()->user()->role === 'guru' ? 'true' : 'false' }},
         isDragging: false,
         dragHari: '',
         dragKelasId: null,
@@ -98,6 +105,7 @@ new class extends Component {
         selectedJams: [],
 
         openModal(record) {
+            if (this.isGuru) return;
             const currentScrollY = window.scrollY;
             $wire.$parent.openEditJadwal(record).then(() => {
                 requestAnimationFrame(() => {
@@ -107,6 +115,7 @@ new class extends Component {
         },
 
         startDrag(hari, kelasId, jamId) {
+            if (this.isGuru) return;
             this.isDragging = true;
             this.dragHari = hari;
             this.dragKelasId = kelasId;
@@ -199,10 +208,12 @@ new class extends Component {
             </div>
         </div>
 
-        <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 bg-blue-50/60 dark:bg-blue-950/30 px-3.5 py-1.5 rounded-lg border border-blue-100 dark:border-blue-900/40">
-            <flux:icon name="cursor-arrow-rays" class="w-3.5 h-3.5 text-primary shrink-0" />
-            <span>Tips: <strong>Klik & drag</strong> slot kosong berurutan di dalam matriks untuk memilih beberapa jam pelajaran sekaligus</span>
-        </div>
+        @if(auth()->user()->role !== 'guru')
+            <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 bg-blue-50/60 dark:bg-blue-950/30 px-3.5 py-1.5 rounded-lg border border-blue-100 dark:border-blue-900/40">
+                <flux:icon name="cursor-arrow-rays" class="w-3.5 h-3.5 text-primary shrink-0" />
+                <span>Tips: <strong>Klik & drag</strong> slot kosong berurutan di dalam matriks untuk memilih beberapa jam pelajaran sekaligus</span>
+            </div>
+        @endif
     </div>
 
     <!-- Matrix Grid Table -->

@@ -11,6 +11,10 @@ new class extends Component {
 
     public function mount()
     {
+        if (auth()->user()->role === 'guru') {
+            return redirect()->route('jadwal.periode');
+        }
+
         $this->totalMataPelajaran = \App\Models\MataPelajaran::count();
         $this->totalKelas = \App\Models\Kelas::count();
         $this->totalGuru = \App\Models\Guru::count();

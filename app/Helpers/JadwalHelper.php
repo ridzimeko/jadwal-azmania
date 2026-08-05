@@ -208,15 +208,21 @@ class JadwalHelper
         return $days;
     }
 
-    public static function getGuruOptions()
+    public static function getGuruOptions(bool $includeAll = false)
     {
-        return Guru::orderBy('nama_guru')
+        $options = Guru::orderBy('nama_guru')
             ->get()
             ->map(fn($g) => [
                 'value' => $g->id,
                 'label' => $g->nama_guru,
             ])
             ->toArray();
+
+        if ($includeAll) {
+            array_unshift($options, ['label' => 'Semua Guru', 'value' => '']);
+        }
+
+        return $options;
     }
 
     public static function getJamPelajaranOptions()

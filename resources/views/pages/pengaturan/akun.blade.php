@@ -18,6 +18,10 @@ new class extends Component {
 
     public function mount() // Di Livewire, gunakan mount() sebagai constructor
     {
+        if (Auth::check() && Auth::user()->role === 'guru') {
+            abort(403, 'Guru tidak memiliki akses ke pengaturan akun. Silakan hubungi Admin untuk mengubah kata sandi.');
+        }
+
         // Pastikan ada user yang login sebelum mengakses propertinya
         if (Auth::check()) {
             $this->isSuperadmin = Auth::user()->role === 'superadmin';
