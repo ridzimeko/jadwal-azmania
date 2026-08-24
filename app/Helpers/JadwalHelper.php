@@ -239,6 +239,9 @@ class JadwalHelper
             ->get()
             ->map(fn($j) => [
                 'value' => $j->id,
+                'urutan' => $j->urutan,
+                'jam_mulai' => $j->jam_mulai,
+                'jam_selesai' => $j->jam_selesai,
                 'label' => "{$j->urutan} ({$j->jam_mulai} - {$j->jam_selesai})",
             ])
             ->toArray();

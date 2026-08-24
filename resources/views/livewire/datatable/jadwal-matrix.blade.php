@@ -199,12 +199,12 @@ new class extends Component {
                 </span>
             </div>
             <div class="flex items-center gap-2">
-                <button wire:click="$toggle('onlyEmpty')" wire:loading.attr="disabled"
+                <!-- <button wire:click="$toggle('onlyEmpty')" wire:loading.attr="disabled"
                     class="px-3 py-1 rounded-lg text-xs font-semibold border transition flex items-center gap-1.5 disabled:opacity-70 {{ $onlyEmpty ? 'bg-amber-500 text-white border-amber-600 shadow-sm' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-100' }}">
                     <flux:icon name="arrow-path" wire:loading wire:target="$toggle('onlyEmpty')" class="w-3.5 h-3.5 animate-spin text-current" />
                     <flux:icon name="funnel" wire:loading.remove wire:target="$toggle('onlyEmpty')" class="w-3.5 h-3.5" />
                     <span>{{ $onlyEmpty ? 'Tampilkan Semua Slot' : 'Highlight Slot Kosong Only' }}</span>
-                </button>
+                </button> -->
             </div>
         </div>
 

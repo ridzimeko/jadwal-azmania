@@ -449,6 +449,33 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 return;
             }
 
+            // Capture old data properties before deleting old block records
+            $oldProps = [];
+            if (!empty($oldBlockIds)) {
+                $oldRecordsList = JadwalPelajaran::whereIn('id', $oldBlockIds)->with(['kelas', 'mataPelajaran', 'guru'])->get();
+                if ($oldRecordsList->isNotEmpty()) {
+                    $firstOld = $oldRecordsList->first();
+                    $oldJpCount = $oldRecordsList->count();
+                    $oldKelasName = $firstOld->kelas?->nama_kelas ?? '-';
+                    $oldMapelName = $firstOld->mataPelajaran?->nama_mapel ?? '-';
+                    $oldGuruName = $firstOld->guru?->nama_guru ?? 'Tanpa Guru';
+                    $oldHariName = ucfirst($firstOld->hari ?? '');
+                    $oldJamIds = $oldRecordsList->pluck('jam_pelajaran_id')->toArray();
+                    $oldJamLabels = \App\Models\JamPelajaran::whereIn('id', $oldJamIds)->orderBy('jam_mulai')->pluck('urutan')->map(fn($u) => is_numeric($u) ? "Jam {$u}" : $u)->implode(', ');
+
+                    $oldProps = [
+                        'Hari' => $oldHariName,
+                        'Kelas' => $oldKelasName,
+                        'Mata Pelajaran' => $oldMapelName,
+                        'Guru Pengajar' => $oldGuruName,
+                        'Durasi Jam' => "{$oldJpCount} JP ({$oldJamLabels})",
+                    ];
+                }
+            }
+
+            // Disable individual model event logs during batch update
+            \App\Models\ActivityLog::$disableLogging = true;
+
             // Replace old block records with the newly selected jam slots
             if (!empty($oldBlockIds)) {
                 JadwalPelajaran::whereIn('id', $oldBlockIds)->delete();
@@ -465,6 +492,32 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 ];
                 JadwalPelajaran::create($result);
             }
+
+            \App\Models\ActivityLog::$disableLogging = false;
+
+            // Record 1 single consolidated activity log
+            $jpCount = count($jamIds);
+            $kelasName = \App\Models\Kelas::find($this->formData['kelas_id'])?->nama_kelas ?? '-';
+            $mapelName = \App\Models\MataPelajaran::find($this->formData['mata_pelajaran_id'])?->nama_mapel ?? '-';
+            $guruName = !empty($this->formData['guru_id']) ? (\App\Models\Guru::find($this->formData['guru_id'])?->nama_guru ?? 'Tanpa Guru') : 'Tanpa Guru';
+            $hariName = ucfirst($this->formData['hari'] ?? '');
+            $jamLabels = \App\Models\JamPelajaran::whereIn('id', $jamIds)->orderBy('jam_mulai')->pluck('urutan')->map(fn($u) => is_numeric($u) ? "Jam {$u}" : $u)->implode(', ');
+
+            \App\Models\ActivityLog::record(
+                action: 'update',
+                description: "Mengubah data Jadwal Pelajaran ({$jpCount} JP: {$jamLabels}): {$kelasName} | {$hariName} | {$mapelName} ({$guruName})",
+                module: 'Jadwal Pelajaran',
+                properties: [
+                    'old' => $oldProps,
+                    'new' => [
+                        'Hari' => $hariName,
+                        'Kelas' => $kelasName,
+                        'Mata Pelajaran' => $mapelName,
+                        'Guru Pengajar' => $guruName,
+                        'Durasi Jam' => "{$jpCount} JP ({$jamLabels})",
+                    ]
+                ]
+            );
         } else {
             // Check availability for all selected jam slots first
             $allBentrok = collect();
@@ -483,6 +536,9 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 return;
             }
 
+            // Disable individual model event logs during batch creation
+            \App\Models\ActivityLog::$disableLogging = true;
+
             // Create all schedule items
             foreach ($jamIds as $jamId) {
                 $result = [
@@ -495,6 +551,31 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 ];
                 JadwalPelajaran::create($result);
             }
+
+            \App\Models\ActivityLog::$disableLogging = false;
+
+            // Record 1 single consolidated activity log
+            $jpCount = count($jamIds);
+            $kelasName = \App\Models\Kelas::find($this->formData['kelas_id'])?->nama_kelas ?? '-';
+            $mapelName = \App\Models\MataPelajaran::find($this->formData['mata_pelajaran_id'])?->nama_mapel ?? '-';
+            $guruName = !empty($this->formData['guru_id']) ? (\App\Models\Guru::find($this->formData['guru_id'])?->nama_guru ?? 'Tanpa Guru') : 'Tanpa Guru';
+            $hariName = ucfirst($this->formData['hari'] ?? '');
+            $jamLabels = \App\Models\JamPelajaran::whereIn('id', $jamIds)->orderBy('jam_mulai')->pluck('urutan')->map(fn($u) => is_numeric($u) ? "Jam {$u}" : $u)->implode(', ');
+
+            \App\Models\ActivityLog::record(
+                action: 'create',
+                description: "Menambah data Jadwal Pelajaran ({$jpCount} JP: {$jamLabels}): {$kelasName} | {$hariName} | {$mapelName} ({$guruName})",
+                module: 'Jadwal Pelajaran',
+                properties: [
+                    'new' => [
+                        'Hari' => $hariName,
+                        'Kelas' => $kelasName,
+                        'Mata Pelajaran' => $mapelName,
+                        'Guru Pengajar' => $guruName,
+                        'Durasi Jam' => "{$jpCount} JP ({$jamLabels})",
+                    ]
+                ]
+            );
         }
 
         $this->jadwalBentrokList = [];
@@ -527,7 +608,15 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 $post = JadwalPelajaran::find($arguments['jadwal'] ?? null);
 
                 if ($post) {
+                    $kelasName = $post->kelas?->nama_kelas ?? '-';
+                    $mapelName = $post->mataPelajaran?->nama_mapel ?? '-';
+                    $guruName = $post->guru?->nama_guru ?? 'Tanpa Guru';
+                    $hariName = ucfirst($post->hari);
+
                     $jamIds = $this->formData['jam_pelajaran_ids'] ?? [];
+
+                    \App\Models\ActivityLog::$disableLogging = true;
+
                     if (!empty($jamIds) && is_array($jamIds)) {
                         JadwalPelajaran::where('periode_id', $post->periode_id)
                             ->where('hari', $post->hari)
@@ -544,6 +633,22 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                             ->where('guru_id', $post->guru_id)
                             ->delete();
                     }
+
+                    \App\Models\ActivityLog::$disableLogging = false;
+
+                    \App\Models\ActivityLog::record(
+                        action: 'delete',
+                        description: "Menghapus data Jadwal Pelajaran: {$kelasName} | {$hariName} | {$mapelName} ({$guruName})",
+                        module: 'Jadwal Pelajaran',
+                        properties: [
+                            'old' => [
+                                'Hari' => $hariName,
+                                'Kelas' => $kelasName,
+                                'Mata Pelajaran' => $mapelName,
+                                'Guru Pengajar' => $guruName,
+                            ]
+                        ]
+                    );
                 }
 
                 Notification::make()->title('Jadwal berhasil dihapus')->success()->send();
@@ -559,13 +664,13 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     <x-card-heading title="Jadwal Pelajaran" description="Periode Tahun Ajaran {{ $this->tahunAjaran }}">
         <x-slot name="action_buttons">
             @if(auth()->user()->role !== 'guru')
-                {{-- Fitur Import Excel disembunyikan sementara --}}
+                {{-- Fitur Import Excel & Tambah Data disembunyikan di halaman matriks --}}
                 {{-- <flux:modal.trigger name="import-excel">
                     <flux:button icon="file-excel" class="!bg-az-green !text-white">Import dari Excel</flux:button>
                 </flux:modal.trigger> --}}
-                <flux:button icon="plus" wire:click="openAddJadwalModal" class="!bg-primary !text-white">
+                {{-- <flux:button icon="plus" wire:click="openAddJadwalModal" class="!bg-primary !text-white">
                     Tambah Data
-                </flux:button>
+                </flux:button> --}}
             @endif
             <flux:modal.trigger name="export-jadwal">
                 <flux:button icon="arrow-down-tray">
@@ -700,13 +805,21 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                             $sId = (string) $jamOpt['value'];
                             $isAvailableSlot = in_array($sId, $availIds);
                             $isBentrokSlot = $hasBentrok && in_array($sId, array_map('strval', $this->formData['jam_pelajaran_ids'] ?? [])) && !$isAvailableSlot;
+                            $urutanVal = $jamOpt['urutan'] ?? '';
+                            $titleText = is_numeric($urutanVal) ? 'Jam ' . $urutanVal : ($urutanVal ?: $jamOpt['label']);
+                            $timeText = isset($jamOpt['jam_mulai']) ? "{$jamOpt['jam_mulai']} - {$jamOpt['jam_selesai']}" : '';
                         @endphp
                         <label
                             class="flex items-center justify-between gap-2 p-2.5 rounded-lg cursor-pointer text-xs md:text-sm border transition shadow-2xs {{ $isBentrokSlot ? 'bg-red-50 dark:bg-red-950/50 border-red-300 dark:border-red-800 text-red-900 dark:text-red-200 ring-1 ring-red-400' : ($isAvailableSlot ? 'bg-emerald-50/80 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/70' : 'border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200') }}">
                             <div class="flex items-center gap-2">
                                 <input type="checkbox" wire:model="formData.jam_pelajaran_ids" value="{{ $jamOpt['value'] }}"
-                                    class="rounded border-gray-300 text-primary focus:ring-primary">
-                                <span class="font-medium">{{ $jamOpt['label'] }}</span>
+                                    class="rounded border-gray-300 text-primary focus:ring-primary mt-0.5">
+                                <div class="flex flex-col leading-tight">
+                                    <span class="font-bold text-xs md:text-sm">{{ $titleText }}</span>
+                                    @if ($timeText)
+                                        <span class="text-[11px] opacity-80 mt-0.5 font-medium">{{ $timeText }}</span>
+                                    @endif
+                                </div>
                             </div>
                             @if ($isBentrokSlot)
                                 <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-600 text-white shadow-xs shrink-0 flex items-center gap-1">
