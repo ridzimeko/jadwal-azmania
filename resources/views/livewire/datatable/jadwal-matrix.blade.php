@@ -138,6 +138,19 @@ new class extends Component {
         selectedJams: [],
         isDeleteMode: false,
         selectedDeleteIds: [],
+        isShiftPressed: false,
+
+        init() {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Shift') this.isShiftPressed = true;
+            });
+            window.addEventListener('keyup', (e) => {
+                if (e.key === 'Shift') this.isShiftPressed = false;
+            });
+            window.addEventListener('blur', () => {
+                this.isShiftPressed = false;
+            });
+        },
 
         toggleDeleteMode() {
             this.isDeleteMode = !this.isDeleteMode;
@@ -165,6 +178,22 @@ new class extends Component {
                 this.selectedDeleteIds = [];
                 this.isDeleteMode = false;
             });
+        },
+
+        handleEmptySlotClick(e, hari, jamId, kelasId) {
+            if (this.isGuru || this.isDeleteMode) return;
+
+            if (e.shiftKey) {
+                this.openModal({
+                    hari: hari,
+                    kelas_id: '',
+                    mata_pelajaran_id: '',
+                    jam_pelajaran_id: String(jamId),
+                    jam_pelajaran_ids: [String(jamId)],
+                    guru_id: '',
+                    fill_horizontal: true
+                });
+            }
         },
 
         openModal(record) {
@@ -276,7 +305,7 @@ new class extends Component {
         @if(auth()->user()->role !== 'guru')
             <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 bg-blue-50/60 dark:bg-blue-950/30 px-3.5 py-1.5 rounded-lg border border-blue-100 dark:border-blue-900/40">
                 <flux:icon name="cursor-arrow-rays" class="w-3.5 h-3.5 text-primary shrink-0" />
-                <span>Tips: <strong>Klik & drag</strong> slot kosong berurutan di dalam matriks untuk memilih beberapa jam pelajaran sekaligus</span>
+                <span>Tips: <strong>Klik & drag</strong> slot kosong untuk memilih beberapa jam, atau <strong>Shift + Klik</strong> pada slot kosong untuk mengisi penuh ke semua kelas.</span>
             </div>
         @endif
     </div>
@@ -478,6 +507,7 @@ new class extends Component {
                                                     @else
                                                         {{-- TAMPILAN SLOT KOSONG --}}
                                                         <button type="button"
+                                                            @click="handleEmptySlotClick($event, '{{ $hariKey }}', {{ $jam->id }}, {{ $kelas->id }})"
                                                             @mousedown.prevent="startDrag('{{ $hariKey }}', {{ $kelas->id }}, {{ $jam->id }})"
                                                             @mouseenter="dragOver('{{ $hariKey }}', {{ $kelas->id }}, {{ $jam->id }}, {{ json_encode($allJamIds) }})"
                                                             :class="isSelected('{{ $hariKey }}', {{ $kelas->id }}, {{ $jam->id }})
@@ -541,6 +571,23 @@ new class extends Component {
                 <flux:icon name="trash" class="w-3.5 h-3.5" />
                 <span x-text="'Hapus Terpilih (' + selectedDeleteIds.length + ')'"></span>
             </button>
+        </div>
+    </div>
+
+    <!-- Sticky Floating Action Bar for Shift Pressed Mode (App Theme Consistent) -->
+    <div x-cloak x-show="isShiftPressed" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-900/95 dark:bg-gray-800/95 text-white backdrop-blur-md px-5 py-3 rounded-2xl shadow-2xl border border-gray-700/80 flex items-center gap-4 min-w-[340px] max-w-[90vw] justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm shrink-0 border border-emerald-500/30">
+                <flux:icon name="bolt" class="w-4 h-4 text-emerald-400 animate-bounce" />
+            </div>
+            <div>
+                <div class="text-xs font-bold text-white flex items-center gap-2">
+                    <span>Mode Horizontal Full (Shift Ditekan)</span>
+                    <span class="bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-xs animate-pulse">AKTIF</span>
+                </div>
+                <div class="text-[11px] text-gray-400 mt-0.5">Klik slot kosong untuk mengisi penuh ke semua kelas</div>
+            </div>
         </div>
     </div>
 </div>

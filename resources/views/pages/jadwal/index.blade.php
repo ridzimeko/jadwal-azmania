@@ -42,6 +42,8 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         'guru_id' => '',
     ];
     public bool $isEdit = false;
+    public array $overwriteConflictList = [];
+    public bool $isOverwriteConfirmed = false;
 
     public function mount()
     {
@@ -61,13 +63,14 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
     protected function rules(): array
     {
+        $isFillHorizontal = !empty($this->formData['fill_horizontal']);
+
         return [
             'formData.hari' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
-            'formData.kelas_id' => 'required|exists:kelas,id',
+            'formData.kelas_id' => $isFillHorizontal ? 'nullable' : 'required|exists:kelas,id',
             'formData.mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
             'formData.guru_id' => 'nullable|exists:guru,id',
-            'formData.jam_pelajaran_ids' => 'required|array|min:1',
-            'formData.jam_pelajaran_ids.*' => 'exists:jam_pelajaran,id',
+            'formData.jam_pelajaran_ids' => $isFillHorizontal ? 'nullable' : 'required|array|min:1',
         ];
     }
 
@@ -406,9 +409,139 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         $this->dispatch('reload-mapel-options');
     }
 
+    public function confirmOverwrite()
+    {
+        $this->isOverwriteConfirmed = true;
+        $this->save();
+    }
+
+    public function closeOverwriteModal()
+    {
+        $this->isOverwriteConfirmed = false;
+        $this->overwriteConflictList = [];
+        Flux::modal('overwrite-modal')->close();
+    }
+
     public function save()
     {
         $this->validate();
+
+        $isFillHorizontal = !empty($this->formData['fill_horizontal']);
+
+        if ($isFillHorizontal) {
+            $tingkat = strtoupper($this->filterData['tingkat'] ?? 'SMP');
+            $kelasList = \App\Models\Kelas::where('tingkat', $tingkat)->whereNotIn('kode_kelas', ['SMP', 'MA'])->get();
+            if ($kelasList->isEmpty()) {
+                $kelasList = \App\Models\Kelas::where('tingkat', strtolower($tingkat))->whereNotIn('kode_kelas', ['SMP', 'MA'])->get();
+            }
+            if ($kelasList->isEmpty()) {
+                $kelasList = \App\Models\Kelas::all();
+            }
+
+            $jamId = !empty($this->formData['jam_pelajaran_id']) 
+                ? (string) $this->formData['jam_pelajaran_id'] 
+                : (!empty($this->formData['jam_pelajaran_ids'][0]) ? (string) $this->formData['jam_pelajaran_ids'][0] : null);
+
+            if (!$jamId) {
+                Notification::make()->title('Jam Pelajaran wajib dipilih.')->danger()->send();
+                return;
+            }
+
+            $hari = $this->formData['hari'] ?? 'Senin';
+            $mapelId = $this->formData['mata_pelajaran_id'];
+            $guruId = JadwalHelper::empty_to_null($this->formData)['guru_id'] ?? null;
+
+            // Existing schedules in target class slots
+            $existingTargetSchedules = JadwalPelajaran::where('periode_id', $this->periode_id)
+                ->where('hari', $hari)
+                ->where('jam_pelajaran_id', $jamId)
+                ->whereIn('kelas_id', $kelasList->pluck('id'))
+                ->with(['kelas', 'mataPelajaran', 'guru'])
+                ->get();
+
+            // Guru conflict check in other classes
+            if ($guruId) {
+                $guruConflicts = JadwalPelajaran::where('periode_id', $this->periode_id)
+                    ->where('hari', $hari)
+                    ->where('jam_pelajaran_id', $jamId)
+                    ->where('guru_id', $guruId)
+                    ->whereNotIn('kelas_id', $kelasList->pluck('id'))
+                    ->with(['kelas', 'mataPelajaran', 'guru'])
+                    ->get();
+
+                if ($guruConflicts->isNotEmpty()) {
+                    $gName = $guruConflicts->first()->guru?->nama_guru ?? 'Guru';
+                    $kName = $guruConflicts->first()->kelas?->nama_kelas ?? 'Kelas';
+                    Notification::make()
+                        ->title("Bentrok Guru: {$gName} sudah mengajar di {$kName} pada jam yang sama.")
+                        ->danger()
+                        ->send();
+                    return;
+                }
+            }
+
+            if ($existingTargetSchedules->isNotEmpty() && !$this->isOverwriteConfirmed) {
+                $this->overwriteConflictList = $existingTargetSchedules->map(function ($item) {
+                    return [
+                        'kelas' => $item->kelas?->nama_kelas ?? '-',
+                        'jam' => "Jam {$item->jamPelajaran?->urutan}",
+                        'mapel' => $item->mataPelajaran?->nama_mapel ?? '-',
+                        'guru' => $item->guru?->nama_guru ?? 'Tanpa Guru',
+                    ];
+                })->toArray();
+
+                Flux::modal('overwrite-modal')->show();
+                return;
+            }
+
+            \App\Models\ActivityLog::$disableLogging = true;
+
+            JadwalPelajaran::where('periode_id', $this->periode_id)
+                ->where('hari', $hari)
+                ->where('jam_pelajaran_id', $jamId)
+                ->whereIn('kelas_id', $kelasList->pluck('id'))
+                ->delete();
+
+            foreach ($kelasList as $kelasItem) {
+                JadwalPelajaran::create([
+                    'periode_id' => $this->periode_id,
+                    'hari' => $hari,
+                    'kelas_id' => $kelasItem->id,
+                    'jam_pelajaran_id' => $jamId,
+                    'mata_pelajaran_id' => $mapelId,
+                    'guru_id' => $guruId,
+                ]);
+            }
+
+            \App\Models\ActivityLog::$disableLogging = false;
+
+            $mapelName = \App\Models\MataPelajaran::find($mapelId)?->nama_mapel ?? '-';
+            $guruName = $guruId ? (\App\Models\Guru::find($guruId)?->nama_guru ?? 'Tanpa Guru') : 'Tanpa Guru';
+            $jamObj = \App\Models\JamPelajaran::find($jamId);
+            $jamLabel = $jamObj ? "Jam {$jamObj->urutan}" : "Jam {$jamId}";
+
+            \App\Models\ActivityLog::record(
+                action: $this->isEdit ? 'update' : 'create',
+                description: "Menyimpan Jadwal Penuh Horizontal ({$tingkat}): {$hari} | {$jamLabel} | {$mapelName} ({$guruName}) ke " . $kelasList->count() . " kelas",
+                module: 'Jadwal Pelajaran',
+                properties: [
+                    'Hari' => $hari,
+                    'Jam' => $jamLabel,
+                    'Mata Pelajaran' => $mapelName,
+                    'Guru Pengajar' => $guruName,
+                    'Target Kelas' => "Semua Kelas {$tingkat} (" . $kelasList->pluck('nama_kelas')->implode(', ') . ")",
+                ]
+            );
+
+            $this->isOverwriteConfirmed = false;
+            $this->overwriteConflictList = [];
+            Flux::modal('overwrite-modal')->close();
+            Flux::modal('jadwal-modal')->close();
+            Notification::make()->title("Jadwal Penuh Horizontal Berhasil Tersimpan! (" . $kelasList->count() . " Kelas)")->success()->send();
+            $this->dispatch('refreshJadwalTable');
+            $this->dispatch('reload-mapel-options');
+            return;
+        }
 
         $jamIds = $this->formData['jam_pelajaran_ids'] ?? [];
         if (empty($jamIds) && !empty($this->formData['jam_pelajaran_id'])) {
@@ -698,8 +831,8 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 <x-select wire:model.live="filterData.hari" :search="false"
                     :options="JadwalHelper::getHariOptions(true)" placeholder="Pilih hari" class="!w-[130px]" />
                 <x-select wire:model.live="filterData.tingkat" :search="false" :options="[['label' => 'SMP', 'value' => 'smp'], ['label' => 'MA', 'value' => 'ma']]" placeholder="Pilih tingkat" class="!w-[110px]" />
-                <x-select wire:model.live="filterData.guru_id" :search="true"
-                    :options="JadwalHelper::getGuruOptions(true)" placeholder="Filter Guru..." class="!w-[220px]" />
+                {{-- <x-select wire:model.live="filterData.guru_id" :search="true"
+                    :options="JadwalHelper::getGuruOptions(true)" placeholder="Filter Guru..." class="!w-[220px]" /> --}}
             </div>
         </div>
 
@@ -721,15 +854,23 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     <flux:modal name="jadwal-modal" class="w-[90%] md:w-[480px] z-[30]" scroll="null" variant="flyout">
         <form wire:submit.prevent="save" class="flex flex-col gap-3 max-w-[768px]">
             <flux:heading size="lg">
-                {{ $isEdit ? 'Ubah Data Jadwal' : 'Tambah Data Jadwal' }}
+                {{ $isEdit ? 'Ubah Data Jadwal' : (!empty($this->formData['fill_horizontal']) ? 'Tambah Jadwal (Penuh Horizontal)' : 'Tambah Data Jadwal') }}
             </flux:heading>
 
             @php
-                $selectedKelasNama = collect($kelasOptions)->firstWhere('value', $this->formData['kelas_id'] ?? null)['label'] ?? ($this->formData['kelas'] ?? '-');
+                $isFillHorizontal = !empty($this->formData['fill_horizontal']);
+                $tingkatText = strtoupper($this->filterData['tingkat'] ?? 'SMP');
+                $selectedKelasNama = $isFillHorizontal ? "Semua Kelas ({$tingkatText})" : (collect($kelasOptions)->firstWhere('value', $this->formData['kelas_id'] ?? null)['label'] ?? ($this->formData['kelas'] ?? '-'));
                 $selectedHari = !empty($this->formData['hari']) ? ucfirst($this->formData['hari']) : '-';
+                
+                $selectedJamObj = !empty($this->formData['jam_pelajaran_id']) ? \App\Models\JamPelajaran::find($this->formData['jam_pelajaran_id']) : null;
+                if (!$selectedJamObj && !empty($this->formData['jam_pelajaran_ids'][0])) {
+                    $selectedJamObj = \App\Models\JamPelajaran::find($this->formData['jam_pelajaran_ids'][0]);
+                }
+                $jamInfoText = $selectedJamObj ? ("Jam " . $selectedJamObj->urutan . " (" . $selectedJamObj->jam_mulai . " - " . $selectedJamObj->jam_selesai . ")") : null;
             @endphp
 
-            <div class="flex items-center justify-between gap-3 bg-gray-100 dark:bg-gray-800/80 px-3.5 py-2 rounded-xl text-xs md:text-sm font-semibold border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200">
+            <div class="flex flex-wrap items-center justify-between gap-2.5 bg-gray-100 dark:bg-gray-800/80 px-3.5 py-2 rounded-xl text-xs md:text-sm font-semibold border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200">
                 <div class="flex items-center gap-1.5">
                     <flux:icon name="calendar-days" class="w-4 h-4 text-primary shrink-0" />
                     <span>Hari: <strong class="text-gray-900 dark:text-white">{{ $selectedHari }}</strong></span>
@@ -739,6 +880,13 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                     <flux:icon name="academic-cap" class="w-4 h-4 text-primary shrink-0" />
                     <span>Kelas: <strong class="text-gray-900 dark:text-white">{{ $selectedKelasNama }}</strong></span>
                 </div>
+                @if($isFillHorizontal && $jamInfoText)
+                    <span class="text-gray-300 dark:text-gray-600">|</span>
+                    <div class="flex items-center gap-1.5">
+                        <flux:icon name="clock" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span>Jam: <strong class="text-emerald-700 dark:text-emerald-300">{{ $jamInfoText }}</strong></span>
+                    </div>
+                @endif
             </div>
 
             @if (count($this->jadwalBentrokList) >= 1)
@@ -780,63 +928,83 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 $hasSlotInfo = !empty($this->availableSlotsList) || $hasBentrok;
             @endphp
 
-            <flux:field>
-                <div class="flex items-center justify-between gap-2 mb-1">
-                    <flux:label>Jam ke (Bisa pilih beberapa jam sekaligus)</flux:label>
-                    @if ($hasSlotInfo)
-                        <div class="flex items-center gap-2 text-[11px] font-semibold">
-                            <span class="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                <span>Tersedia</span>
-                            </span>
-                            @if ($hasBentrok)
-                                <span class="inline-flex items-center gap-1 text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-950/80 px-2 py-0.5 rounded-full border border-red-300 dark:border-red-800">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                                    <span>Bentrok</span>
-                                </span>
-                            @endif
-                        </div>
-                    @endif
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-52 overflow-y-auto p-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900">
-                    @foreach ($this->jamPelajaranOptions as $jamOpt)
-                        @php
-                            $sId = (string) $jamOpt['value'];
-                            $isAvailableSlot = in_array($sId, $availIds);
-                            $isBentrokSlot = $hasBentrok && in_array($sId, array_map('strval', $this->formData['jam_pelajaran_ids'] ?? [])) && !$isAvailableSlot;
-                            $urutanVal = $jamOpt['urutan'] ?? '';
-                            $titleText = is_numeric($urutanVal) ? 'Jam ' . $urutanVal : ($urutanVal ?: $jamOpt['label']);
-                            $timeText = isset($jamOpt['jam_mulai']) ? "{$jamOpt['jam_mulai']} - {$jamOpt['jam_selesai']}" : '';
-                        @endphp
-                        <label
-                            class="flex items-center justify-between gap-2 p-2.5 rounded-lg cursor-pointer text-xs md:text-sm border transition shadow-2xs {{ $isBentrokSlot ? 'bg-red-50 dark:bg-red-950/50 border-red-300 dark:border-red-800 text-red-900 dark:text-red-200 ring-1 ring-red-400' : ($isAvailableSlot ? 'bg-emerald-50/80 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/70' : 'border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200') }}">
-                            <div class="flex items-center gap-2">
-                                <input type="checkbox" wire:model="formData.jam_pelajaran_ids" value="{{ $jamOpt['value'] }}"
-                                    class="rounded border-gray-300 text-primary focus:ring-primary mt-0.5">
-                                <div class="flex flex-col leading-tight">
-                                    <span class="font-bold text-xs md:text-sm">{{ $titleText }}</span>
-                                    @if ($timeText)
-                                        <span class="text-[11px] opacity-80 mt-0.5 font-medium">{{ $timeText }}</span>
-                                    @endif
-                                </div>
-                            </div>
-                            @if ($isBentrokSlot)
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-600 text-white shadow-xs shrink-0 flex items-center gap-1">
-                                    <flux:icon name="x-circle" class="w-3 h-3" />
-                                    <span>Bentrok</span>
-                                </span>
-                            @elseif ($isAvailableSlot)
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-600 text-white shadow-xs shrink-0 flex items-center gap-1">
-                                    <flux:icon name="check-circle" class="w-3 h-3" />
+            @if(empty($this->formData['fill_horizontal']))
+                <flux:field>
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                        <flux:label>Jam ke (Bisa pilih beberapa jam sekaligus)</flux:label>
+                        @if ($hasSlotInfo)
+                            <div class="flex items-center gap-2 text-[11px] font-semibold">
+                                <span class="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                     <span>Tersedia</span>
                                 </span>
-                            @endif
-                        </label>
-                    @endforeach
+                                @if ($hasBentrok)
+                                    <span class="inline-flex items-center gap-1 text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-950/80 px-2 py-0.5 rounded-full border border-red-300 dark:border-red-800">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                        <span>Bentrok</span>
+                                    </span>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-52 overflow-y-auto p-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900">
+                        @foreach ($this->jamPelajaranOptions as $jamOpt)
+                            @php
+                                $sId = (string) $jamOpt['value'];
+                                $isAvailableSlot = in_array($sId, $availIds);
+                                $isBentrokSlot = $hasBentrok && in_array($sId, array_map('strval', $this->formData['jam_pelajaran_ids'] ?? [])) && !$isAvailableSlot;
+                                $urutanVal = $jamOpt['urutan'] ?? '';
+                                $titleText = is_numeric($urutanVal) ? 'Jam ' . $urutanVal : ($urutanVal ?: $jamOpt['label']);
+                                $timeText = isset($jamOpt['jam_mulai']) ? "{$jamOpt['jam_mulai']} - {$jamOpt['jam_selesai']}" : '';
+                            @endphp
+                            <label
+                                class="flex items-center justify-between gap-2 p-2.5 rounded-lg cursor-pointer text-xs md:text-sm border transition shadow-2xs {{ $isBentrokSlot ? 'bg-red-50 dark:bg-red-950/50 border-red-300 dark:border-red-800 text-red-900 dark:text-red-200 ring-1 ring-red-400' : ($isAvailableSlot ? 'bg-emerald-50/80 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/70' : 'border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200') }}">
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" wire:model="formData.jam_pelajaran_ids" value="{{ $jamOpt['value'] }}"
+                                        class="rounded border-gray-300 text-primary focus:ring-primary mt-0.5">
+                                    <div class="flex flex-col leading-tight">
+                                        <span class="font-bold text-xs md:text-sm">{{ $titleText }}</span>
+                                        @if ($timeText)
+                                            <span class="text-[11px] opacity-80 mt-0.5 font-medium">{{ $timeText }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                @if ($isBentrokSlot)
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-600 text-white shadow-xs shrink-0 flex items-center gap-1">
+                                        <flux:icon name="x-circle" class="w-3 h-3" />
+                                        <span>Bentrok</span>
+                                    </span>
+                                @elseif ($isAvailableSlot)
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-600 text-white shadow-xs shrink-0 flex items-center gap-1">
+                                        <flux:icon name="check-circle" class="w-3 h-3" />
+                                        <span>Tersedia</span>
+                                    </span>
+                                @endif
+                            </label>
+                        @endforeach
+                    </div>
+                    <flux:error name="formData.jam_pelajaran_ids" />
+                </flux:field>
+            @else
+                @php
+                    $selectedJamObj = !empty($this->formData['jam_pelajaran_id']) ? \App\Models\JamPelajaran::find($this->formData['jam_pelajaran_id']) : null;
+                    if (!$selectedJamObj && !empty($this->formData['jam_pelajaran_ids'][0])) {
+                        $selectedJamObj = \App\Models\JamPelajaran::find($this->formData['jam_pelajaran_ids'][0]);
+                    }
+                    $jamInfoText = $selectedJamObj ? ("Jam " . $selectedJamObj->urutan . " (" . $selectedJamObj->jam_mulai . " - " . $selectedJamObj->jam_selesai . ")") : 'Jam Pelajaran Dipilih';
+                    $tingkatText = strtoupper($this->filterData['tingkat'] ?? 'SMP');
+                @endphp
+                <div class="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/50 text-xs">
+                    <span class="font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
+                        <flux:icon name="clock" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span>Target Jam: <strong>{{ $jamInfoText }}</strong></span>
+                    </span>
+                    <span class="bg-emerald-600 text-white font-extrabold px-2.5 py-0.5 rounded-full text-[10px] uppercase shadow-xs shrink-0">
+                        Semua Kelas {{ $tingkatText }}
+                    </span>
                 </div>
-                <flux:error name="formData.jam_pelajaran_ids" />
-            </flux:field>
+            @endif
 
 
 
@@ -978,6 +1146,38 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                         Simpan Alokasi Jadwal
                     </flux:button>
                 </div>
+            </div>
+        </div>
+    </flux:modal>
+
+    {{-- Modal Konfirmasi Overwrite Jadwal --}}
+    <flux:modal name="overwrite-modal" class="w-[90%] md:w-[500px] z-[60]" scroll="null">
+        <div class="space-y-4 p-1">
+            <div class="flex items-center gap-3 text-amber-600 dark:text-amber-400">
+                <flux:icon name="exclamation-triangle" class="w-7 h-7 shrink-0 text-amber-500" />
+                <div>
+                    <flux:heading size="lg" class="text-amber-800 dark:text-amber-300 font-bold">Konfirmasi Timpa Jadwal (Overwrite)</flux:heading>
+                    <flux:subheading size="sm">Beberapa slot kelas pada jam ini sudah terisi jadwal lain.</flux:subheading>
+                </div>
+            </div>
+
+            <div class="bg-amber-50/80 dark:bg-amber-950/50 p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 space-y-2">
+                <div class="text-xs font-bold text-amber-900 dark:text-amber-200">Jadwal yang akan ditimpa/dihapus:</div>
+                <div class="max-h-[200px] overflow-y-auto space-y-1.5 pr-1">
+                    @foreach ($this->overwriteConflictList as $conf)
+                        <div class="flex items-center justify-between text-xs bg-white dark:bg-gray-900 p-2 rounded-lg border border-amber-200 dark:border-amber-900/40">
+                            <span class="font-bold text-gray-800 dark:text-gray-200">{{ $conf['kelas'] }} ({{ $conf['jam'] }})</span>
+                            <span class="text-gray-600 dark:text-gray-400">{{ $conf['mapel'] }} - {{ $conf['guru'] }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-800">
+                <flux:button type="button" wire:click="closeOverwriteModal" variant="ghost" size="sm">Batal</flux:button>
+                <flux:button type="button" wire:click="confirmOverwrite" variant="filled" color="red" size="sm" class="!bg-red-600 hover:!bg-red-700 !text-white font-bold">
+                    Ya, Timpa Semua (Overwrite)
+                </flux:button>
             </div>
         </div>
     </flux:modal>
