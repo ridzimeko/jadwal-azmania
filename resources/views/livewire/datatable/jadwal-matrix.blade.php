@@ -39,8 +39,8 @@ new class extends Component {
     public function getJamPelajaran()
     {
         return JamPelajaran::query()
-            ->orderBy('urutan')
             ->orderBy('jam_mulai')
+            ->orderBy('urutan')
             ->get();
     }
 
@@ -266,20 +266,24 @@ new class extends Component {
                                         $guruId = $firstItem->guru_id;
 
                                         $span = 1;
+                                        $spanJamIds = [(string) $currentJam->id];
                                         for ($j = $i + 1; $j < $totalJams; $j++) {
                                             $nextJam = $jamArray[$j];
                                             $nextKey = $hKey . '_' . $nextJam->id . '_' . $kelas->id;
                                             $nextItems = $jadwalMap[$nextKey] ?? [];
                                             if (!empty($nextItems) && count($nextItems) === 1 && $nextItems[0]->mata_pelajaran_id == $mapelId && $nextItems[0]->guru_id == $guruId) {
                                                 $span++;
+                                                $spanJamIds[] = (string) $nextJam->id;
                                                 $skipCell[$hKey][$nextJam->id][$kelas->id] = true;
                                             } else {
                                                 break;
                                             }
                                         }
                                         $spanCountMap[$hKey][$currentJam->id][$kelas->id] = $span;
+                                        $spanJamIdsMap[$hKey][$currentJam->id][$kelas->id] = $spanJamIds;
                                     } else {
                                         $spanCountMap[$hKey][$currentJam->id][$kelas->id] = 1;
+                                        $spanJamIdsMap[$hKey][$currentJam->id][$kelas->id] = [(string) $currentJam->id];
                                     }
                                 }
                             }
@@ -384,6 +388,7 @@ new class extends Component {
                                                                     'kelas_id' => $kelas->id,
                                                                     'mata_pelajaran_id' => $item->mata_pelajaran_id,
                                                                     'jam_pelajaran_id' => $jam->id,
+                                                                    'jam_pelajaran_ids' => $spanJamIdsMap[$hariKey][$jam->id][$kelas->id] ?? [(string) $jam->id],
                                                                     'guru_id' => $item->guru_id,
                                                                 ]) }})">
                                                                 <div class="font-bold text-xs md:text-sm line-clamp-2 leading-tight px-1">{{ $item->mataPelajaran->nama_mapel ?? '-' }}</div>

@@ -23,6 +23,8 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
     public $actionType;
     public array $columns = [];
     public string $scope = '';
+    public ?string $defaultSortColumn = null;
+    public string $defaultSortDirection = 'asc';
 
     #[On('refreshTable')]
     public function refresh()
@@ -80,7 +82,13 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
 
         $mTable = $table
             ->query(function () {
-                $query = $this->model::query()->orderByDesc('id');
+                $query = $this->model::query();
+
+                if ($this->defaultSortColumn) {
+                    $query->orderBy($this->defaultSortColumn, $this->defaultSortDirection);
+                } else {
+                    $query->orderByDesc('id');
+                }
 
                 if (property_exists($this, 'scope') && $this->scope && method_exists($this->model, 'scope' . ucfirst($this->scope))) {
                     $scope = $this->scope;

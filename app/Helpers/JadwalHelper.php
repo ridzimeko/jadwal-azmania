@@ -16,10 +16,10 @@ class JadwalHelper
      * dan kembalikan detail bentrok jika ada.
      *
      * @param  array  $data  ['hari', 'jam_mulai', 'jam_selesai', 'guru_id', 'kelas_id']
-     * @param  int|null  $ignoreId  abaikan ID tertentu saat edit data
+     * @param  int|array|null  $ignoreId  abaikan ID tertentu saat edit data
      * @return array
      */
-    public static function isAvailable(array $data, ?int $ignoreId = null): array
+    public static function isAvailable(array $data, int|array|null $ignoreId = null): array
     {
         // Resolve jam_mulai / jam_selesai either from payload or from JamPelajaran model (if jam_pelajaran_id provided)
         $jamMulai = $data['jam_mulai'] ?? null;
@@ -47,7 +47,11 @@ class JadwalHelper
             });
 
         if ($ignoreId) {
-            $query->where('id', '!=', $ignoreId);
+            if (is_array($ignoreId)) {
+                $query->whereNotIn('id', $ignoreId);
+            } else {
+                $query->where('id', '!=', $ignoreId);
+            }
         }
 
         // Cek data kelas (aman walau null)
@@ -91,12 +95,12 @@ class JadwalHelper
      * Cari semua jam pelajaran yang tersedia (bebas bentrok) untuk kelas & guru tertentu pada hari tertentu.
      *
      * @param array $data ['hari', 'kelas_id', 'guru_id', 'periode_id']
-     * @param int|null $ignoreId
+     * @param int|array|null $ignoreId
      * @return \Illuminate\Support\Collection
      */
-    public static function findAvailableSlots(array $data, ?int $ignoreId = null)
+    public static function findAvailableSlots(array $data, int|array|null $ignoreId = null)
     {
-        $allJam = \App\Models\JamPelajaran::orderBy('urutan')->get();
+        $allJam = \App\Models\JamPelajaran::orderBy('jam_mulai')->orderBy('urutan')->get();
         $available = collect();
 
         foreach ($allJam as $jam) {

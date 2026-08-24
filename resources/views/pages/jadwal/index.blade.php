@@ -61,21 +61,14 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
     protected function rules(): array
     {
-        $rules = [
+        return [
             'formData.hari' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
             'formData.kelas_id' => 'required|exists:kelas,id',
             'formData.mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
             'formData.guru_id' => 'nullable|exists:guru,id',
+            'formData.jam_pelajaran_ids' => 'required|array|min:1',
+            'formData.jam_pelajaran_ids.*' => 'exists:jam_pelajaran,id',
         ];
-
-        if ($this->isEdit) {
-            $rules['formData.jam_pelajaran_id'] = 'required|exists:jam_pelajaran,id';
-        } else {
-            $rules['formData.jam_pelajaran_ids'] = 'required|array|min:1';
-            $rules['formData.jam_pelajaran_ids.*'] = 'exists:jam_pelajaran,id';
-        }
-
-        return $rules;
     }
 
     protected function messages(): array
@@ -122,9 +115,27 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     {
         $this->jadwalBentrokList = [];
         $this->availableSlotsList = [];
-        if ($record['id'] ?? null) {
+
+        if (!empty($record['id'])) {
             $this->isEdit = true;
-            $record['jam_pelajaran_ids'] = isset($record['jam_pelajaran_id']) ? [(string) $record['jam_pelajaran_id']] : [];
+            if (!empty($record['jam_pelajaran_ids']) && is_array($record['jam_pelajaran_ids'])) {
+                $record['jam_pelajaran_ids'] = array_map('strval', $record['jam_pelajaran_ids']);
+            } else {
+                $item = JadwalPelajaran::find($record['id']);
+                if ($item) {
+                    $matchingJamIds = JadwalPelajaran::where('periode_id', $item->periode_id)
+                        ->where('hari', $item->hari)
+                        ->where('kelas_id', $item->kelas_id)
+                        ->where('mata_pelajaran_id', $item->mata_pelajaran_id)
+                        ->where('guru_id', $item->guru_id)
+                        ->pluck('jam_pelajaran_id')
+                        ->map(fn($id) => (string) $id)
+                        ->toArray();
+                    $record['jam_pelajaran_ids'] = !empty($matchingJamIds) ? $matchingJamIds : [(string) $item->jam_pelajaran_id];
+                } else {
+                    $record['jam_pelajaran_ids'] = isset($record['jam_pelajaran_id']) ? [(string) $record['jam_pelajaran_id']] : [];
+                }
+            }
         } else {
             $this->isEdit = false;
             if (!empty($record['jam_pelajaran_ids']) && is_array($record['jam_pelajaran_ids'])) {
@@ -390,27 +401,61 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     {
         $this->validate();
 
+        $jamIds = $this->formData['jam_pelajaran_ids'] ?? [];
+        if (empty($jamIds) && !empty($this->formData['jam_pelajaran_id'])) {
+            $jamIds = [(string) $this->formData['jam_pelajaran_id']];
+        }
+
         if ($this->isEdit) {
-            $jadwal = JadwalHelper::isAvailable($this->formData, $this->formData['id'] ?? null);
-            if (!$jadwal['available']) {
-                $this->jadwalBentrokList = $jadwal['bentrok'];
-                $this->availableSlotsList = JadwalHelper::findAvailableSlots($this->formData, $this->formData['id'] ?? null)->toArray();
+            $editId = $this->formData['id'] ?? null;
+            $originalRecord = JadwalPelajaran::find($editId);
+            $oldBlockIds = [];
+            if ($originalRecord) {
+                $oldBlockIds = JadwalPelajaran::where('periode_id', $originalRecord->periode_id)
+                    ->where('hari', $originalRecord->hari)
+                    ->where('kelas_id', $originalRecord->kelas_id)
+                    ->where('mata_pelajaran_id', $originalRecord->mata_pelajaran_id)
+                    ->where('guru_id', $originalRecord->guru_id)
+                    ->pluck('id')
+                    ->toArray();
+            }
+            if (empty($oldBlockIds) && $editId) {
+                $oldBlockIds = [$editId];
+            }
+
+            // Check availability for all selected jam slots
+            $allBentrok = collect();
+            foreach ($jamIds as $jamId) {
+                $singleData = array_merge($this->formData, ['jam_pelajaran_id' => $jamId]);
+                $chk = JadwalHelper::isAvailable($singleData, $oldBlockIds);
+                if (!$chk['available']) {
+                    $allBentrok = $allBentrok->concat($chk['bentrok']);
+                }
+            }
+
+            if ($allBentrok->isNotEmpty()) {
+                $this->jadwalBentrokList = $allBentrok->unique('id')->values()->toArray();
+                $this->availableSlotsList = JadwalHelper::findAvailableSlots($this->formData, $oldBlockIds)->toArray();
                 return;
             }
 
-            $result = [
-                ...JadwalHelper::empty_to_null($this->formData),
-                'periode_id' => $this->periode_id,
-            ];
-            unset($result['jam_pelajaran_ids']);
-
-            JadwalPelajaran::find($this->formData['id'])->update($result);
-        } else {
-            $jamIds = $this->formData['jam_pelajaran_ids'] ?? [];
-            if (empty($jamIds) && !empty($this->formData['jam_pelajaran_id'])) {
-                $jamIds = [$this->formData['jam_pelajaran_id']];
+            // Replace old block records with the newly selected jam slots
+            if (!empty($oldBlockIds)) {
+                JadwalPelajaran::whereIn('id', $oldBlockIds)->delete();
             }
 
+            foreach ($jamIds as $jamId) {
+                $result = [
+                    'hari' => $this->formData['hari'],
+                    'kelas_id' => $this->formData['kelas_id'],
+                    'mata_pelajaran_id' => $this->formData['mata_pelajaran_id'],
+                    'guru_id' => JadwalHelper::empty_to_null($this->formData)['guru_id'] ?? null,
+                    'jam_pelajaran_id' => $jamId,
+                    'periode_id' => $this->periode_id,
+                ];
+                JadwalPelajaran::create($result);
+            }
+        } else {
             // Check availability for all selected jam slots first
             $allBentrok = collect();
             foreach ($jamIds as $jamId) {
@@ -451,16 +496,11 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
     public function selectAlternativeSlot($slotId)
     {
-        if ($this->isEdit) {
-            $this->formData['jam_pelajaran_id'] = (string) $slotId;
-        } else {
-            $jamIds = $this->formData['jam_pelajaran_ids'] ?? [];
-            if (!in_array((string) $slotId, $jamIds)) {
-                $jamIds[] = (string) $slotId;
-            }
-            $this->formData['jam_pelajaran_ids'] = array_values(array_unique($jamIds));
+        $jamIds = $this->formData['jam_pelajaran_ids'] ?? [];
+        if (!in_array((string) $slotId, $jamIds)) {
+            $jamIds[] = (string) $slotId;
         }
-
+        $this->formData['jam_pelajaran_ids'] = array_values(array_unique($jamIds));
         $this->jadwalBentrokList = [];
     }
 
@@ -472,16 +512,33 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             ->modalHeading('Hapus Jadwal')
             ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
             ->requiresConfirmation()
-            ->modalHeading('Hapus Jadwal')
-            ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
             ->action(function (array $arguments) {
-                $post = JadwalPelajaran::find($arguments['jadwal']);
+                $post = JadwalPelajaran::find($arguments['jadwal'] ?? null);
 
-                $post?->delete();
+                if ($post) {
+                    $jamIds = $this->formData['jam_pelajaran_ids'] ?? [];
+                    if (!empty($jamIds) && is_array($jamIds)) {
+                        JadwalPelajaran::where('periode_id', $post->periode_id)
+                            ->where('hari', $post->hari)
+                            ->where('kelas_id', $post->kelas_id)
+                            ->where('mata_pelajaran_id', $post->mata_pelajaran_id)
+                            ->where('guru_id', $post->guru_id)
+                            ->whereIn('jam_pelajaran_id', $jamIds)
+                            ->delete();
+                    } else {
+                        JadwalPelajaran::where('periode_id', $post->periode_id)
+                            ->where('hari', $post->hari)
+                            ->where('kelas_id', $post->kelas_id)
+                            ->where('mata_pelajaran_id', $post->mata_pelajaran_id)
+                            ->where('guru_id', $post->guru_id)
+                            ->delete();
+                    }
+                }
 
                 Notification::make()->title('Jadwal berhasil dihapus')->success()->send();
                 Flux::modal('jadwal-modal')->close();
                 $this->dispatch('refreshJadwalTable');
+                $this->dispatch('reload-mapel-options');
             });
     }
 };
@@ -491,9 +548,10 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     <x-card-heading title="Jadwal Pelajaran" description="Periode Tahun Ajaran {{ $this->tahunAjaran }}">
         <x-slot name="action_buttons">
             @if(auth()->user()->role !== 'guru')
-                <flux:modal.trigger name="import-excel">
+                {{-- Fitur Import Excel disembunyikan sementara --}}
+                {{-- <flux:modal.trigger name="import-excel">
                     <flux:button icon="file-excel" class="!bg-az-green !text-white">Import dari Excel</flux:button>
-                </flux:modal.trigger>
+                </flux:modal.trigger> --}}
                 <flux:button icon="plus" wire:click="openAddJadwalModal" class="!bg-primary !text-white">
                     Tambah Data
                 </flux:button>
@@ -507,8 +565,9 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     </x-card-heading>
 
     <div x-data="{ activeTab: 'timeline' }">
-        <div class="flex items-center justify-between gap-4 flex-wrap">
-            <flux:tabs variant="segmented">
+        <div class="flex items-center justify-end gap-4 flex-wrap">
+            {{-- Tabs disembunyikan sementara --}}
+            {{-- <flux:tabs variant="segmented">
                 <flux:tab icon="calendar-days" x-on:click="activeTab = 'timeline'"
                     x-bind:data-selected="activeTab === 'timeline'">
                     Timeline
@@ -517,9 +576,9 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                     x-bind:data-selected="activeTab === 'tabel'">
                     Tabel
                 </flux:tab>
-            </flux:tabs>
+            </flux:tabs> --}}
 
-            <div x-cloak x-show="activeTab === 'timeline'" class="flex items-center flex-wrap gap-3">
+            <div class="flex items-center flex-wrap gap-3">
                 <x-select wire:model.live="filterData.hari" :search="false"
                     :options="JadwalHelper::getHariOptions(true)" placeholder="Pilih hari" class="!w-[130px]" />
                 <x-select wire:model.live="filterData.tingkat" :search="false" :options="[['label' => 'SMP', 'value' => 'smp'], ['label' => 'MA', 'value' => 'ma']]" placeholder="Pilih tingkat" class="!w-[110px]" />
@@ -529,10 +588,11 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         </div>
 
         <div class="mt-4 min-h-[600px]">
-            <div x-cloak x-show="activeTab === 'tabel'">
+            {{-- Tampilan tabel disembunyikan sementara --}}
+            {{-- <div x-cloak x-show="activeTab === 'tabel'">
                 <livewire:datatable.jadwal lazy :periode_id="$this->periode_id" />
-            </div>
-            <div x-cloak x-show="activeTab === 'timeline'">
+            </div> --}}
+            <div>
                 <livewire:datatable.jadwal-matrix lazy :periode_id="$this->periode_id" :hari="$this->filterData['hari']"
                     :tingkat="$this->filterData['tingkat']" :guru_id="$this->filterData['guru_id']" wire:key="matrix-{{ md5(json_encode($filterData)) }}" />
             </div>
@@ -610,25 +670,19 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             </flux:field>
 
             <flux:field>
-                <flux:label>Jam ke {{ !$this->isEdit ? '(Bisa pilih beberapa jam sekaligus)' : '' }}</flux:label>
-                @if ($this->isEdit)
-                    <x-select name="formData.jam_pelajaran_id" wire:model="formData.jam_pelajaran_id"
-                        :options="$this->jamPelajaranOptions" placeholder="Pilih jam pelajaran..." />
-                    <flux:error name="formData.jam_pelajaran_id" />
-                @else
-                    <div
-                        class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900">
-                        @foreach ($this->jamPelajaranOptions as $jamOpt)
-                            <label
-                                class="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-xs md:text-sm border border-gray-200 dark:border-gray-800 transition">
-                                <input type="checkbox" wire:model="formData.jam_pelajaran_ids" value="{{ $jamOpt['value'] }}"
-                                    class="rounded border-gray-300 text-primary focus:ring-primary">
-                                <span class="font-medium text-gray-700 dark:text-gray-200">{{ $jamOpt['label'] }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                    <flux:error name="formData.jam_pelajaran_ids" />
-                @endif
+                <flux:label>Jam ke (Bisa pilih beberapa jam sekaligus)</flux:label>
+                <div
+                    class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900">
+                    @foreach ($this->jamPelajaranOptions as $jamOpt)
+                        <label
+                            class="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-xs md:text-sm border border-gray-200 dark:border-gray-800 transition">
+                            <input type="checkbox" wire:model="formData.jam_pelajaran_ids" value="{{ $jamOpt['value'] }}"
+                                class="rounded border-gray-300 text-primary focus:ring-primary">
+                            <span class="font-medium text-gray-700 dark:text-gray-200">{{ $jamOpt['label'] }}</span>
+                        </label>
+                    @endforeach
+                </div>
+                <flux:error name="formData.jam_pelajaran_ids" />
             </flux:field>
 
             <flux:field>

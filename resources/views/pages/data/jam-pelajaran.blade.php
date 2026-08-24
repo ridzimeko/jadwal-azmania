@@ -9,7 +9,11 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Title('Data Kelas')] class extends Component {
-    protected $columnDefs = [['name' => 'Jam Ke', 'field' => 'urutan'], ['name' => 'Jam Mulai', 'field' => 'jam_mulai'], ['name' => 'Jam Selesai', 'field' => 'jam_selesai']];
+    protected $columnDefs = [
+        ['name' => 'Jam Ke', 'field' => 'urutan', 'sortable' => true],
+        ['name' => 'Jam Mulai', 'field' => 'jam_mulai', 'sortable' => true],
+        ['name' => 'Jam Selesai', 'field' => 'jam_selesai', 'sortable' => true]
+    ];
 
     public ?array $formData = null;
     public array $jamBentrokList = [];
@@ -116,7 +120,7 @@ new #[Title('Data Kelas')] class extends Component {
     </x-card-heading>
 
     {{-- Datatable --}}
-    <livewire:datatable.index actionType="data" :columns="$this->columnDefs" :model="JamPelajaran::class" />
+    <livewire:datatable.index actionType="data" :columns="$this->columnDefs" :model="JamPelajaran::class" defaultSortColumn="jam_mulai" defaultSortDirection="asc" />
 
     {{-- Add Data Modal --}}
     <flux:modal name="jam-modal" class="w-[85%] md:w-[480px]">
