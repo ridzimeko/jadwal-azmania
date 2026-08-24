@@ -3,6 +3,7 @@
 use App\Helpers\JadwalHelper;
 use App\Models\JamPelajaran;
 use App\Models\Kelas;
+use Filament\Notifications\Notification;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -86,6 +87,38 @@ new class extends Component {
         return Kelas::whereIn('kode_kelas', ['SMP', 'MA'])->pluck('id', 'kode_kelas')->toArray();
     }
 
+    public function deleteBatchJadwal(array $ids)
+    {
+        if (empty($ids)) return;
+
+        $items = \App\Models\JadwalPelajaran::whereIn('id', $ids)->get();
+        $count = $items->count();
+
+        if ($count === 0) return;
+
+        \App\Models\ActivityLog::$disableLogging = true;
+        \App\Models\JadwalPelajaran::whereIn('id', $ids)->delete();
+        \App\Models\ActivityLog::$disableLogging = false;
+
+        \App\Models\ActivityLog::record(
+            action: 'delete',
+            description: "Menghapus {$count} data Jadwal Pelajaran (Hapus Massal)",
+            module: 'Jadwal Pelajaran',
+            properties: [
+                'count' => $count,
+                'ids' => $ids
+            ]
+        );
+
+        Notification::make()
+            ->title("{$count} Jadwal Berhasil Dihapus!")
+            ->success()
+            ->send();
+
+        $this->dispatch('refreshJadwalTable');
+        $this->dispatch('reload-mapel-options');
+    }
+
     #[On('refreshJadwalTable')]
     public function refresh()
     {
@@ -103,6 +136,36 @@ new class extends Component {
         dragKelasId: null,
         startJamId: null,
         selectedJams: [],
+        isDeleteMode: false,
+        selectedDeleteIds: [],
+
+        toggleDeleteMode() {
+            this.isDeleteMode = !this.isDeleteMode;
+            this.selectedDeleteIds = [];
+        },
+
+        toggleCardDelete(id) {
+            const idx = this.selectedDeleteIds.indexOf(id);
+            if (idx > -1) {
+                this.selectedDeleteIds.splice(idx, 1);
+            } else {
+                this.selectedDeleteIds.push(id);
+            }
+        },
+
+        isCardSelectedForDelete(id) {
+            return this.selectedDeleteIds.includes(id);
+        },
+
+        confirmBatchDelete() {
+            if (this.selectedDeleteIds.length === 0) return;
+            if (!confirm(`Apakah Anda yakin ingin menghapus ${this.selectedDeleteIds.length} jadwal terpilih?`)) return;
+            const ids = [...this.selectedDeleteIds];
+            $wire.deleteBatchJadwal(ids).then(() => {
+                this.selectedDeleteIds = [];
+                this.isDeleteMode = false;
+            });
+        },
 
         openModal(record) {
             if (this.isGuru) return;
@@ -199,12 +262,14 @@ new class extends Component {
                 </span>
             </div>
             <div class="flex items-center gap-2">
-                <!-- <button wire:click="$toggle('onlyEmpty')" wire:loading.attr="disabled"
-                    class="px-3 py-1 rounded-lg text-xs font-semibold border transition flex items-center gap-1.5 disabled:opacity-70 {{ $onlyEmpty ? 'bg-amber-500 text-white border-amber-600 shadow-sm' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-gray-100' }}">
-                    <flux:icon name="arrow-path" wire:loading wire:target="$toggle('onlyEmpty')" class="w-3.5 h-3.5 animate-spin text-current" />
-                    <flux:icon name="funnel" wire:loading.remove wire:target="$toggle('onlyEmpty')" class="w-3.5 h-3.5" />
-                    <span>{{ $onlyEmpty ? 'Tampilkan Semua Slot' : 'Highlight Slot Kosong Only' }}</span>
-                </button> -->
+                @if(auth()->user()->role !== 'guru')
+                    <button type="button" @click="toggleDeleteMode()"
+                        :class="isDeleteMode ? 'bg-red-600 text-white border-red-600 shadow-md ring-2 ring-red-400 font-bold' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 font-semibold'"
+                        class="px-3 py-1.5 rounded-lg text-xs border transition-all flex items-center gap-1.5 cursor-pointer">
+                        <flux:icon name="trash" class="w-3.5 h-3.5" />
+                        <span x-text="isDeleteMode ? 'Batal Hapus Massal' : '🗑️ Hapus Massal'"></span>
+                    </button>
+                @endif
             </div>
         </div>
 
@@ -380,9 +445,10 @@ new class extends Component {
                                                                 $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                                                 $isBentrok = $item->is_bentrok ?? false;
                                                             @endphp
-                                                            <button class="w-full h-full min-h-[58px] p-2.5 rounded-xl shadow-xs text-center flex flex-col justify-center items-center cursor-pointer transition hover:scale-[1.01] hover:shadow-md border {{ $isBentrok ? 'border-red-500 ring-2 ring-red-400' : 'border-black/10' }}"
+                                                            <button class="relative w-full h-full min-h-[58px] p-2.5 rounded-xl shadow-xs text-center flex flex-col justify-center items-center cursor-pointer transition hover:scale-[1.01] hover:shadow-md border {{ $isBentrok ? 'border-red-500 ring-2 ring-red-400' : 'border-black/10' }}"
+                                                                :class="isDeleteMode ? (isCardSelectedForDelete({{ $item->id }}) ? '!ring-4 !ring-red-500 !border-red-600 !bg-red-500/30 scale-[1.02] shadow-lg' : 'opacity-70 hover:opacity-100 hover:border-red-400') : ''"
                                                                 style="background-color: {{ $bg }}; color: {{ $text }}" 
-                                                                @click="openModal({{ json_encode([
+                                                                @click="isDeleteMode ? toggleCardDelete({{ $item->id }}) : openModal({{ json_encode([
                                                                     'id' => $item->id,
                                                                     'hari' => $hariKey,
                                                                     'kelas_id' => $kelas->id,
@@ -391,6 +457,12 @@ new class extends Component {
                                                                     'jam_pelajaran_ids' => $spanJamIdsMap[$hariKey][$jam->id][$kelas->id] ?? [(string) $jam->id],
                                                                     'guru_id' => $item->guru_id,
                                                                 ]) }})">
+                                                                <template x-if="isDeleteMode && isCardSelectedForDelete({{ $item->id }})">
+                                                                    <div class="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-md border border-white z-20 animate-pulse">
+                                                                        <flux:icon name="check" class="w-3 h-3 text-white" />
+                                                                        <span>HAPUS</span>
+                                                                    </div>
+                                                                </template>
                                                                 <div class="font-bold text-xs md:text-sm line-clamp-2 leading-tight px-1">{{ $item->mataPelajaran->nama_mapel ?? '-' }}</div>
                                                                 <div class="text-[11px] opacity-90 line-clamp-1 mt-1 font-medium px-1">{{ $item->guru->nama_guru ?? 'Tanpa Guru' }}</div>
                                                                 @if ($rowSpan > 1)
@@ -442,5 +514,33 @@ new class extends Component {
                 <p class="font-semibold text-gray-600 dark:text-gray-300">Belum ada master Jam Pelajaran atau Kelas yang diset.</p>
             </div>
         @endif
+    </div>
+
+    <!-- Sticky Floating Action Bar for Batch Delete -->
+    <div x-cloak x-show="isDeleteMode" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-900/95 dark:bg-gray-800/95 text-white backdrop-blur-md px-5 py-3 rounded-2xl shadow-2xl border border-gray-700/80 flex items-center gap-4 min-w-[340px] max-w-[90vw] justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center font-bold text-sm shrink-0 border border-red-500/30">
+                <flux:icon name="trash" class="w-4 h-4" />
+            </div>
+            <div>
+                <div class="text-xs font-bold text-white flex items-center gap-2">
+                    <span>Mode Hapus Massal</span>
+                    <span class="bg-red-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-xs" x-text="selectedDeleteIds.length + ' Terpilih'"></span>
+                </div>
+                <div class="text-[11px] text-gray-400 mt-0.5">Klik kartu jadwal yang ingin dihapus</div>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <button type="button" @click="toggleDeleteMode()" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-gray-300 hover:text-white hover:bg-gray-800 transition cursor-pointer">
+                Batal
+            </button>
+            <button type="button" :disabled="selectedDeleteIds.length === 0" @click="confirmBatchDelete()"
+                :class="selectedDeleteIds.length > 0 ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg cursor-pointer animate-pulse' : 'bg-gray-700 text-gray-500 cursor-not-allowed'"
+                class="px-4 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                <flux:icon name="trash" class="w-3.5 h-3.5" />
+                <span x-text="'Hapus Terpilih (' + selectedDeleteIds.length + ')'"></span>
+            </button>
+        </div>
     </div>
 </div>
