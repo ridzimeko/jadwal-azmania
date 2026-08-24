@@ -52,16 +52,21 @@ class JadwalPelajaran extends Model
                         ->join('jam_pelajaran as jp1', 'jp1.id', '=', 'j2.jam_pelajaran_id')
                         ->join('jam_pelajaran as jp2', 'jp2.id', '=', 'jadwal_pelajaran.jam_pelajaran_id')
                         ->whereColumn('j2.hari', 'jadwal_pelajaran.hari')
+                        ->whereColumn('j2.periode_id', 'jadwal_pelajaran.periode_id')
                         ->where(function ($q) {
                             $q->where(function ($yy) {
                                 // bentrok guru
-                                $yy->whereColumn('j2.guru_id', 'jadwal_pelajaran.guru_id')
+                                $yy->whereNotNull('j2.guru_id')
+                                    ->whereNotNull('jadwal_pelajaran.guru_id')
+                                    ->whereColumn('j2.guru_id', 'jadwal_pelajaran.guru_id')
                                     ->whereColumn('jp1.jam_mulai', '<', 'jp2.jam_selesai')
                                     ->whereColumn('jp1.jam_selesai', '>', 'jp2.jam_mulai');
                             })
                                 ->orWhere(function ($yy) {
                                     // bentrok kelas
-                                    $yy->whereColumn('j2.kelas_id', 'jadwal_pelajaran.kelas_id')
+                                    $yy->whereNotNull('j2.kelas_id')
+                                        ->whereNotNull('jadwal_pelajaran.kelas_id')
+                                        ->whereColumn('j2.kelas_id', 'jadwal_pelajaran.kelas_id')
                                         ->whereColumn('jp1.jam_mulai', '<', 'jp2.jam_selesai')
                                         ->whereColumn('jp1.jam_selesai', '>', 'jp2.jam_mulai');
                                 });

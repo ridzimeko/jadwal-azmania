@@ -46,6 +46,10 @@ class JadwalHelper
                     ->where('jam_selesai', '>', $jamMulai);
             });
 
+        if (isset($data['periode_id']) && $data['periode_id']) {
+            $query->where('periode_id', $data['periode_id']);
+        }
+
         if ($ignoreId) {
             if (is_array($ignoreId)) {
                 $query->whereNotIn('id', $ignoreId);
