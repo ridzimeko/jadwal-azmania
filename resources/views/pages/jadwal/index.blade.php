@@ -837,6 +837,22 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 $this->dispatch('reload-mapel-options');
             });
     }
+
+    public function switchPeriode($periodeId)
+    {
+        if ($periodeId) {
+            return redirect()->route('jadwal.index', ['periode_id' => $periodeId]);
+        }
+    }
+
+    #[\Livewire\Attributes\Computed]
+    public function getPeriodeOptionsProperty()
+    {
+        return \App\Models\Periode::orderBy('aktif', 'desc')->orderBy('tahun_ajaran', 'desc')->get()->map(function($p) {
+            $label = "{$p->tahun_ajaran} ({$p->semester})" . ($p->aktif ? ' ⭐ [AKTIF]' : '');
+            return ['label' => $label, 'value' => (string) $p->id];
+        })->toArray();
+    }
 };
 ?>
 
@@ -875,6 +891,8 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             </flux:tabs> --}}
 
             <div class="flex items-center flex-wrap gap-3">
+                <x-select wire:change="switchPeriode($event.target.value)" :value="(string) $this->periode_id" :search="false"
+                    :options="$this->periodeOptions" placeholder="Pilih Periode..." class="!w-[230px]" />
                 <x-select wire:model.live="filterData.hari" :search="false"
                     :options="JadwalHelper::getHariOptions(true)" placeholder="Pilih hari" class="!w-[130px]" />
                 <x-select wire:model.live="filterData.tingkat" :search="false" :options="[['label' => 'SMP', 'value' => 'smp'], ['label' => 'MA', 'value' => 'ma']]" placeholder="Pilih tingkat" class="!w-[110px]" />

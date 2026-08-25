@@ -17,7 +17,7 @@
             <flux:sidebar.item icon="home" href="/">Beranda</flux:sidebar.item>
 
             <flux:sidebar.group expandable icon="book" heading="Jadwal" class="grid">
-                <flux:sidebar.item href="/jadwal/periode">Periode</flux:sidebar.item>
+                <flux:sidebar.item href="/jadwal/periode?list=1" :current="Request::is('jadwal/periode*')">Periode</flux:sidebar.item>
                 <flux:sidebar.item :current="Request::is('jadwal/pelajaran*')" href="/jadwal/pelajaran">Pelajaran</flux:sidebar.item>
             </flux:sidebar.group>
 

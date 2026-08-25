@@ -21,16 +21,19 @@ new #[Title('Periode Jadwal')]
     public ?array $formData = [
         'tahun_ajaran' => '',
         'semester' => '',
+        'aktif' => false,
     ];
     public bool $isEdit = false;
 
-    // public function mount()
-    // {
-    //     $this->hariOptions = JadwalHelper::getHariOptions();
-    //     $this->mataPelajaranOptions = JadwalHelper::getMapelOptions();
-    //     $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
-    //     $this->guruOptions = JadwalHelper::getGuruOptions();
-    // }
+    public function mount()
+    {
+        $activePeriode = Periode::where('aktif', true)->first() ?? Periode::latest()->first();
+
+        // Automatic redirect to active period detail page unless user wants to view period list (?list=1)
+        if ($activePeriode && !request()->has('list')) {
+            return redirect()->route('jadwal.index', ['periode_id' => $activePeriode->id]);
+        }
+    }
 
     protected function rules(): array
     {
@@ -45,6 +48,7 @@ new #[Title('Periode Jadwal')]
                     ->ignore($this->formData['id'] ?? null),
             ],
             'formData.semester' => 'required|string',
+            'formData.aktif' => 'nullable|boolean',
         ];
     }
 
@@ -65,7 +69,8 @@ new #[Title('Periode Jadwal')]
         $this->isEdit = false;
         $this->formData = [
             'tahun_ajaran' => '',
-            'semester' => '',
+            'semester' => 'Ganjil',
+            'aktif' => false,
         ];
         Flux::modal('periode-modal')->show();
     }
@@ -82,19 +87,39 @@ new #[Title('Periode Jadwal')]
         Flux::modal('periode-modal')->show();
     }
 
+    public function setActivePeriode($id)
+    {
+        Periode::query()->update(['aktif' => false]);
+        Periode::where('id', $id)->update(['aktif' => true]);
+
+        $periode = Periode::find($id);
+        Notification::make()
+            ->title("Periode {$periode?->tahun_ajaran} ({$periode?->semester}) Berhasil Ditetapkan Sebagai Periode Aktif!")
+            ->success()
+            ->send();
+    }
+
     public function save()
     {
         $this->validate();
 
+        $isAktif = !empty($this->formData['aktif']);
+
+        if ($isAktif) {
+            Periode::query()->update(['aktif' => false]);
+        }
+
         if ($this->isEdit) {
             Periode::find($this->formData['id'])->update([
-                ...$this->formData,
+                'tahun_ajaran' => $this->formData['tahun_ajaran'],
                 'semester' => ucfirst($this->formData['semester'] ?? 'Ganjil'),
+                'aktif' => $isAktif,
             ]);
         } else {
             Periode::create([
-                ...$this->formData,
+                'tahun_ajaran' => $this->formData['tahun_ajaran'],
                 'semester' => ucfirst($this->formData['semester'] ?? 'Ganjil'),
+                'aktif' => $isAktif,
             ]);
         }
 
@@ -123,49 +148,75 @@ new #[Title('Periode Jadwal')]
 
     public function getPeriode()
     {
-        return Periode::orderBy('tahun_ajaran', 'desc')->get();
+        return Periode::orderBy('aktif', 'desc')->orderBy('tahun_ajaran', 'desc')->get();
     }
 };
 ?>
 
 <div class="dash-card">
-    <x-card-heading title="Jadwal Pelajaran" description="Silahkan pilih periode jadwal yang akan digunakan">
-        {{-- <x-slot name="action_buttons">
+    <x-card-heading title="Kelola Periode Jadwal" description="Kelola periode tahun ajaran dan tentukan periode yang sedang aktif utama">
+        <x-slot name="action_buttons">
             <flux:button icon="plus" wire:click="openAddPeriode" class="!bg-primary !text-white">
-                Tambah Data
+                Tambah Periode Baru
             </flux:button>
-        </x-slot> --}}
+        </x-slot>
     </x-card-heading>
 
     <!-- main content -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-
         @php
             $periodeList = $this->getPeriode();
         @endphp
 
         @foreach ($periodeList as $periode)
-            <a href="{{ route('jadwal.index', ['periode_id' => $periode->id]) }}" aria-label="Latest on our blog">
-                <flux:card size="sm" class="relative hover:bg-zinc-50 dark:hover:bg-zinc-700">
-                    <div class="w-[90%]">
-                        <flux:heading class="flex items-center gap-2">{{ $periode->tahun_ajaran }}</flux:heading>
-                        <flux:text class="mt-2">{{ $periode->semester }}</flux:text>
+            <div class="relative bg-white dark:bg-gray-900 border rounded-2xl p-5 shadow-xs transition hover:shadow-md flex flex-col justify-between gap-4 {{ $periode->aktif ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/20' : 'border-gray-200 dark:border-gray-800' }}">
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <flux:heading class="font-extrabold text-lg text-gray-900 dark:text-white">{{ $periode->tahun_ajaran }}</flux:heading>
+                        @if($periode->aktif)
+                            <span class="inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-600 text-white shadow-xs">
+                                <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                                <span>PERIODE AKTIF</span>
+                            </span>
+                        @else
+                            <span class="text-[11px] font-semibold text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                                Nonaktif
+                            </span>
+                        @endif
                     </div>
-                </flux:card>
-            </a>
+                    <flux:text class="text-sm font-semibold text-gray-600 dark:text-gray-400">Semester {{ $periode->semester }}</flux:text>
+                </div>
+
+                <div class="flex items-center justify-between gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
+                    <div class="flex items-center gap-2">
+                        @if(!$periode->aktif)
+                            <flux:button wire:click="setActivePeriode({{ $periode->id }})" size="xs" variant="outline" icon="check" class="!text-emerald-700 dark:!text-emerald-300 border-emerald-300">
+                                Set Aktif
+                            </flux:button>
+                        @endif
+                        <flux:button wire:click="openEditPeriode({{ json_encode($periode) }})" size="xs" variant="ghost" icon="pencil">
+                            Edit
+                        </flux:button>
+                    </div>
+
+                    <a href="{{ route('jadwal.index', ['periode_id' => $periode->id]) }}" 
+                       class="inline-flex items-center gap-1 text-xs font-extrabold text-primary hover:underline">
+                        <span>Lihat Jadwal</span>
+                        <flux:icon name="chevron-right" class="w-3.5 h-3.5 text-primary" />
+                    </a>
+                </div>
+            </div>
         @endforeach
     </div>
 
-    {{-- <x-filament-actions::modals /> --}}
-
-    {{-- Add Data Modal --}}
-    {{-- <flux:modal name="periode-modal" class="md:w-[480px] z-[30]">
+    {{-- Add/Edit Periode Modal --}}
+    <flux:modal name="periode-modal" class="md:w-[480px] z-[30]">
         <form wire:submit.prevent="save" class="flex flex-col gap-4 max-w-[768px]">
             <flux:heading size="lg">
                 {{ $isEdit ? 'Ubah Data' : 'Tambah Data' }} Periode
             </flux:heading>
 
-            <flux:input wire:model.defer="formData.tahun_ajaran" label="Tahun Ajaran" placeholder="Tahun Ajaran" />
+            <flux:input wire:model.defer="formData.tahun_ajaran" label="Tahun Ajaran" placeholder="Contoh: 2025/2026" />
 
             <flux:field>
                 <flux:label>Semester</flux:label>
@@ -175,11 +226,19 @@ new #[Title('Periode Jadwal')]
                 <flux:error name="formData.semester" />
             </flux:field>
 
+            <flux:field class="flex items-center gap-2 pt-2">
+                <input type="checkbox" wire:model="formData.aktif" id="periode_aktif_checkbox" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                <flux:label for="periode_aktif_checkbox" class="cursor-pointer font-bold text-xs text-gray-800 dark:text-gray-200">
+                    Jadikan Sebagai Periode Aktif Utama
+                </flux:label>
+            </flux:field>
 
-            <div class="flex mt-8">
-                <flux:spacer />
+            <div class="flex mt-6 gap-2 justify-end">
+                <flux:modal.close>
+                    <flux:button variant="ghost">Batal</flux:button>
+                </flux:modal.close>
                 <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>
             </div>
         </form>
-    </flux:modal> --}}
+    </flux:modal>
 </div>

@@ -14,12 +14,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::group(['prefix' => '/jadwal'], function () {
         Route::livewire('pelajaran', 'pages::jadwal.periode')
-            ->name('jadwal.periode');
+            ->name('jadwal.pelajaran');
 
         Route::livewire('pelajaran/detail/{periode_id}', 'pages::jadwal.index')
             ->name('jadwal.index');
 
-        Route::livewire('periode', 'pages::jadwal.periode-old')
+        Route::livewire('periode', 'pages::jadwal.periode')
             ->name('jadwal.periode');
     });
 
