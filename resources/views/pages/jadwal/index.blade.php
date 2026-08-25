@@ -451,11 +451,11 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 $kelasList = \App\Models\Kelas::all();
             }
 
-            $jamId = !empty($this->formData['jam_pelajaran_id']) 
-                ? (string) $this->formData['jam_pelajaran_id'] 
-                : (!empty($this->formData['jam_pelajaran_ids'][0]) ? (string) $this->formData['jam_pelajaran_ids'][0] : null);
+            $jamIds = !empty($this->formData['jam_pelajaran_ids']) && is_array($this->formData['jam_pelajaran_ids'])
+                ? array_map('strval', $this->formData['jam_pelajaran_ids'])
+                : (!empty($this->formData['jam_pelajaran_id']) ? [(string) $this->formData['jam_pelajaran_id']] : []);
 
-            if (!$jamId) {
+            if (empty($jamIds)) {
                 Notification::make()->title('Jam Pelajaran wajib dipilih.')->danger()->send();
                 return;
             }
@@ -467,16 +467,16 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             // Existing schedules in target class slots
             $existingTargetSchedules = JadwalPelajaran::where('periode_id', $this->periode_id)
                 ->where('hari', $hari)
-                ->where('jam_pelajaran_id', $jamId)
+                ->whereIn('jam_pelajaran_id', $jamIds)
                 ->whereIn('kelas_id', $kelasList->pluck('id'))
-                ->with(['kelas', 'mataPelajaran', 'guru'])
+                ->with(['kelas', 'mataPelajaran', 'guru', 'jamPelajaran'])
                 ->get();
 
             // Guru conflict check in other classes
             if ($guruId) {
                 $guruConflicts = JadwalPelajaran::where('periode_id', $this->periode_id)
                     ->where('hari', $hari)
-                    ->where('jam_pelajaran_id', $jamId)
+                    ->whereIn('jam_pelajaran_id', $jamIds)
                     ->where('guru_id', $guruId)
                     ->whereNotIn('kelas_id', $kelasList->pluck('id'))
                     ->with(['kelas', 'mataPelajaran', 'guru'])
@@ -511,35 +511,39 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
             JadwalPelajaran::where('periode_id', $this->periode_id)
                 ->where('hari', $hari)
-                ->where('jam_pelajaran_id', $jamId)
+                ->whereIn('jam_pelajaran_id', $jamIds)
                 ->whereIn('kelas_id', $kelasList->pluck('id'))
                 ->delete();
 
-            foreach ($kelasList as $kelasItem) {
-                JadwalPelajaran::create([
-                    'periode_id' => $this->periode_id,
-                    'hari' => $hari,
-                    'kelas_id' => $kelasItem->id,
-                    'jam_pelajaran_id' => $jamId,
-                    'mata_pelajaran_id' => $mapelId,
-                    'guru_id' => $guruId,
-                ]);
+            foreach ($jamIds as $jamIdItem) {
+                foreach ($kelasList as $kelasItem) {
+                    JadwalPelajaran::create([
+                        'periode_id' => $this->periode_id,
+                        'hari' => $hari,
+                        'kelas_id' => $kelasItem->id,
+                        'jam_pelajaran_id' => $jamIdItem,
+                        'mata_pelajaran_id' => $mapelId,
+                        'guru_id' => $guruId,
+                    ]);
+                }
             }
 
             \App\Models\ActivityLog::$disableLogging = false;
 
             $mapelName = \App\Models\MataPelajaran::find($mapelId)?->nama_mapel ?? '-';
             $guruName = $guruId ? (\App\Models\Guru::find($guruId)?->nama_guru ?? 'Tanpa Guru') : 'Tanpa Guru';
-            $jamObj = \App\Models\JamPelajaran::find($jamId);
-            $jamLabel = $jamObj ? "Jam {$jamObj->urutan}" : "Jam {$jamId}";
+            $jamLabels = \App\Models\JamPelajaran::whereIn('id', $jamIds)->orderBy('jam_mulai')->pluck('urutan')->map(fn($u) => is_numeric($u) ? "Jam {$u}" : $u)->implode(', ');
+            if (empty($jamLabels)) {
+                $jamLabels = 'Jam Pelajaran';
+            }
 
             \App\Models\ActivityLog::record(
                 action: $this->isEdit ? 'update' : 'create',
-                description: "Menyimpan Jadwal Penuh Horizontal ({$tingkat}): {$hari} | {$jamLabel} | {$mapelName} ({$guruName}) ke " . $kelasList->count() . " kelas",
+                description: "Menyimpan Jadwal Penuh Horizontal ({$tingkat}): {$hari} | {$jamLabels} | {$mapelName} ({$guruName}) ke " . $kelasList->count() . " kelas",
                 module: 'Jadwal Pelajaran',
                 properties: [
                     'Hari' => $hari,
-                    'Jam' => $jamLabel,
+                    'Jam' => $jamLabels,
                     'Mata Pelajaran' => $mapelName,
                     'Guru Pengajar' => $guruName,
                     'Target Kelas' => "Semua Kelas {$tingkat} (" . $kelasList->pluck('nama_kelas')->implode(', ') . ")",
@@ -748,7 +752,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             ->label('Hapus')
             ->color('danger')
             ->modalHeading('Hapus Jadwal')
-            ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
+            ->modalDescription('Apakah anda yakin ingin menghapus data jadwal ini?')
             ->requiresConfirmation()
             ->action(function (array $arguments) {
                 $post = JadwalPelajaran::find($arguments['jadwal'] ?? null);
@@ -760,24 +764,54 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                     $hariName = ucfirst($post->hari);
 
                     $jamIds = $this->formData['jam_pelajaran_ids'] ?? [];
+                    if (empty($jamIds) && !empty($this->formData['jam_pelajaran_id'])) {
+                        $jamIds = [(string) $this->formData['jam_pelajaran_id']];
+                    }
+                    if (empty($jamIds) && !empty($post->jam_pelajaran_id)) {
+                        $jamIds = [(string) $post->jam_pelajaran_id];
+                    }
+
+                    $isFillHorizontal = !empty($this->formData['fill_horizontal']);
 
                     \App\Models\ActivityLog::$disableLogging = true;
 
-                    if (!empty($jamIds) && is_array($jamIds)) {
-                        JadwalPelajaran::where('periode_id', $post->periode_id)
+                    if ($isFillHorizontal) {
+                        $tingkat = strtoupper($this->filterData['tingkat'] ?? 'SMP');
+                        $kelasList = \App\Models\Kelas::where('tingkat', $tingkat)->whereNotIn('kode_kelas', ['SMP', 'MA'])->pluck('id');
+                        if ($kelasList->isEmpty()) {
+                            $kelasList = \App\Models\Kelas::where('tingkat', strtolower($tingkat))->whereNotIn('kode_kelas', ['SMP', 'MA'])->pluck('id');
+                        }
+                        if ($kelasList->isEmpty()) {
+                            $kelasList = \App\Models\Kelas::pluck('id');
+                        }
+
+                        $query = JadwalPelajaran::where('periode_id', $post->periode_id)
                             ->where('hari', $post->hari)
-                            ->where('kelas_id', $post->kelas_id)
-                            ->where('mata_pelajaran_id', $post->mata_pelajaran_id)
-                            ->where('guru_id', $post->guru_id)
-                            ->whereIn('jam_pelajaran_id', $jamIds)
-                            ->delete();
+                            ->whereIn('kelas_id', $kelasList)
+                            ->where('mata_pelajaran_id', $post->mata_pelajaran_id);
+
+                        if (!empty($jamIds)) {
+                            $query->whereIn('jam_pelajaran_id', $jamIds);
+                        }
+
+                        $query->delete();
                     } else {
-                        JadwalPelajaran::where('periode_id', $post->periode_id)
+                        $query = JadwalPelajaran::where('periode_id', $post->periode_id)
                             ->where('hari', $post->hari)
                             ->where('kelas_id', $post->kelas_id)
-                            ->where('mata_pelajaran_id', $post->mata_pelajaran_id)
-                            ->where('guru_id', $post->guru_id)
-                            ->delete();
+                            ->where('mata_pelajaran_id', $post->mata_pelajaran_id);
+
+                        if ($post->guru_id) {
+                            $query->where('guru_id', $post->guru_id);
+                        } else {
+                            $query->whereNull('guru_id');
+                        }
+
+                        if (!empty($jamIds)) {
+                            $query->whereIn('jam_pelajaran_id', $jamIds);
+                        }
+
+                        $query->delete();
                     }
 
                     \App\Models\ActivityLog::$disableLogging = false;
@@ -789,7 +823,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                         properties: [
                             'old' => [
                                 'Hari' => $hariName,
-                                'Kelas' => $kelasName,
+                                'Kelas' => $isFillHorizontal ? "Semua Kelas ({$tingkat})" : $kelasName,
                                 'Mata Pelajaran' => $mapelName,
                                 'Guru Pengajar' => $guruName,
                             ]

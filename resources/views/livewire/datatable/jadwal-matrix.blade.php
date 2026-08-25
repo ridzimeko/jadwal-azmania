@@ -358,13 +358,105 @@ new class extends Component {
                     @php
                         $skipCell = [];
                         $spanCountMap = [];
+                        $spanJamIdsMap = [];
+                        $spanItemIdsMap = [];
 
-                        // Pre-calculate consecutive merged cells for each hari & kelas
+                        $skipFullHorizontalRow = [];
+                        $fullHorizontalSpanMap = [];
+
+                        $getFullHorizontalInfo = function($hKey, $jId) use ($globalKelasMap, $jadwalMap, $kelasList) {
+                            // 1. Check if dummy global class (SMP/MA) has item
+                            $globalItems = collect();
+                            foreach (['SMP', 'MA'] as $gKode) {
+                                $gId = $globalKelasMap[$gKode] ?? null;
+                                if ($gId && !empty($jadwalMap[$hKey . '_' . $jId . '_' . $gId])) {
+                                    $globalItems = $globalItems->concat($jadwalMap[$hKey . '_' . $jId . '_' . $gId]);
+                                }
+                            }
+                            if ($globalItems->isNotEmpty()) {
+                                return [
+                                    'is_horizontal' => true,
+                                    'mapel_id' => $globalItems->first()->mata_pelajaran_id,
+                                    'items' => $globalItems,
+                                ];
+                            }
+
+                            // 2. Check if all individual classes in $kelasList have the exact same mapel
+                            if ($kelasList->isEmpty()) {
+                                return ['is_horizontal' => false];
+                            }
+
+                            $firstKey = $hKey . '_' . $jId . '_' . $kelasList->first()->id;
+                            $firstItems = $jadwalMap[$firstKey] ?? [];
+                            if (empty($firstItems) || count($firstItems) !== 1) {
+                                return ['is_horizontal' => false];
+                            }
+
+                            $mapelId = $firstItems[0]->mata_pelajaran_id;
+                            $allItems = collect();
+
+                            foreach ($kelasList as $k) {
+                                $kKey = $hKey . '_' . $jId . '_' . $k->id;
+                                $kItems = $jadwalMap[$kKey] ?? [];
+                                if (empty($kItems) || count($kItems) !== 1 || $kItems[0]->mata_pelajaran_id != $mapelId) {
+                                    return ['is_horizontal' => false];
+                                }
+                                $allItems->push($kItems[0]);
+                            }
+
+                            return [
+                                'is_horizontal' => true,
+                                'mapel_id' => $mapelId,
+                                'items' => $allItems,
+                            ];
+                        };
+
+                        // Pre-calculate full horizontal rowspan and class-specific rowspan
                         foreach ($hariList as $hKey) {
                             $jamArray = $jamList->values();
                             $totalJams = count($jamArray);
                             for ($i = 0; $i < $totalJams; $i++) {
                                 $currentJam = $jamArray[$i];
+
+                                // 1. Full horizontal rowspan calculation across consecutive hours
+                                if (!isset($skipFullHorizontalRow[$hKey][$currentJam->id])) {
+                                    $currInfo = $getFullHorizontalInfo($hKey, $currentJam->id);
+                                    if ($currInfo['is_horizontal']) {
+                                        $gMapelId = $currInfo['mapel_id'];
+                                        $gSpan = 1;
+                                        $gSpanJamIds = [(string) $currentJam->id];
+                                        $gSpanItemIds = $currInfo['items']->pluck('id')->toArray();
+
+                                        for ($j = $i + 1; $j < $totalJams; $j++) {
+                                            $nextJam = $jamArray[$j];
+                                            $nextInfo = $getFullHorizontalInfo($hKey, $nextJam->id);
+
+                                            if ($nextInfo['is_horizontal'] && $nextInfo['mapel_id'] == $gMapelId) {
+                                                $gSpan++;
+                                                $gSpanJamIds[] = (string) $nextJam->id;
+                                                $gSpanItemIds = array_merge($gSpanItemIds, $nextInfo['items']->pluck('id')->toArray());
+                                                $skipFullHorizontalRow[$hKey][$nextJam->id] = true;
+                                            } else {
+                                                break;
+                                            }
+                                        }
+
+                                        $fullHorizontalSpanMap[$hKey][$currentJam->id] = [
+                                            'span' => $gSpan,
+                                            'jam_ids' => $gSpanJamIds,
+                                            'item_ids' => $gSpanItemIds,
+                                            'items' => $currInfo['items'],
+                                        ];
+
+                                        foreach ($gSpanJamIds as $spannedJamId) {
+                                            foreach ($kelasList as $kelas) {
+                                                $skipCell[$hKey][$spannedJamId][$kelas->id] = true;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // 2. Class-specific consecutive rowspan calculation
                                 foreach ($kelasList as $kelas) {
                                     if (isset($skipCell[$hKey][$currentJam->id][$kelas->id])) {
                                         continue;
@@ -429,17 +521,8 @@ new class extends Component {
 
                         @foreach ($jamList as $jamIndex => $jam)
                             @php
-                                // Cek apakah ada jadwal global (SMP / MA) di jam & hari ini
-                                $globalItems = collect();
-                                foreach (['SMP', 'MA'] as $globalKode) {
-                                    $gKelasId = $globalKelasMap[$globalKode] ?? null;
-                                    if ($gKelasId) {
-                                        $gKey = $hariKey . '_' . $jam->id . '_' . $gKelasId;
-                                        if (!empty($jadwalMap[$gKey])) {
-                                            $globalItems = $globalItems->concat($jadwalMap[$gKey]);
-                                        }
-                                    }
-                                }
+                                $isSkippedHorizontal = $skipFullHorizontalRow[$hariKey][$jam->id] ?? false;
+                                $horizontalInfo = $fullHorizontalSpanMap[$hariKey][$jam->id] ?? null;
                             @endphp
                             <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/40 transition-colors">
                                 <td class="px-2 py-2 border-b border-r border-gray-200 dark:border-gray-700 text-center text-gray-500 font-medium sticky left-0 z-10 bg-white dark:bg-gray-900 w-12 min-w-[48px] shadow-xs">{{ $no++ }}</td>
@@ -449,29 +532,47 @@ new class extends Component {
                                     <div class="text-xs font-semibold text-gray-800 dark:text-gray-200 mt-0.5">({{ $jam->jam_mulai }} - {{ $jam->jam_selesai }})</div>
                                 </td>
 
-                                {{-- Jika ada kegiatan Global (SMP / MA) --}}
-                                @if ($globalItems->count() > 0)
-                                    <td colspan="{{ count($kelasList) }}"
+                                @if ($isSkippedHorizontal)
+                                    {{-- Skipped because covered by multi-row full horizontal span --}}
+                                @elseif ($horizontalInfo)
+                                    @php
+                                        $gSpan = $horizontalInfo['span'];
+                                        $gSpanJamIds = $horizontalInfo['jam_ids'];
+                                        $gSpanItemIds = $horizontalInfo['item_ids'];
+                                        $hItems = $horizontalInfo['items'];
+                                        $firstHItem = $hItems->first();
+                                        $bg = $firstHItem->guru->warna ?? ($firstHItem->mataPelajaran->warna ?? '#8b5cf6');
+                                        $text = \App\Helpers\ColorHelper::getTextColor($bg);
+                                    @endphp
+                                    <td colspan="{{ count($kelasList) }}" rowspan="{{ $gSpan }}"
                                         class="p-2 border-b border-r border-gray-200 dark:border-gray-700 text-center align-middle bg-purple-50 dark:bg-purple-950/30">
-                                        @foreach ($globalItems as $item)
-                                            @php
-                                                $bg = $item->guru->warna ?? '#8b5cf6';
-                                                $text = \App\Helpers\ColorHelper::getTextColor($bg);
-                                            @endphp
-                                            <button class="w-full p-2.5 rounded-lg font-semibold text-center shadow-xs transition hover:brightness-95"
-                                                style="background-color: {{ $bg }}; color: {{ $text }}" 
-                                                @click="openModal({{ json_encode([
-                                                    'id' => $item->id,
-                                                    'hari' => $hariKey,
-                                                    'kelas_id' => $item->kelas_id,
-                                                    'mata_pelajaran_id' => $item->mata_pelajaran_id,
-                                                    'jam_pelajaran_id' => $item->jam_pelajaran_id,
-                                                    'guru_id' => $item->guru_id,
-                                                ]) }})">
-                                                <div class="font-bold text-sm">{{ $item->mataPelajaran->nama_mapel ?? '-' }}</div>
-                                                <div class="text-xs opacity-90 mt-0.5">{{ $item->guru->nama_guru ?? 'Semua Kelas' }}</div>
-                                            </button>
-                                        @endforeach
+                                        <button class="relative w-full h-full min-h-[58px] p-3 rounded-xl font-semibold text-center shadow-xs transition hover:brightness-95 border flex flex-col justify-center items-center"
+                                            :class="isDeleteMode ? (isCardSelectedForDelete({{ json_encode($gSpanItemIds) }}) ? '!ring-4 !ring-red-500 !border-red-600 !bg-red-500/30 scale-[1.02] shadow-lg' : 'opacity-70 hover:opacity-100 hover:border-red-400') : 'border-purple-300 dark:border-purple-800'"
+                                            style="background-color: {{ $bg }}; color: {{ $text }}" 
+                                            @click="isDeleteMode ? toggleCardDelete($event, {{ json_encode($gSpanItemIds) }}) : openModal({{ json_encode([
+                                                'id' => $firstHItem->id,
+                                                'hari' => $hariKey,
+                                                'kelas_id' => $firstHItem->kelas_id,
+                                                'mata_pelajaran_id' => $firstHItem->mata_pelajaran_id,
+                                                'jam_pelajaran_id' => $jam->id,
+                                                'jam_pelajaran_ids' => $gSpanJamIds,
+                                                'guru_id' => $firstHItem->guru_id,
+                                                'fill_horizontal' => true,
+                                            ]) }})">
+                                            <template x-if="isDeleteMode && isCardSelectedForDelete({{ json_encode($gSpanItemIds) }})">
+                                                <div class="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-md border border-white z-20 animate-pulse">
+                                                    <flux:icon name="check" class="w-3 h-3 text-white" />
+                                                    <span>HAPUS ({{ $gSpan }} JP)</span>
+                                                </div>
+                                            </template>
+                                            <div class="font-bold text-sm md:text-base leading-tight">{{ $firstHItem->mataPelajaran->nama_mapel ?? '-' }}</div>
+                                            <div class="text-xs opacity-90 mt-1 font-medium">{{ $firstHItem->guru->nama_guru ?? 'Semua Kelas' }}</div>
+                                            @if ($gSpan > 1)
+                                                <div class="text-[10px] font-semibold px-2.5 py-0.5 rounded-md mt-1.5 inline-block bg-black/20 text-white shadow-xs">
+                                                    {{ $gSpan }} JP (Penuh Horizontal)
+                                                </div>
+                                            @endif
+                                        </button>
                                     </td>
                                 @else
                                     {{-- Kolom Per Kelas --}}
