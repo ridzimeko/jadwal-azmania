@@ -22,6 +22,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     protected $columnDefs = [['name' => 'Kelas', 'field' => 'kelas_nama'], ['name' => 'Hari', 'field' => 'hari'], ['name' => 'Jam Mulai', 'field' => 'jam_mulai'], ['name' => 'Jam Selesai', 'field' => 'jam_selesai'], ['name' => 'Mata Pelajaran', 'field' => 'mapel_nama'], ['name' => 'Guru Pengajar', 'field' => 'guru_nama']];
 
     public $periode_id;
+    public $selectedPeriodeId;
     public $tahunAjaran;
     public $hariOptions;
     public $kelasOptions;
@@ -50,6 +51,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
     public function mount()
     {
+        $this->selectedPeriodeId = (string) $this->periode_id;
         $this->tahunAjaran = JadwalHelper::getTahunAjaran($this->periode_id);
 
         if (!$this->tahunAjaran) {
@@ -838,9 +840,16 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             });
     }
 
+    public function updatedSelectedPeriodeId($value)
+    {
+        if ($value && $value != $this->periode_id) {
+            return redirect()->route('jadwal.index', ['periode_id' => $value]);
+        }
+    }
+
     public function switchPeriode($periodeId)
     {
-        if ($periodeId) {
+        if ($periodeId && $periodeId != $this->periode_id) {
             return redirect()->route('jadwal.index', ['periode_id' => $periodeId]);
         }
     }
@@ -849,7 +858,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     public function getPeriodeOptionsProperty()
     {
         return \App\Models\Periode::orderBy('aktif', 'desc')->orderBy('tahun_ajaran', 'desc')->get()->map(function($p) {
-            $label = "{$p->tahun_ajaran} ({$p->semester})" . ($p->aktif ? ' ⭐ [AKTIF]' : '');
+            $label = ($p->aktif ? '⭐ ' : '') . "{$p->tahun_ajaran} ({$p->semester})";
             return ['label' => $label, 'value' => (string) $p->id];
         })->toArray();
     }
@@ -891,8 +900,11 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             </flux:tabs> --}}
 
             <div class="flex items-center flex-wrap gap-3">
-                <x-select wire:change="switchPeriode($event.target.value)" :value="(string) $this->periode_id" :search="false"
-                    :options="$this->periodeOptions" placeholder="Pilih Periode..." class="!w-[230px]" />
+                <div class="flex items-center gap-1 text-xs font-semibold">
+                    <span class="text-gray-500 shrink-0">Periode:</span>
+                    <x-select wire:model.live="selectedPeriodeId" :search="false"
+                        :options="$this->periodeOptions" placeholder="Pilih Periode..." class="!w-[220px]" />
+                </div>
                 <x-select wire:model.live="filterData.hari" :search="false"
                     :options="JadwalHelper::getHariOptions(true)" placeholder="Pilih hari" class="!w-[130px]" />
                 <x-select wire:model.live="filterData.tingkat" :search="false" :options="[['label' => 'SMP', 'value' => 'smp'], ['label' => 'MA', 'value' => 'ma']]" placeholder="Pilih tingkat" class="!w-[110px]" />
