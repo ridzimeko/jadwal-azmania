@@ -157,12 +157,14 @@ new class extends Component {
             this.selectedDeleteIds = [];
         },
 
-        toggleCardDelete(id) {
-            const idx = this.selectedDeleteIds.indexOf(id);
-            if (idx > -1) {
-                this.selectedDeleteIds.splice(idx, 1);
+        toggleCardDelete(event, id, groupIds = []) {
+            const ids = event.shiftKey ? groupIds : [id];
+            const allSelected = ids.every(groupId => this.selectedDeleteIds.includes(groupId));
+
+            if (allSelected) {
+                this.selectedDeleteIds = this.selectedDeleteIds.filter(selectedId => !ids.includes(selectedId));
             } else {
-                this.selectedDeleteIds.push(id);
+                this.selectedDeleteIds = [...new Set([...this.selectedDeleteIds, ...ids])];
             }
         },
 
@@ -257,6 +259,13 @@ new class extends Component {
         $jamList = $this->getJamPelajaran();
         $hariList = $this->getHariList();
         $jadwalMap = $this->getJadwalMap();
+        $horizontalDeleteGroups = [];
+        foreach ($jadwalMap as $items) {
+            foreach ($items as $scheduledItem) {
+                $groupKey = $scheduledItem->hari . '_' . $scheduledItem->jam_pelajaran_id . '_' . $scheduledItem->mata_pelajaran_id;
+                $horizontalDeleteGroups[$groupKey][] = $scheduledItem->id;
+            }
+        }
         $globalKelasMap = $this->getGlobalKelasMap();
         $allJamIds = $jamList->pluck('id')->values()->toArray();
 
@@ -305,7 +314,8 @@ new class extends Component {
         @if(auth()->user()->role !== 'guru')
             <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 bg-blue-50/60 dark:bg-blue-950/30 px-3.5 py-1.5 rounded-lg border border-blue-100 dark:border-blue-900/40">
                 <flux:icon name="cursor-arrow-rays" class="w-3.5 h-3.5 text-primary shrink-0" />
-                <span>Tips: <strong>Klik & drag</strong> slot kosong untuk memilih beberapa jam, atau <strong>Shift + Klik</strong> pada slot kosong untuk mengisi penuh ke semua kelas.</span>
+                <span x-show="!isDeleteMode">Tips: <strong>Klik & drag</strong> slot kosong untuk memilih beberapa jam, atau <strong>Shift + Klik</strong> pada slot kosong untuk mengisi penuh ke semua kelas.</span>
+                <span x-cloak x-show="isDeleteMode">Tips: <strong>Klik</strong> untuk memilih satu jadwal, atau <strong>Shift + Klik</strong> untuk memilih seluruh jadwal horizontal terkait.</span>
             </div>
         @endif
     </div>
@@ -473,11 +483,13 @@ new class extends Component {
                                                                 $bg = $item->guru->warna ?? '#ffffff';
                                                                 $text = \App\Helpers\ColorHelper::getTextColor($bg);
                                                                 $isBentrok = $item->is_bentrok ?? false;
+                                                                $horizontalDeleteKey = $item->hari . '_' . $item->jam_pelajaran_id . '_' . $item->mata_pelajaran_id;
+                                                                $horizontalDeleteIds = $horizontalDeleteGroups[$horizontalDeleteKey] ?? [$item->id];
                                                             @endphp
                                                             <button class="relative w-full h-full min-h-[58px] p-2.5 rounded-xl shadow-xs text-center flex flex-col justify-center items-center cursor-pointer transition hover:scale-[1.01] hover:shadow-md border {{ $isBentrok ? 'border-red-500 ring-2 ring-red-400' : 'border-black/10' }}"
                                                                 :class="isDeleteMode ? (isCardSelectedForDelete({{ $item->id }}) ? '!ring-4 !ring-red-500 !border-red-600 !bg-red-500/30 scale-[1.02] shadow-lg' : 'opacity-70 hover:opacity-100 hover:border-red-400') : ''"
                                                                 style="background-color: {{ $bg }}; color: {{ $text }}" 
-                                                                @click="isDeleteMode ? toggleCardDelete({{ $item->id }}) : openModal({{ json_encode([
+                                                                @click="isDeleteMode ? toggleCardDelete($event, {{ $item->id }}, {{ json_encode($horizontalDeleteIds) }}) : openModal({{ json_encode([
                                                                     'id' => $item->id,
                                                                     'hari' => $hariKey,
                                                                     'kelas_id' => $kelas->id,
@@ -575,7 +587,7 @@ new class extends Component {
     </div>
 
     <!-- Sticky Floating Action Bar for Shift Pressed Mode (App Theme Consistent) -->
-    <div x-cloak x-show="isShiftPressed" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+    <div x-cloak x-show="isShiftPressed && !isDeleteMode" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
         class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-900/95 dark:bg-gray-800/95 text-white backdrop-blur-md px-5 py-3 rounded-2xl shadow-2xl border border-gray-700/80 flex items-center gap-4 min-w-[340px] max-w-[90vw] justify-between">
         <div class="flex items-center gap-3">
             <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm shrink-0 border border-emerald-500/30">
