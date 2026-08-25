@@ -508,7 +508,7 @@ new class extends Component {
                                                         {{-- TAMPILAN SLOT KOSONG --}}
                                                         <button type="button"
                                                             @click="handleEmptySlotClick($event, '{{ $hariKey }}', {{ $jam->id }}, {{ $kelas->id }})"
-                                                            @mousedown.prevent="startDrag('{{ $hariKey }}', {{ $kelas->id }}, {{ $jam->id }})"
+                                                            @mousedown.prevent="if (!$event.shiftKey) startDrag('{{ $hariKey }}', {{ $kelas->id }}, {{ $jam->id }})"
                                                             @mouseenter="dragOver('{{ $hariKey }}', {{ $kelas->id }}, {{ $jam->id }}, {{ json_encode($allJamIds) }})"
                                                             :class="isSelected('{{ $hariKey }}', {{ $kelas->id }}, {{ $jam->id }})
                                                                 ? 'border-emerald-500 bg-emerald-500 text-white font-bold shadow-md scale-[1.02] ring-2 ring-emerald-400'

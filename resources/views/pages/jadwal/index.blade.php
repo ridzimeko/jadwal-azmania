@@ -2,6 +2,7 @@
 
 use App\Helpers\JadwalHelper;
 use App\Models\JadwalPelajaran;
+use App\Models\MataPelajaran;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -9,6 +10,7 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Flux\Flux;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -24,6 +26,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     public $hariOptions;
     public $kelasOptions;
     public $guruOptions;
+    public $horizontalMapelOptions;
     public $jamPelajaranOptions;
     public $jadwalBentrokList = [];
     public $availableSlotsList = [];
@@ -56,6 +59,11 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         $this->hariOptions = JadwalHelper::getHariOptions();
         $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
         $this->guruOptions = JadwalHelper::getGuruOptions();
+        $this->horizontalMapelOptions = MataPelajaran::where('jenis_mapel', 'Non KBM')
+            ->orderBy('nama_mapel')
+            ->get()
+            ->map(fn($mapel) => ['value' => $mapel->id, 'label' => $mapel->nama_mapel])
+            ->toArray();
         $this->jamPelajaranOptions = JadwalHelper::getJamPelajaranOptions();
         // $this->filterData['hari'] = 'Senin';
         $this->filterData['tingkat'] = 'smp';
@@ -68,8 +76,10 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         return [
             'formData.hari' => 'required|string|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu',
             'formData.kelas_id' => $isFillHorizontal ? 'nullable' : 'required|exists:kelas,id',
-            'formData.mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
-            'formData.guru_id' => 'nullable|exists:guru,id',
+            'formData.mata_pelajaran_id' => $isFillHorizontal
+                ? ['required', Rule::exists('mata_pelajaran', 'id')->where('jenis_mapel', 'Non KBM')]
+                : 'required|exists:mata_pelajaran,id',
+            'formData.guru_id' => $isFillHorizontal ? 'prohibited' : 'nullable|exists:guru,id',
             'formData.jam_pelajaran_ids' => $isFillHorizontal ? 'nullable' : 'required|array|min:1',
         ];
     }
@@ -151,6 +161,9 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             }
         }
         $this->formData = $record;
+        if (!empty($this->formData['fill_horizontal'])) {
+            $this->formData['guru_id'] = null;
+        }
         Flux::modal('jadwal-modal')->show();
     }
 
@@ -907,18 +920,25 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 </div>
             @endif
 
-            {{-- Selector Guru diatas sendiri --}}
-            <flux:field>
-                <flux:label>Guru Pengajar</flux:label>
-                <x-select name="formData.guru_id" wire:model="formData.guru_id" :options="$this->guruOptions"
-                    placeholder="Pilih guru..." clearable />
-                <flux:error name="formData.guru_id" />
-            </flux:field>
+            @if (!$isFillHorizontal)
+                {{-- Selector Guru diatas sendiri --}}
+                <flux:field>
+                    <flux:label>Guru Pengajar</flux:label>
+                    <x-select name="formData.guru_id" wire:model="formData.guru_id" :options="$this->guruOptions"
+                        placeholder="Pilih guru..." clearable />
+                    <flux:error name="formData.guru_id" />
+                </flux:field>
+            @endif
 
             <flux:field>
                 <flux:label>Nama Mata Pelajaran</flux:label>
-                <livewire:mapel-option wire:model="formData.mata_pelajaran_id" :periodeId="$this->periode_id"
-                    placeholder="Pilih mata pelajaran..." />
+                @if ($isFillHorizontal)
+                    <x-select name="formData.mata_pelajaran_id" wire:model="formData.mata_pelajaran_id"
+                        :options="$this->horizontalMapelOptions" placeholder="Pilih mata pelajaran non-KBM..." />
+                @else
+                    <livewire:mapel-option wire:model="formData.mata_pelajaran_id" :periodeId="$this->periode_id"
+                        placeholder="Pilih mata pelajaran..." />
+                @endif
                 <flux:error name="formData.mata_pelajaran_id" />
             </flux:field>
 

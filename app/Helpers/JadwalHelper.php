@@ -81,6 +81,7 @@ class JadwalHelper
                 'available' => false,
                 'bentrok' => $bentrok->map(function ($item) {
                     return [
+                        'id' => $item->id,
                         'hari' => $item->hari,
                         'jam_mulai' => $item->jamPelajaran->jam_mulai ?? $item->jam_mulai ?? '-',
                         'jam_selesai' => $item->jamPelajaran->jam_selesai ?? $item->jam_selesai ?? '-',
