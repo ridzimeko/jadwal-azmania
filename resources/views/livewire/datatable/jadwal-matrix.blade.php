@@ -157,19 +157,26 @@ new class extends Component {
             this.selectedDeleteIds = [];
         },
 
-        toggleCardDelete(event, id, groupIds = []) {
-            const ids = event.shiftKey ? groupIds : [id];
-            const allSelected = ids.every(groupId => this.selectedDeleteIds.includes(groupId));
+        toggleCardDelete(event, blockIds = [], horizontalIds = []) {
+            if (!Array.isArray(blockIds)) blockIds = [blockIds];
+            let targetIds = [...blockIds];
+
+            if (event && event.shiftKey && Array.isArray(horizontalIds) && horizontalIds.length > 0) {
+                targetIds = [...new Set([...targetIds, ...horizontalIds])];
+            }
+
+            const allSelected = targetIds.every(id => this.selectedDeleteIds.includes(id));
 
             if (allSelected) {
-                this.selectedDeleteIds = this.selectedDeleteIds.filter(selectedId => !ids.includes(selectedId));
+                this.selectedDeleteIds = this.selectedDeleteIds.filter(selectedId => !targetIds.includes(selectedId));
             } else {
-                this.selectedDeleteIds = [...new Set([...this.selectedDeleteIds, ...ids])];
+                this.selectedDeleteIds = [...new Set([...this.selectedDeleteIds, ...targetIds])];
             }
         },
 
-        isCardSelectedForDelete(id) {
-            return this.selectedDeleteIds.includes(id);
+        isCardSelectedForDelete(blockIds = []) {
+            if (!Array.isArray(blockIds)) blockIds = [blockIds];
+            return blockIds.some(id => this.selectedDeleteIds.includes(id));
         },
 
         confirmBatchDelete() {
@@ -371,6 +378,7 @@ new class extends Component {
 
                                         $span = 1;
                                         $spanJamIds = [(string) $currentJam->id];
+                                        $spanItemIds = [$firstItem->id];
                                         for ($j = $i + 1; $j < $totalJams; $j++) {
                                             $nextJam = $jamArray[$j];
                                             $nextKey = $hKey . '_' . $nextJam->id . '_' . $kelas->id;
@@ -378,6 +386,7 @@ new class extends Component {
                                             if (!empty($nextItems) && count($nextItems) === 1 && $nextItems[0]->mata_pelajaran_id == $mapelId && $nextItems[0]->guru_id == $guruId) {
                                                 $span++;
                                                 $spanJamIds[] = (string) $nextJam->id;
+                                                $spanItemIds[] = $nextItems[0]->id;
                                                 $skipCell[$hKey][$nextJam->id][$kelas->id] = true;
                                             } else {
                                                 break;
@@ -385,9 +394,11 @@ new class extends Component {
                                         }
                                         $spanCountMap[$hKey][$currentJam->id][$kelas->id] = $span;
                                         $spanJamIdsMap[$hKey][$currentJam->id][$kelas->id] = $spanJamIds;
+                                        $spanItemIdsMap[$hKey][$currentJam->id][$kelas->id] = $spanItemIds;
                                     } else {
                                         $spanCountMap[$hKey][$currentJam->id][$kelas->id] = 1;
                                         $spanJamIdsMap[$hKey][$currentJam->id][$kelas->id] = [(string) $currentJam->id];
+                                        $spanItemIdsMap[$hKey][$currentJam->id][$kelas->id] = [];
                                     }
                                 }
                             }
@@ -485,11 +496,15 @@ new class extends Component {
                                                                 $isBentrok = $item->is_bentrok ?? false;
                                                                 $horizontalDeleteKey = $item->hari . '_' . $item->jam_pelajaran_id . '_' . $item->mata_pelajaran_id;
                                                                 $horizontalDeleteIds = $horizontalDeleteGroups[$horizontalDeleteKey] ?? [$item->id];
+                                                                $blockItemIds = $spanItemIdsMap[$hariKey][$jam->id][$kelas->id] ?? [$item->id];
+                                                                if (empty($blockItemIds)) {
+                                                                    $blockItemIds = [$item->id];
+                                                                }
                                                             @endphp
                                                             <button class="relative w-full h-full min-h-[58px] p-2.5 rounded-xl shadow-xs text-center flex flex-col justify-center items-center cursor-pointer transition hover:scale-[1.01] hover:shadow-md border {{ $isBentrok ? 'border-red-500 ring-2 ring-red-400' : 'border-black/10' }}"
-                                                                :class="isDeleteMode ? (isCardSelectedForDelete({{ $item->id }}) ? '!ring-4 !ring-red-500 !border-red-600 !bg-red-500/30 scale-[1.02] shadow-lg' : 'opacity-70 hover:opacity-100 hover:border-red-400') : ''"
+                                                                :class="isDeleteMode ? (isCardSelectedForDelete({{ json_encode($blockItemIds) }}) ? '!ring-4 !ring-red-500 !border-red-600 !bg-red-500/30 scale-[1.02] shadow-lg' : 'opacity-70 hover:opacity-100 hover:border-red-400') : ''"
                                                                 style="background-color: {{ $bg }}; color: {{ $text }}" 
-                                                                @click="isDeleteMode ? toggleCardDelete($event, {{ $item->id }}, {{ json_encode($horizontalDeleteIds) }}) : openModal({{ json_encode([
+                                                                @click="isDeleteMode ? toggleCardDelete($event, {{ json_encode($blockItemIds) }}, {{ json_encode($horizontalDeleteIds) }}) : openModal({{ json_encode([
                                                                     'id' => $item->id,
                                                                     'hari' => $hariKey,
                                                                     'kelas_id' => $kelas->id,
@@ -498,10 +513,10 @@ new class extends Component {
                                                                     'jam_pelajaran_ids' => $spanJamIdsMap[$hariKey][$jam->id][$kelas->id] ?? [(string) $jam->id],
                                                                     'guru_id' => $item->guru_id,
                                                                 ]) }})">
-                                                                <template x-if="isDeleteMode && isCardSelectedForDelete({{ $item->id }})">
+                                                                <template x-if="isDeleteMode && isCardSelectedForDelete({{ json_encode($blockItemIds) }})">
                                                                     <div class="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-md border border-white z-20 animate-pulse">
                                                                         <flux:icon name="check" class="w-3 h-3 text-white" />
-                                                                        <span>HAPUS</span>
+                                                                        <span>HAPUS ({{ count($blockItemIds) }} JP)</span>
                                                                     </div>
                                                                 </template>
                                                                 <div class="font-bold text-xs md:text-sm line-clamp-2 leading-tight px-1">{{ $item->mataPelajaran->nama_mapel ?? '-' }}</div>
