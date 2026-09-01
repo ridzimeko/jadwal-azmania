@@ -196,8 +196,9 @@ new #[Title('Periode Jadwal')]
                     <flux:text class="text-sm font-semibold text-gray-600 dark:text-gray-400">Semester {{ $periode->semester }}</flux:text>
                 </div>
 
-                <div class="flex items-center justify-between gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
-                    <div class="flex items-center gap-1.5">
+                <div class="flex flex-col gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-800">
+                    <!-- Line 1: Action Buttons -->
+                    <div class="flex items-center gap-1.5 flex-wrap">
                         @if(!$periode->aktif)
                             <flux:button wire:click="setActivePeriode({{ $periode->id }})" size="xs" variant="outline" icon="check" class="!text-emerald-700 dark:!text-emerald-300 border-emerald-300">
                                 Set Aktif
@@ -211,11 +212,14 @@ new #[Title('Periode Jadwal')]
                         </flux:button>
                     </div>
 
-                    <a href="{{ route('jadwal.index', ['periode_id' => $periode->id]) }}" 
-                       class="inline-flex items-center gap-1 text-xs font-extrabold text-primary hover:underline">
-                        <span>Lihat Jadwal</span>
-                        <flux:icon name="chevron-right" class="w-3.5 h-3.5 text-primary" />
-                    </a>
+                    <!-- Line 2: Lihat Jadwal -->
+                    <div class="flex justify-end pt-1.5 border-t border-gray-50 dark:border-gray-800/60">
+                        <a href="{{ route('jadwal.index', ['periode_id' => $periode->id]) }}" 
+                           class="inline-flex items-center gap-1 text-xs font-extrabold text-primary hover:underline">
+                            <span>Lihat Jadwal</span>
+                            <flux:icon name="chevron-right" class="w-3.5 h-3.5 text-primary" />
+                        </a>
+                    </div>
                 </div>
             </div>
         @endforeach
