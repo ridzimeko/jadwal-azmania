@@ -8,6 +8,7 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Flux\Flux;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
@@ -127,6 +128,20 @@ new #[Title('Periode Jadwal')]
         Flux::modal('periode-modal')->close();
     }
 
+    public function deletePeriode($id)
+    {
+        $periode = Periode::find($id);
+
+        if ($periode) {
+            $periode->delete();
+            Cache::forget('periode_options');
+
+            Notification::make()->title('Data periode berhasil dihapus')->success()->send();
+            Flux::modal('periode-modal')->close();
+            $this->dispatch('$refresh');
+        }
+    }
+
     public function deleteAction(): Action
     {
         return Action::make('delete')
@@ -134,15 +149,9 @@ new #[Title('Periode Jadwal')]
             ->color('danger')
             ->requiresConfirmation()
             ->modalHeading('Hapus Periode')
-            ->modalDescription('Apakah anda yakin ingin menghapus data ini?')
+            ->modalDescription('Apakah Anda yakin ingin menghapus periode ini? Semua data jadwal pada periode ini akan ikut terhapus!')
             ->action(function (array $arguments) {
-                $post = Periode::find($arguments['periode']);
-
-                $post?->delete();
-
-                Notification::make()->title('Data periode berhasil dihapus')->success()->send();
-                Flux::modal('periode-modal')->close();
-                $this->dispatch('$refresh');
+                $this->deletePeriode($arguments['periode'] ?? null);
             });
     }
 
@@ -188,7 +197,7 @@ new #[Title('Periode Jadwal')]
                 </div>
 
                 <div class="flex items-center justify-between gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5">
                         @if(!$periode->aktif)
                             <flux:button wire:click="setActivePeriode({{ $periode->id }})" size="xs" variant="outline" icon="check" class="!text-emerald-700 dark:!text-emerald-300 border-emerald-300">
                                 Set Aktif
@@ -196,6 +205,9 @@ new #[Title('Periode Jadwal')]
                         @endif
                         <flux:button wire:click="openEditPeriode({{ json_encode($periode) }})" size="xs" variant="ghost" icon="pencil">
                             Edit
+                        </flux:button>
+                        <flux:button x-on:click="$wire.mountAction('delete', { periode: {{ $periode->id }} })" size="xs" variant="ghost" icon="trash" class="!text-red-600 dark:!text-red-400 hover:!bg-red-50 dark:hover:!bg-red-950/50">
+                            Hapus
                         </flux:button>
                     </div>
 
@@ -233,12 +245,26 @@ new #[Title('Periode Jadwal')]
                 </flux:label>
             </flux:field>
 
-            <div class="flex mt-6 gap-2 justify-end">
-                <flux:modal.close>
-                    <flux:button variant="ghost">Batal</flux:button>
-                </flux:modal.close>
-                <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>
+            <div class="flex mt-6 gap-2 justify-between items-center">
+                @if ($isEdit)
+                    <flux:button variant="ghost" icon="trash" class="!text-red-600 dark:!text-red-400 hover:!bg-red-50 dark:hover:!bg-red-950/50" x-on:click="() => {
+                        $flux.modals().close()
+                        $wire.mountAction('delete', { periode: '{{ $this->formData['id'] ?? null }}' })
+                    }">
+                        Hapus
+                    </flux:button>
+                @else
+                    <div></div>
+                @endif
+                <div class="flex gap-2">
+                    <flux:modal.close>
+                        <flux:button variant="ghost">Batal</flux:button>
+                    </flux:modal.close>
+                    <flux:button type="submit" variant="filled" class="!bg-primary !text-white">Simpan</flux:button>
+                </div>
             </div>
         </form>
     </flux:modal>
+
+    <x-filament-actions::modals />
 </div>

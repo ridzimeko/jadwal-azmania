@@ -11,9 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('periode', function (Blueprint $table) {
-            $table->unique(['tahun_ajaran', 'semester']);
-        });
+        try {
+            Schema::table('periode', function (Blueprint $table) {
+                $table->unique(['tahun_ajaran', 'semester']);
+            });
+        } catch (\Throwable $e) {
+            // Index may already exist from table creation
+        }
     }
 
     /**

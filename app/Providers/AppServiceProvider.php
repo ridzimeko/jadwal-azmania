@@ -25,13 +25,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Helper global jadwal_available()
-        if (!function_exists('jadwal_available')) {
+        if (!function_exists('App\Providers\jadwal_available')) {
             function jadwal_available($data, $ignoreId = null) {
                 return JadwalHelper::isAvailable($data, $ignoreId);
             }
         }
 
-        if (!function_exists('jadwal_has_bentrok')) {
+        if (!function_exists('App\Providers\jadwal_has_bentrok')) {
             function jadwal_has_bentrok() {
                 return JadwalHelper::hasBentrok();
             }
