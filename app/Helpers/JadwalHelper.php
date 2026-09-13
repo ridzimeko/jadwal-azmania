@@ -141,7 +141,7 @@ class JadwalHelper
             ->orderByDesc('is_bentrok')
             ->orderByRaw("CASE hari WHEN 'Senin' THEN 1 WHEN 'Selasa' THEN 2 WHEN 'Rabu' THEN 3 WHEN 'Kamis' THEN 4 WHEN 'Jumat' THEN 5 WHEN 'Sabtu' THEN 6 WHEN 'Minggu' THEN 7 ELSE 8 END");
 
-        if ($tingkat) {
+        if ($tingkat && in_array(strtoupper($tingkat), ['SMP', 'MA'])) {
             $query->whereRelation('kelas', 'tingkat', strtoupper($tingkat));
         }
 
@@ -153,7 +153,7 @@ class JadwalHelper
         $options = $query = Kelas::orderByRaw("CASE kode_kelas WHEN 'SMP' THEN 1 WHEN 'MA' THEN 2 ELSE 3 END")
             ->orderBy('nama_kelas');
 
-        if ($tingkat) {
+        if ($tingkat && in_array(strtoupper($tingkat), ['SMP', 'MA'])) {
             $query->where('tingkat', strtoupper($tingkat));
         }
 

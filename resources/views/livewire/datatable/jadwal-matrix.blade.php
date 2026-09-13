@@ -11,7 +11,7 @@ use Livewire\Component;
 new class extends Component {
     public $periode_id;
 
-    public string $tingkat = 'SMP'; // bisa di-pass lewat route/filter
+    public string $tingkat = 'all'; // bisa di-pass lewat route/filter
 
     public $hari;
 
@@ -27,10 +27,14 @@ new class extends Component {
     #[Computed]
     public function getKelas()
     {
-        $kelasQuery = Kelas::query()->orderBy('nama_kelas');
-        if ($this->tingkat) {
+        $kelasQuery = Kelas::query()
+            ->orderByRaw("CASE tingkat WHEN 'SMP' THEN 1 WHEN 'MA' THEN 2 ELSE 3 END")
+            ->orderBy('nama_kelas');
+
+        if ($this->tingkat && in_array(strtoupper($this->tingkat), ['SMP', 'MA'])) {
             $kelasQuery->where('tingkat', strtoupper($this->tingkat));
         }
+
         return $kelasQuery
             ->whereNotIn('kode_kelas', ['SMP', 'MA'])
             ->get();
@@ -57,7 +61,8 @@ new class extends Component {
     #[Computed]
     public function getJadwalMap()
     {
-        $query = JadwalHelper::getQuery($this->periode_id, strtoupper($this->tingkat));
+        $tingkatParam = ($this->tingkat && in_array(strtoupper($this->tingkat), ['SMP', 'MA'])) ? strtoupper($this->tingkat) : null;
+        $query = JadwalHelper::getQuery($this->periode_id, $tingkatParam);
 
         if ($this->hari) {
             $query->where('hari', $this->hari);
@@ -133,9 +138,12 @@ new class extends Component {
         isGuru: {{ auth()->user()->role === 'guru' ? 'true' : 'false' }},
         isDragging: false,
         dragHari: '',
+        startKelasId: null,
         dragKelasId: null,
         startJamId: null,
+        dragDirection: null,
         selectedJams: [],
+        selectedKelasIds: [],
         isDeleteMode: false,
         selectedDeleteIds: [],
         isShiftPressed: false,
@@ -216,24 +224,48 @@ new class extends Component {
         },
 
         startDrag(hari, kelasId, jamId) {
-            if (this.isGuru) return;
+            if (this.isGuru || this.isDeleteMode) return;
             this.isDragging = true;
             this.dragHari = hari;
+            this.startKelasId = kelasId;
             this.dragKelasId = kelasId;
             this.startJamId = jamId;
             this.selectedJams = [jamId];
+            this.selectedKelasIds = [kelasId];
+            this.dragDirection = null;
         },
 
-        dragOver(hari, kelasId, jamId, allJamIds) {
-            if (!this.isDragging) return;
-            if (this.dragHari !== hari || this.dragKelasId !== kelasId) return;
+        dragOver(hari, kelasId, jamId, allJamIds, allKelasIds) {
+            if (!this.isDragging || this.dragHari !== hari) return;
 
-            const startIndex = allJamIds.indexOf(this.startJamId);
-            const currentIndex = allJamIds.indexOf(jamId);
+            const jamStartIndex = allJamIds.indexOf(this.startJamId);
+            const jamCurrentIndex = allJamIds.indexOf(jamId);
+            const kelasStartIndex = allKelasIds ? allKelasIds.indexOf(this.startKelasId) : -1;
+            const kelasCurrentIndex = allKelasIds ? allKelasIds.indexOf(kelasId) : -1;
 
-            if (startIndex !== -1 && currentIndex !== -1) {
-                const min = Math.min(startIndex, currentIndex);
-                const max = Math.max(startIndex, currentIndex);
+            if (jamStartIndex === -1 || jamCurrentIndex === -1) return;
+
+            if (!this.dragDirection) {
+                if (kelasId !== this.startKelasId && jamId === this.startJamId) {
+                    this.dragDirection = 'horizontal';
+                } else if (jamId !== this.startJamId && kelasId === this.startKelasId) {
+                    this.dragDirection = 'vertical';
+                } else if (kelasId !== this.startKelasId || jamId !== this.startJamId) {
+                    const deltaKelas = Math.abs(kelasCurrentIndex - kelasStartIndex);
+                    const deltaJam = Math.abs(jamCurrentIndex - jamStartIndex);
+                    this.dragDirection = deltaKelas >= deltaJam ? 'horizontal' : 'vertical';
+                }
+            }
+
+            if (this.dragDirection === 'horizontal' && allKelasIds && kelasStartIndex !== -1 && kelasCurrentIndex !== -1) {
+                this.selectedJams = [this.startJamId];
+                const min = Math.min(kelasStartIndex, kelasCurrentIndex);
+                const max = Math.max(kelasStartIndex, kelasCurrentIndex);
+                this.selectedKelasIds = allKelasIds.slice(min, max + 1);
+            } else if (this.dragDirection === 'vertical' || !this.dragDirection) {
+                this.selectedKelasIds = [this.startKelasId];
+                const min = Math.min(jamStartIndex, jamCurrentIndex);
+                const max = Math.max(jamStartIndex, jamCurrentIndex);
                 this.selectedJams = allJamIds.slice(min, max + 1);
             }
         },
@@ -241,22 +273,37 @@ new class extends Component {
         endDrag() {
             if (!this.isDragging) return;
             this.isDragging = false;
-            if (this.selectedJams.length > 0) {
+
+            if (this.dragDirection === 'horizontal') {
+                this.openModal({
+                    hari: this.dragHari,
+                    kelas_id: '',
+                    mata_pelajaran_id: '',
+                    jam_pelajaran_id: String(this.startJamId),
+                    jam_pelajaran_ids: [String(this.startJamId)],
+                    guru_id: '',
+                    fill_horizontal: true,
+                    target_kelas_ids: this.selectedKelasIds.map(String)
+                });
+            } else if (this.selectedJams.length > 0) {
                 const jams = this.selectedJams.map(String);
                 this.openModal({
                     hari: this.dragHari,
-                    kelas_id: this.dragKelasId,
+                    kelas_id: this.startKelasId,
                     mata_pelajaran_id: '',
                     jam_pelajaran_id: '',
                     jam_pelajaran_ids: jams,
                     guru_id: ''
                 });
             }
+
             this.selectedJams = [];
+            this.selectedKelasIds = [];
+            this.dragDirection = null;
         },
 
         isSelected(hari, kelasId, jamId) {
-            return this.dragHari === hari && this.dragKelasId === kelasId && this.selectedJams.includes(jamId);
+            return this.dragHari === hari && this.selectedKelasIds.includes(kelasId) && this.selectedJams.includes(jamId);
         }
     }"
     @mouseup.window="endDrag()"
@@ -275,6 +322,7 @@ new class extends Component {
         }
         $globalKelasMap = $this->getGlobalKelasMap();
         $allJamIds = $jamList->pluck('id')->values()->toArray();
+        $allKelasIds = $kelasList->pluck('id')->values()->toArray();
 
         // Hitung statistik slot
         $totalSlot = count($hariList) * count($jamList) * count($kelasList);
@@ -321,7 +369,7 @@ new class extends Component {
         @if(auth()->user()->role !== 'guru')
             <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 bg-blue-50/60 dark:bg-blue-950/30 px-3.5 py-1.5 rounded-lg border border-blue-100 dark:border-blue-900/40">
                 <flux:icon name="cursor-arrow-rays" class="w-3.5 h-3.5 text-primary shrink-0" />
-                <span x-show="!isDeleteMode">Tips: <strong>Klik & drag</strong> slot kosong untuk memilih beberapa jam, atau <strong>Shift + Klik</strong> pada slot kosong untuk mengisi penuh ke semua kelas.</span>
+                <span x-show="!isDeleteMode">Tips: <strong>Drag vertikal</strong> untuk memilih beberapa jam di 1 kelas, <strong>drag horizontal</strong> untuk mengisi jadwal Non-KBM ke semua kelas, atau <strong>Shift + Klik</strong>.</span>
                 <span x-cloak x-show="isDeleteMode">Tips: <strong>Klik</strong> untuk memilih satu jadwal, atau <strong>Shift + Klik</strong> untuk memilih seluruh jadwal horizontal terkait.</span>
             </div>
         @endif
@@ -350,7 +398,12 @@ new class extends Component {
                         <th class="px-2 py-2.5 border-b border-r border-primary-600 text-center w-12 min-w-[48px] sticky left-0 z-40 bg-primary">No</th>
                         <th class="px-3 py-2.5 border-b border-r border-primary-600 text-center w-36 min-w-[145px] sticky left-12 z-40 bg-primary font-semibold">Jam ke / Waktu</th>
                         @foreach ($kelasList as $kelas)
-                            <th class="px-4 py-2.5 border-b border-r border-primary-600 text-center min-w-[160px] font-semibold last:border-r-0">{{ $kelas->nama_kelas }}</th>
+                            <th class="px-4 py-2.5 border-b border-r border-primary-600 text-center min-w-[160px] font-semibold last:border-r-0">
+                                <div>{{ $kelas->nama_kelas }}</div>
+                                @if (!$this->tingkat || !in_array(strtoupper($this->tingkat), ['SMP', 'MA']))
+                                    <span class="inline-block mt-0.5 text-[10px] font-medium opacity-85 px-1.5 py-0.2 rounded bg-black/20 text-white">{{ $kelas->tingkat }}</span>
+                                @endif
+                            </th>
                         @endforeach
                     </tr>
                 </thead>
@@ -637,7 +690,7 @@ new class extends Component {
                                                         <button type="button"
                                                             @click="handleEmptySlotClick($event, '{{ $hariKey }}', {{ $jam->id }}, {{ $kelas->id }})"
                                                             @mousedown.prevent="if (!$event.shiftKey) startDrag('{{ $hariKey }}', {{ $kelas->id }}, {{ $jam->id }})"
-                                                            @mouseenter="dragOver('{{ $hariKey }}', {{ $kelas->id }}, {{ $jam->id }}, {{ json_encode($allJamIds) }})"
+                                                            @mouseenter="dragOver('{{ $hariKey }}', {{ $kelas->id }}, {{ $jam->id }}, {{ json_encode($allJamIds) }}, {{ json_encode($allKelasIds) }})"
                                                             :class="isSelected('{{ $hariKey }}', {{ $kelas->id }}, {{ $jam->id }})
                                                                 ? 'border-emerald-500 bg-emerald-500 text-white font-bold shadow-md scale-[1.02] ring-2 ring-emerald-400'
                                                                 : '{{ $onlyEmpty ? 'border-amber-500 bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 font-bold animate-pulse shadow-sm' : 'border-gray-300 dark:border-gray-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400' }}'"

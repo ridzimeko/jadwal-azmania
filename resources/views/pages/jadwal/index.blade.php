@@ -42,7 +42,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     ];
     public ?array $filterData = [
         'hari' => '',
-        'tingkat' => '',
+        'tingkat' => 'all',
         'guru_id' => '',
     ];
     public bool $isEdit = false;
@@ -58,6 +58,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             abort(404, 'Jadwal dengan periode ini tidak ditemukan.');
         }
 
+        $this->filterData['tingkat'] = 'all';
         $this->hariOptions = JadwalHelper::getHariOptions();
         $this->kelasOptions = JadwalHelper::getKelasOptions($this->filterData['tingkat']);
         $this->guruOptions = JadwalHelper::getGuruOptions();
@@ -68,7 +69,6 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             ->toArray();
         $this->jamPelajaranOptions = JadwalHelper::getJamPelajaranOptions();
         // $this->filterData['hari'] = 'Senin';
-        $this->filterData['tingkat'] = 'smp';
     }
 
     protected function rules(): array
@@ -174,6 +174,13 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         if (in_array($key, ['hari', 'kelas_id', 'guru_id', 'jam_pelajaran_ids'])) {
             $this->jadwalBentrokList = [];
             $this->availableSlotsList = [];
+        }
+    }
+
+    public function updatedFilterData($value, $key)
+    {
+        if ($key === 'tingkat') {
+            $this->kelasOptions = JadwalHelper::getKelasOptions($value);
         }
     }
 
@@ -444,13 +451,20 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         $isFillHorizontal = !empty($this->formData['fill_horizontal']);
 
         if ($isFillHorizontal) {
-            $tingkat = strtoupper($this->filterData['tingkat'] ?? 'SMP');
-            $kelasList = \App\Models\Kelas::where('tingkat', $tingkat)->whereNotIn('kode_kelas', ['SMP', 'MA'])->get();
-            if ($kelasList->isEmpty()) {
-                $kelasList = \App\Models\Kelas::where('tingkat', strtolower($tingkat))->whereNotIn('kode_kelas', ['SMP', 'MA'])->get();
-            }
-            if ($kelasList->isEmpty()) {
-                $kelasList = \App\Models\Kelas::all();
+            $tingkatRaw = $this->filterData['tingkat'] ?? 'all';
+            $tingkat = in_array(strtoupper($tingkatRaw), ['SMP', 'MA']) ? strtoupper($tingkatRaw) : 'SMP & MA';
+
+            if (!empty($this->formData['target_kelas_ids']) && is_array($this->formData['target_kelas_ids'])) {
+                $kelasList = \App\Models\Kelas::whereIn('id', $this->formData['target_kelas_ids'])->get();
+            } else {
+                $kelasListQuery = \App\Models\Kelas::whereNotIn('kode_kelas', ['SMP', 'MA']);
+                if (in_array(strtoupper($tingkatRaw), ['SMP', 'MA'])) {
+                    $kelasListQuery->where('tingkat', strtoupper($tingkatRaw));
+                }
+                $kelasList = $kelasListQuery->get();
+                if ($kelasList->isEmpty()) {
+                    $kelasList = \App\Models\Kelas::all();
+                }
             }
 
             $jamIds = !empty($this->formData['jam_pelajaran_ids']) && is_array($this->formData['jam_pelajaran_ids'])
@@ -541,14 +555,14 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
             \App\Models\ActivityLog::record(
                 action: $this->isEdit ? 'update' : 'create',
-                description: "Menyimpan Jadwal Penuh Horizontal ({$tingkat}): {$hari} | {$jamLabels} | {$mapelName} ({$guruName}) ke " . $kelasList->count() . " kelas",
+                description: (!empty($this->formData['target_kelas_ids']) ? "Menyimpan Jadwal Horizontal ({$tingkat})" : "Menyimpan Jadwal Penuh Horizontal ({$tingkat})") . ": {$hari} | {$jamLabels} | {$mapelName} ({$guruName}) ke " . $kelasList->count() . " kelas",
                 module: 'Jadwal Pelajaran',
                 properties: [
                     'Hari' => $hari,
                     'Jam' => $jamLabels,
                     'Mata Pelajaran' => $mapelName,
                     'Guru Pengajar' => $guruName,
-                    'Target Kelas' => "Semua Kelas {$tingkat} (" . $kelasList->pluck('nama_kelas')->implode(', ') . ")",
+                    'Target Kelas' => (!empty($this->formData['target_kelas_ids']) ? "Kelas Terpilih (" : "Semua Kelas {$tingkat} (") . $kelasList->pluck('nama_kelas')->implode(', ') . ")",
                 ]
             );
 
@@ -778,11 +792,14 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                     \App\Models\ActivityLog::$disableLogging = true;
 
                     if ($isFillHorizontal) {
-                        $tingkat = strtoupper($this->filterData['tingkat'] ?? 'SMP');
-                        $kelasList = \App\Models\Kelas::where('tingkat', $tingkat)->whereNotIn('kode_kelas', ['SMP', 'MA'])->pluck('id');
-                        if ($kelasList->isEmpty()) {
-                            $kelasList = \App\Models\Kelas::where('tingkat', strtolower($tingkat))->whereNotIn('kode_kelas', ['SMP', 'MA'])->pluck('id');
+                        $tingkatRaw = $this->filterData['tingkat'] ?? 'all';
+                        $tingkat = in_array(strtoupper($tingkatRaw), ['SMP', 'MA']) ? strtoupper($tingkatRaw) : 'SMP & MA';
+
+                        $kelasListQuery = \App\Models\Kelas::whereNotIn('kode_kelas', ['SMP', 'MA']);
+                        if (in_array(strtoupper($tingkatRaw), ['SMP', 'MA'])) {
+                            $kelasListQuery->where('tingkat', strtoupper($tingkatRaw));
                         }
+                        $kelasList = $kelasListQuery->pluck('id');
                         if ($kelasList->isEmpty()) {
                             $kelasList = \App\Models\Kelas::pluck('id');
                         }
@@ -907,7 +924,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 </div>
                 <x-select wire:model.live="filterData.hari" :search="false"
                     :options="JadwalHelper::getHariOptions(true)" placeholder="Pilih hari" class="!w-[130px]" />
-                <x-select wire:model.live="filterData.tingkat" :search="false" :options="[['label' => 'SMP', 'value' => 'smp'], ['label' => 'MA', 'value' => 'ma']]" placeholder="Pilih tingkat" class="!w-[110px]" />
+                <x-select wire:model.live="filterData.tingkat" :search="false" :options="[['label' => 'SMP & MA', 'value' => 'all'], ['label' => 'SMP', 'value' => 'smp'], ['label' => 'MA', 'value' => 'ma']]" placeholder="Pilih tingkat" class="!w-[130px]" />
                 {{-- <x-select wire:model.live="filterData.guru_id" :search="true"
                     :options="JadwalHelper::getGuruOptions(true)" placeholder="Filter Guru..." class="!w-[220px]" /> --}}
             </div>
@@ -936,8 +953,13 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
             @php
                 $isFillHorizontal = !empty($this->formData['fill_horizontal']);
-                $tingkatText = strtoupper($this->filterData['tingkat'] ?? 'SMP');
-                $selectedKelasNama = $isFillHorizontal ? "Semua Kelas ({$tingkatText})" : (collect($kelasOptions)->firstWhere('value', $this->formData['kelas_id'] ?? null)['label'] ?? ($this->formData['kelas'] ?? '-'));
+                $tingkatRaw = $this->filterData['tingkat'] ?? 'all';
+                $tingkatText = in_array(strtoupper($tingkatRaw), ['SMP', 'MA']) ? strtoupper($tingkatRaw) : 'SMP & MA';
+                $selectedKelasNama = $isFillHorizontal 
+                    ? (!empty($this->formData['target_kelas_ids']) 
+                        ? count($this->formData['target_kelas_ids']) . " Kelas Terpilih" 
+                        : "Semua Kelas ({$tingkatText})") 
+                    : (collect($kelasOptions)->firstWhere('value', $this->formData['kelas_id'] ?? null)['label'] ?? ($this->formData['kelas'] ?? '-'));
                 $selectedHari = !empty($this->formData['hari']) ? ucfirst($this->formData['hari']) : '-';
                 
                 $selectedJamObj = !empty($this->formData['jam_pelajaran_id']) ? \App\Models\JamPelajaran::find($this->formData['jam_pelajaran_id']) : null;
@@ -1077,7 +1099,11 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                         $selectedJamObj = \App\Models\JamPelajaran::find($this->formData['jam_pelajaran_ids'][0]);
                     }
                     $jamInfoText = $selectedJamObj ? ("Jam " . $selectedJamObj->urutan . " (" . $selectedJamObj->jam_mulai . " - " . $selectedJamObj->jam_selesai . ")") : 'Jam Pelajaran Dipilih';
-                    $tingkatText = strtoupper($this->filterData['tingkat'] ?? 'SMP');
+                    $tingkatRaw = $this->filterData['tingkat'] ?? 'all';
+                    $tingkatText = in_array(strtoupper($tingkatRaw), ['SMP', 'MA']) ? strtoupper($tingkatRaw) : 'SMP & MA';
+                    $targetBadgeText = !empty($this->formData['target_kelas_ids']) 
+                        ? count($this->formData['target_kelas_ids']) . " Kelas Terpilih" 
+                        : "Semua Kelas " . $tingkatText;
                 @endphp
                 <div class="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/50 text-xs">
                     <span class="font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
@@ -1085,7 +1111,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                         <span>Target Jam: <strong>{{ $jamInfoText }}</strong></span>
                     </span>
                     <span class="bg-emerald-600 text-white font-extrabold px-2.5 py-0.5 rounded-full text-[10px] uppercase shadow-xs shrink-0">
-                        Semua Kelas {{ $tingkatText }}
+                        {{ $targetBadgeText }}
                     </span>
                 </div>
             @endif
