@@ -195,7 +195,8 @@ new class extends Component {
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {{-- Kolom Kiri (7 Cols): Widget Jadwal Pelajaran Hari Ini --}}
         <div class="lg:col-span-7 space-y-4 bg-white dark:bg-gray-900 p-5 md:p-6 rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-xs">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100 dark:border-gray-800">
+            <div class="space-y-3 pb-3 border-b border-gray-100 dark:border-gray-800">
+                {{-- Header Judul --}}
                 <div class="flex items-center gap-2.5">
                     <div class="p-2 rounded-lg bg-primary/10 text-primary dark:text-purple-300">
                         <flux:icon name="calendar-days" class="w-5 h-5" />
@@ -206,11 +207,11 @@ new class extends Component {
                     </div>
                 </div>
 
-                {{-- Filter Chips Hari --}}
-                <div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+                {{-- Filter Tombol Hari (Line Terpisah) --}}
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5">
                     @foreach(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'] as $hari)
                         <button type="button" wire:click="selectHari('{{ $hari }}')"
-                            class="px-2.5 py-1 rounded-lg text-xs font-extrabold transition cursor-pointer shrink-0 {{ $selectedHari === $hari ? 'bg-primary text-white shadow-xs' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700' }}">
+                            class="flex-1 min-w-[70px] text-center px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 {{ $selectedHari === $hari ? 'bg-primary text-white shadow-xs' : 'bg-gray-100/80 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700' }}">
                             {{ $hari }}
                         </button>
                     @endforeach
