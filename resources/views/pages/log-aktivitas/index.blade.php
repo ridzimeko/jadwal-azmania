@@ -250,7 +250,7 @@ class extends Component {
                                             </span>
                                         </td>
                                         <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">
-                                            {{ $log->description }}
+                                            {{ $log->short_description }}
                                         </td>
                                         <td class="px-4 py-3 text-center">
                                             <flux:button wire:click="viewDetail({{ $log->id }})" size="xs" variant="subtle" icon="eye">
@@ -277,14 +277,34 @@ class extends Component {
         @if($selectedLog)
             <div class="space-y-4">
                 <div>
-                    <flux:heading size="lg">Detail Perubahan Data</flux:heading>
-                    <flux:subheading class="text-gray-600 dark:text-gray-300 font-medium mt-0.5">{{ $selectedLog->description }}</flux:subheading>
+                    <div class="flex items-center gap-2 mb-1">
+                        @if($selectedLog->action === 'create')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                                <flux:icon name="plus-circle" class="w-3 h-3" />
+                                <span>TAMBAH</span>
+                            </span>
+                        @elseif($selectedLog->action === 'update')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800">
+                                <flux:icon name="pencil-square" class="w-3 h-3" />
+                                <span>UBAH</span>
+                            </span>
+                        @elseif($selectedLog->action === 'delete')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800">
+                                <flux:icon name="trash" class="w-3 h-3" />
+                                <span>HAPUS</span>
+                            </span>
+                        @endif
+                        <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                            {{ $selectedLog->module }}
+                        </span>
+                    </div>
+                    <flux:heading size="lg">{{ $selectedLog->short_description }}</flux:heading>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 text-xs bg-gray-50 dark:bg-gray-800/60 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
                     <div>
                         <span class="font-semibold text-gray-500 dark:text-gray-400 block">Waktu:</span>
-                        <span class="text-gray-900 dark:text-white font-bold">{{ $selectedLog->created_at?->format('d F Y - H:i:s') }}</span>
+                        <span class="text-gray-900 dark:text-white font-bold">{{ $selectedLog->created_at?->translatedFormat('d F Y - H:i:s') }}</span>
                     </div>
                     <div>
                         <span class="font-semibold text-gray-500 dark:text-gray-400 block">Pengubah:</span>
@@ -310,9 +330,9 @@ class extends Component {
                         <div class="grid grid-cols-1 gap-2.5 max-h-[350px] overflow-y-auto pr-1">
                             @foreach($keys as $key)
                                 @php
-                                    $label = $this->formatAttrLabel($key);
-                                    $oldVal = $this->formatAttrValue($key, $old[$key] ?? null);
-                                    $newVal = $this->formatAttrValue($key, $new[$key] ?? null);
+                                    $label = $selectedLog->formatLabel($key);
+                                    $oldVal = $selectedLog->formatValue($key, $old[$key] ?? null);
+                                    $newVal = $selectedLog->formatValue($key, $new[$key] ?? null);
                                 @endphp
                                 <div class="bg-gray-50 dark:bg-gray-800/80 p-3 rounded-xl border border-gray-200 dark:border-gray-700 space-y-1.5">
                                     <div class="text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center justify-between">
@@ -336,13 +356,13 @@ class extends Component {
                     <div class="space-y-2">
                         <div class="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
                             <flux:icon name="plus-circle" class="w-4 h-4 text-emerald-500" />
-                            <span>Rincian Data Baru Ditambahkan:</span>
+                            <span>Rincian Data Baru:</span>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[350px] overflow-y-auto p-1">
                             @foreach($new as $k => $v)
                                 @php
-                                    $label = $this->formatAttrLabel($k);
-                                    $val = $this->formatAttrValue($k, $v);
+                                    $label = $selectedLog->formatLabel($k);
+                                    $val = $selectedLog->formatValue($k, $v);
                                 @endphp
                                 <div class="bg-emerald-50/60 dark:bg-emerald-950/30 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900/40">
                                     <span class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 block mb-0.5">{{ $label }}</span>
@@ -360,15 +380,68 @@ class extends Component {
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[350px] overflow-y-auto p-1">
                             @foreach($old as $k => $v)
                                 @php
-                                    $label = $this->formatAttrLabel($k);
-                                    $val = $this->formatAttrValue($k, $v);
+                                    $label = $selectedLog->formatLabel($k);
+                                    $val = $selectedLog->formatValue($k, $v);
                                 @endphp
-                                <div class="bg-red-50/60 dark:bg-red-950/30 p-2.5 rounded-xl border border-red-200 dark:border-red-900/40">
-                                    <span class="text-[11px] font-semibold text-red-700 dark:text-red-400 block mb-0.5">{{ $label }}</span>
-                                    <span class="text-xs font-bold text-red-900 dark:text-red-200 line-through">{{ $val }}</span>
-                                </div>
+                                @if(is_array($v))
+                                    <div class="bg-red-50/60 dark:bg-red-950/30 p-2.5 rounded-xl border border-red-200 dark:border-red-900/40 col-span-full">
+                                        <span class="text-[11px] font-semibold text-red-700 dark:text-red-400 block mb-1.5">{{ $label }} ({{ count($v) }})</span>
+                                        <div class="space-y-1 max-h-48 overflow-y-auto text-xs text-red-900 dark:text-red-200 pr-1 divide-y divide-red-200/50 dark:divide-red-900/30">
+                                            @foreach($v as $listItem)
+                                                <div class="pt-1.5 first:pt-0 flex items-start gap-2">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 mt-1.5"></span>
+                                                    <span>{{ $listItem }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="bg-red-50/60 dark:bg-red-950/30 p-2.5 rounded-xl border border-red-200 dark:border-red-900/40">
+                                        <span class="text-[11px] font-semibold text-red-700 dark:text-red-400 block mb-0.5">{{ $label }}</span>
+                                        <span class="text-xs font-bold text-red-900 dark:text-red-200 line-through">{{ $val }}</span>
+                                    </div>
+                                @endif
                             @endforeach
                         </div>
+                    </div>
+                @elseif(!empty($properties))
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                            <flux:icon name="information-circle" class="w-4 h-4 text-primary" />
+                            <span>Rincian Informasi:</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[350px] overflow-y-auto p-1">
+                            @foreach($properties as $k => $v)
+                                @php
+                                    $label = $selectedLog->formatLabel($k);
+                                    $val = $selectedLog->formatValue($k, $v);
+                                @endphp
+                                @if(is_array($v))
+                                    <div class="bg-gray-50 dark:bg-gray-800/80 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 col-span-full">
+                                        <span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 block mb-1.5">{{ $label }} ({{ count($v) }})</span>
+                                        <div class="space-y-1 max-h-48 overflow-y-auto text-xs text-gray-800 dark:text-gray-200 pr-1 divide-y divide-gray-200 dark:divide-gray-700">
+                                            @foreach($v as $listItem)
+                                                <div class="pt-1.5 first:pt-0 flex items-start gap-2">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400 shrink-0 mt-1.5"></span>
+                                                    <span>{{ $listItem }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="bg-gray-50 dark:bg-gray-800/80 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700">
+                                        <span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 block mb-0.5">{{ $label }}</span>
+                                        <span class="text-xs font-bold text-gray-900 dark:text-white">{{ $val }}</span>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                @if($selectedLog->description !== $selectedLog->short_description)
+                    <div class="text-[11px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-2.5 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 leading-relaxed">
+                        <span class="font-bold text-gray-600 dark:text-gray-300">Deskripsi Lengkap:</span> {{ $selectedLog->description }}
                     </div>
                 @endif
 

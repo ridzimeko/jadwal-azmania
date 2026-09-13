@@ -553,16 +553,25 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 $jamLabels = 'Jam Pelajaran';
             }
 
+            $targetKelasCount = $kelasList->count();
+            $targetKelasText = !empty($this->formData['target_kelas_ids']) 
+                ? "{$targetKelasCount} Kelas" 
+                : "Semua Kelas {$tingkat}";
+            $shortDesc = "Simpan Jadwal {$mapelName} ({$targetKelasText})";
+
             \App\Models\ActivityLog::record(
                 action: $this->isEdit ? 'update' : 'create',
-                description: (!empty($this->formData['target_kelas_ids']) ? "Menyimpan Jadwal Horizontal ({$tingkat})" : "Menyimpan Jadwal Penuh Horizontal ({$tingkat})") . ": {$hari} | {$jamLabels} | {$mapelName} ({$guruName}) ke " . $kelasList->count() . " kelas",
+                description: $shortDesc,
                 module: 'Jadwal Pelajaran',
                 properties: [
-                    'Hari' => $hari,
-                    'Jam' => $jamLabels,
-                    'Mata Pelajaran' => $mapelName,
-                    'Guru Pengajar' => $guruName,
-                    'Target Kelas' => (!empty($this->formData['target_kelas_ids']) ? "Kelas Terpilih (" : "Semua Kelas {$tingkat} (") . $kelasList->pluck('nama_kelas')->implode(', ') . ")",
+                    'new' => [
+                        'Mata Pelajaran' => $mapelName,
+                        'Hari' => $hari,
+                        'Jam Pelajaran' => $jamLabels,
+                        'Guru Pengajar' => $guruName,
+                        'Target Kelas' => (!empty($this->formData['target_kelas_ids']) ? "Kelas Terpilih (" : "Semua Kelas {$tingkat} (") . $kelasList->pluck('nama_kelas')->implode(', ') . ")",
+                        'Total Kelas' => "{$targetKelasCount} Kelas",
+                    ]
                 ]
             );
 
@@ -671,14 +680,14 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
             \App\Models\ActivityLog::record(
                 action: 'update',
-                description: "Mengubah data Jadwal Pelajaran ({$jpCount} JP: {$jamLabels}): {$kelasName} | {$hariName} | {$mapelName} ({$guruName})",
+                description: "Ubah Jadwal {$mapelName} ({$kelasName})",
                 module: 'Jadwal Pelajaran',
                 properties: [
                     'old' => $oldProps,
                     'new' => [
-                        'Hari' => $hariName,
-                        'Kelas' => $kelasName,
                         'Mata Pelajaran' => $mapelName,
+                        'Kelas' => $kelasName,
+                        'Hari' => $hariName,
                         'Guru Pengajar' => $guruName,
                         'Durasi Jam' => "{$jpCount} JP ({$jamLabels})",
                     ]
@@ -730,13 +739,13 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
             \App\Models\ActivityLog::record(
                 action: 'create',
-                description: "Menambah data Jadwal Pelajaran ({$jpCount} JP: {$jamLabels}): {$kelasName} | {$hariName} | {$mapelName} ({$guruName})",
+                description: "Tambah Jadwal {$mapelName} ({$kelasName})",
                 module: 'Jadwal Pelajaran',
                 properties: [
                     'new' => [
-                        'Hari' => $hariName,
-                        'Kelas' => $kelasName,
                         'Mata Pelajaran' => $mapelName,
+                        'Kelas' => $kelasName,
+                        'Hari' => $hariName,
                         'Guru Pengajar' => $guruName,
                         'Durasi Jam' => "{$jpCount} JP ({$jamLabels})",
                     ]
@@ -835,15 +844,19 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
                     \App\Models\ActivityLog::$disableLogging = false;
 
+                    $targetKelas = $isFillHorizontal 
+                        ? (!empty($this->formData['target_kelas_ids']) ? count($this->formData['target_kelas_ids']) . " Kelas" : "Semua Kelas {$tingkat}")
+                        : $kelasName;
+
                     \App\Models\ActivityLog::record(
                         action: 'delete',
-                        description: "Menghapus data Jadwal Pelajaran: {$kelasName} | {$hariName} | {$mapelName} ({$guruName})",
+                        description: "Hapus Jadwal {$mapelName} ({$targetKelas})",
                         module: 'Jadwal Pelajaran',
                         properties: [
                             'old' => [
-                                'Hari' => $hariName,
-                                'Kelas' => $isFillHorizontal ? "Semua Kelas ({$tingkat})" : $kelasName,
                                 'Mata Pelajaran' => $mapelName,
+                                'Kelas' => $isFillHorizontal ? (!empty($this->formData['target_kelas_ids']) ? "Kelas Terpilih (" . count($this->formData['target_kelas_ids']) . " Kelas)" : "Semua Kelas {$tingkat}") : $kelasName,
+                                'Hari' => $hariName,
                                 'Guru Pengajar' => $guruName,
                             ]
                         ]

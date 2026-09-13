@@ -96,6 +96,22 @@ new class extends Component {
     {
         return \App\Models\ActivityLog::with('user')->latest()->take(5)->get();
     }
+
+    public ?\App\Models\ActivityLog $selectedLog = null;
+
+    public function viewLogDetail(int $logId)
+    {
+        $this->selectedLog = \App\Models\ActivityLog::find($logId);
+        if ($this->selectedLog) {
+            \Flux\Flux::modal('dashboard-log-detail-modal')->show();
+        }
+    }
+
+    public function closeLogDetailModal()
+    {
+        \Flux\Flux::modal('dashboard-log-detail-modal')->close();
+        $this->selectedLog = null;
+    }
 };
 ?>
 
@@ -302,15 +318,19 @@ new class extends Component {
 
                 <div class="space-y-3">
                     @forelse($this->recentLogs as $log)
-                        <div class="flex items-start gap-3 text-xs p-2.5 rounded-xl bg-gray-50/70 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800">
-                            <div class="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5"></div>
+                        <div wire:click="viewLogDetail({{ $log->id }})" 
+                             class="flex items-start gap-3 text-xs p-2.5 rounded-xl bg-gray-50/70 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 hover:bg-gray-100/80 dark:hover:bg-gray-800 transition cursor-pointer group">
+                            <div class="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5 group-hover:scale-125 transition-transform"></div>
                             <div class="space-y-0.5 flex-1 min-w-0">
-                                <div class="font-bold text-gray-900 dark:text-white line-clamp-1">{{ $log->description }}</div>
+                                <div class="font-bold text-gray-900 dark:text-white line-clamp-1 group-hover:text-primary transition-colors">
+                                    {{ $log->short_description }}
+                                </div>
                                 <div class="text-[10px] text-gray-400 flex items-center justify-between gap-2">
-                                    <span>{{ $log->user?->name ?? 'Sistem' }}</span>
+                                    <span>{{ $log->user_name ?? ($log->user?->nama ?? 'Sistem') }}</span>
                                     <span>{{ $log->created_at?->diffForHumans() }}</span>
                                 </div>
                             </div>
+                            <flux:icon name="chevron-right" class="w-3.5 h-3.5 text-gray-400 group-hover:text-primary transition-colors shrink-0 mt-1" />
                         </div>
                     @empty
                         <div class="text-xs text-gray-400 italic text-center py-4">Belum ada riwayat aktivitas</div>
@@ -319,4 +339,184 @@ new class extends Component {
             </div>
         </div>
     </div>
+
+    {{-- Modal Detail Log Aktivitas Dashboard --}}
+    <flux:modal name="dashboard-log-detail-modal" class="w-[90%] md:w-[680px]">
+        @if($selectedLog)
+            <div class="space-y-4">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        @if($selectedLog->action === 'create')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                                <flux:icon name="plus-circle" class="w-3 h-3" />
+                                <span>TAMBAH</span>
+                            </span>
+                        @elseif($selectedLog->action === 'update')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800">
+                                <flux:icon name="pencil-square" class="w-3 h-3" />
+                                <span>UBAH</span>
+                            </span>
+                        @elseif($selectedLog->action === 'delete')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800">
+                                <flux:icon name="trash" class="w-3 h-3" />
+                                <span>HAPUS</span>
+                            </span>
+                        @endif
+                        <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                            {{ $selectedLog->module }}
+                        </span>
+                    </div>
+                    <flux:heading size="lg">{{ $selectedLog->short_description }}</flux:heading>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 text-xs bg-gray-50 dark:bg-gray-800/60 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <div>
+                        <span class="font-semibold text-gray-500 dark:text-gray-400 block">Waktu:</span>
+                        <span class="text-gray-900 dark:text-white font-bold">{{ $selectedLog->created_at?->translatedFormat('d F Y - H:i:s') }}</span>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-gray-500 dark:text-gray-400 block">Pengubah:</span>
+                        <span class="text-gray-900 dark:text-white font-bold">{{ $selectedLog->user_name }}</span>
+                    </div>
+                </div>
+
+                @php
+                    $properties = $selectedLog->properties ?? [];
+                    $old = $properties['old'] ?? null;
+                    $new = $properties['new'] ?? null;
+                @endphp
+
+                @if($selectedLog->action === 'update' && ($old || $new))
+                    @php
+                        $keys = array_unique(array_merge(array_keys($old ?? []), array_keys($new ?? [])));
+                    @endphp
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                            <flux:icon name="pencil-square" class="w-4 h-4 text-blue-500" />
+                            <span>Rincian Perubahan Nilai:</span>
+                        </div>
+                        <div class="grid grid-cols-1 gap-2.5 max-h-[350px] overflow-y-auto pr-1">
+                            @foreach($keys as $key)
+                                @php
+                                    $label = $selectedLog->formatLabel($key);
+                                    $oldVal = $selectedLog->formatValue($key, $old[$key] ?? null);
+                                    $newVal = $selectedLog->formatValue($key, $new[$key] ?? null);
+                                @endphp
+                                <div class="bg-gray-50 dark:bg-gray-800/80 p-3 rounded-xl border border-gray-200 dark:border-gray-700 space-y-1.5">
+                                    <div class="text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center justify-between">
+                                        <span>{{ $label }}</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2 text-xs">
+                                        <div class="bg-red-50 dark:bg-red-950/40 p-2 rounded-lg border border-red-200 dark:border-red-900/50">
+                                            <span class="text-[10px] font-bold text-red-600 dark:text-red-400 block mb-0.5 uppercase">Sebelum:</span>
+                                            <span class="font-semibold text-red-900 dark:text-red-200 line-through decoration-red-400">{{ $oldVal }}</span>
+                                        </div>
+                                        <div class="bg-emerald-50 dark:bg-emerald-950/40 p-2 rounded-lg border border-emerald-200 dark:border-emerald-900/50">
+                                            <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 block mb-0.5 uppercase">Sesudah:</span>
+                                            <span class="font-bold text-emerald-900 dark:text-emerald-200">{{ $newVal }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @elseif($new)
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <flux:icon name="plus-circle" class="w-4 h-4 text-emerald-500" />
+                            <span>Rincian Data Baru:</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[350px] overflow-y-auto p-1">
+                            @foreach($new as $k => $v)
+                                @php
+                                    $label = $selectedLog->formatLabel($k);
+                                    $val = $selectedLog->formatValue($k, $v);
+                                @endphp
+                                <div class="bg-emerald-50/60 dark:bg-emerald-950/30 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900/40">
+                                    <span class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 block mb-0.5">{{ $label }}</span>
+                                    <span class="text-xs font-bold text-gray-900 dark:text-white">{{ $val }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @elseif($old)
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-red-700 dark:text-red-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <flux:icon name="trash" class="w-4 h-4 text-red-500" />
+                            <span>Rincian Data Terhapus:</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[350px] overflow-y-auto p-1">
+                            @foreach($old as $k => $v)
+                                @php
+                                    $label = $selectedLog->formatLabel($k);
+                                    $val = $selectedLog->formatValue($k, $v);
+                                @endphp
+                                @if(is_array($v))
+                                    <div class="bg-red-50/60 dark:bg-red-950/30 p-2.5 rounded-xl border border-red-200 dark:border-red-900/40 col-span-full">
+                                        <span class="text-[11px] font-semibold text-red-700 dark:text-red-400 block mb-1.5">{{ $label }} ({{ count($v) }})</span>
+                                        <div class="space-y-1 max-h-48 overflow-y-auto text-xs text-red-900 dark:text-red-200 pr-1 divide-y divide-red-200/50 dark:divide-red-900/30">
+                                            @foreach($v as $listItem)
+                                                <div class="pt-1.5 first:pt-0 flex items-start gap-2">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 mt-1.5"></span>
+                                                    <span>{{ $listItem }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="bg-red-50/60 dark:bg-red-950/30 p-2.5 rounded-xl border border-red-200 dark:border-red-900/40">
+                                        <span class="text-[11px] font-semibold text-red-700 dark:text-red-400 block mb-0.5">{{ $label }}</span>
+                                        <span class="text-xs font-bold text-red-900 dark:text-red-200 line-through">{{ $val }}</span>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                @elseif(!empty($properties))
+                    <div class="space-y-2">
+                        <div class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                            <flux:icon name="information-circle" class="w-4 h-4 text-primary" />
+                            <span>Rincian Informasi:</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[350px] overflow-y-auto p-1">
+                            @foreach($properties as $k => $v)
+                                @php
+                                    $label = $selectedLog->formatLabel($k);
+                                    $val = $selectedLog->formatValue($k, $v);
+                                @endphp
+                                @if(is_array($v))
+                                    <div class="bg-gray-50 dark:bg-gray-800/80 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 col-span-full">
+                                        <span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 block mb-1.5">{{ $label }} ({{ count($v) }})</span>
+                                        <div class="space-y-1 max-h-48 overflow-y-auto text-xs text-gray-800 dark:text-gray-200 pr-1 divide-y divide-gray-200 dark:divide-gray-700">
+                                            @foreach($v as $listItem)
+                                                <div class="pt-1.5 first:pt-0 flex items-start gap-2">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400 shrink-0 mt-1.5"></span>
+                                                    <span>{{ $listItem }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="bg-gray-50 dark:bg-gray-800/80 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700">
+                                        <span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 block mb-0.5">{{ $label }}</span>
+                                        <span class="text-xs font-bold text-gray-900 dark:text-white">{{ $val }}</span>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                @if($selectedLog->description !== $selectedLog->short_description)
+                    <div class="text-[11px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-2.5 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 leading-relaxed">
+                        <span class="font-bold text-gray-600 dark:text-gray-300">Deskripsi Lengkap:</span> {{ $selectedLog->description }}
+                    </div>
+                @endif
+
+                <div class="flex justify-end pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <flux:button wire:click="closeLogDetailModal" variant="subtle">Tutup</flux:button>
+                </div>
+            </div>
+        @endif
+    </flux:modal>
 </div>

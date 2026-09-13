@@ -96,22 +96,49 @@ new class extends Component {
     {
         if (empty($ids)) return;
 
-        $items = \App\Models\JadwalPelajaran::whereIn('id', $ids)->get();
+        $items = \App\Models\JadwalPelajaran::with(['kelas', 'mataPelajaran', 'guru', 'jamPelajaran'])
+            ->whereIn('id', $ids)
+            ->get();
         $count = $items->count();
 
         if ($count === 0) return;
+
+        // Siapkan rincian jadwal sebelum dihapus
+        $rincianList = $items->map(function ($item) {
+            $kelas = $item->kelas?->nama_kelas ?? 'Kelas -';
+            $hari = ucfirst($item->hari ?? '-');
+            $jam = $item->jamPelajaran ? (is_numeric($item->jamPelajaran->urutan) ? "Jam {$item->jamPelajaran->urutan}" : $item->jamPelajaran->urutan) : 'Jam -';
+            $mapel = $item->mataPelajaran?->nama_mapel ?? 'Mapel -';
+            $guru = $item->guru?->nama_guru ? " ({$item->guru->nama_guru})" : ' (Tanpa Guru)';
+
+            return "{$kelas} • {$hari}, {$jam} • {$mapel}{$guru}";
+        })->values()->toArray();
+
+        $kelasNames = $items->pluck('kelas.nama_kelas')->filter()->unique()->values()->implode(', ');
+        $mapelUnique = $items->pluck('mataPelajaran.nama_mapel')->filter()->unique()->values();
+        $mapelNames = $mapelUnique->implode(', ');
 
         \App\Models\ActivityLog::$disableLogging = true;
         \App\Models\JadwalPelajaran::whereIn('id', $ids)->delete();
         \App\Models\ActivityLog::$disableLogging = false;
 
+        $shortDesc = "Hapus Massal: {$count} Jadwal Pelajaran";
+        if ($mapelUnique->count() === 1) {
+            $shortDesc = "Hapus Massal Jadwal {$mapelUnique->first()} ({$count} Data)";
+        }
+
         \App\Models\ActivityLog::record(
             action: 'delete',
-            description: "Menghapus {$count} data Jadwal Pelajaran (Hapus Massal)",
+            description: $shortDesc,
             module: 'Jadwal Pelajaran',
             properties: [
-                'count' => $count,
-                'ids' => $ids
+                'old' => [
+                    'Aksi' => 'Hapus Massal Jadwal',
+                    'Total Jadwal Terhapus' => "{$count} Jadwal",
+                    'Kelas Terkait' => $kelasNames ?: '-',
+                    'Mata Pelajaran Terkait' => $mapelNames ?: '-',
+                    'Daftar Jadwal' => $rincianList,
+                ]
             ]
         );
 
