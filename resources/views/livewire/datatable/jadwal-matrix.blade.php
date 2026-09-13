@@ -36,7 +36,7 @@ new class extends Component {
         }
 
         return $kelasQuery
-            ->whereNotIn('kode_kelas', ['SMP', 'MA'])
+            ->noTingkat()
             ->get();
     }
 
@@ -89,7 +89,10 @@ new class extends Component {
     #[Computed]
     public function getGlobalKelasMap()
     {
-        return Kelas::whereIn('kode_kelas', ['SMP', 'MA'])->pluck('id', 'kode_kelas')->toArray();
+        return [
+            'SMP' => Kelas::where('nama_kelas', 'Tingkat SMP')->value('id'),
+            'MA' => Kelas::where('nama_kelas', 'Tingkat MA')->value('id'),
+        ];
     }
 
     public function deleteBatchJadwal(array $ids)

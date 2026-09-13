@@ -31,10 +31,15 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFail
     public function collection(Collection $rows)
     {
         foreach ($rows as $row) {
-            // cari ID berdasarkan kode
-            $kelas = Kelas::where('kode_kelas', $row['kode_kelas'] ?? null)->first();
-            $mapel = MataPelajaran::where('kode_mapel', $row['kode_mata_pelajaran'] ?? null)->first();
-            $guru  = Guru::where('kode_guru', $row['kode_guru_pengajar'] ?? null)->first();
+            // cari ID berdasarkan nama
+            $kelasNama = $row['nama_kelas'] ?? $row['kelas'] ?? $row['kode_kelas'] ?? null;
+            $kelas = Kelas::where('nama_kelas', $kelasNama)->first();
+
+            $mapelNama = $row['nama_mata_pelajaran'] ?? $row['mata_pelajaran'] ?? $row['nama_mapel'] ?? $row['kode_mata_pelajaran'] ?? null;
+            $mapel = MataPelajaran::where('nama_mapel', $mapelNama)->first();
+
+            $guruNama = $row['nama_guru_pengajar'] ?? $row['nama_guru'] ?? $row['guru'] ?? $row['kode_guru_pengajar'] ?? null;
+            $guru  = $guruNama ? Guru::where('nama_guru', $guruNama)->first() : null;
 
             // skip kalau tidak ditemukan
             if (!$kelas || !$mapel) {

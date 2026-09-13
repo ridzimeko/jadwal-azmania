@@ -20,7 +20,6 @@ class KelasFactory extends Factory
         $namaKelas = $tingkat . ' ' . $this->faker->randomElement(['VII', 'VIII', 'IX', 'X', 'XI', 'XII']) . '-' . $this->faker->randomLetter();
 
         return [
-            'kode_kelas' => strtoupper($this->faker->unique()->bothify('KLS###')), // contoh: KLS123
             'nama_kelas' => $namaKelas, // contoh: SMP VIII-B
             'tingkat' => $tingkat,
         ];

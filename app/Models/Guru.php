@@ -13,7 +13,6 @@ class Guru extends Model
     use HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
-        'kode_guru',
         'nama_guru',
         'warna',
     ];

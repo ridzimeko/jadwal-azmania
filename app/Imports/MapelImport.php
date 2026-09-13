@@ -28,14 +28,13 @@ class MapelImport implements ToModel, WithHeadingRow, WithUpserts, SkipsOnError
         ];
 
         return new MataPelajaran([
-            'kode_mapel' => $row['kode_mapel'] ?? null,
             'jenis_mapel' => $jenis_mapel_option[$jenis_mapel] ?? null,
-            'nama_mapel' => $row['mata_pelajaran'] ?? null,
+            'nama_mapel' => $row['mata_pelajaran'] ?? $row['nama_mapel'] ?? null,
         ]);
     }
 
     public function uniqueBy()
     {
-        return 'kode_mapel';
+        return 'nama_mapel';
     }
 }

@@ -9,7 +9,6 @@ use App\Models\JadwalPelajaran;
 
 test('mata pelajaran can be soft deleted and retains relation in jadwal_pelajaran', function () {
     $mapel = MataPelajaran::create([
-        'kode_mapel' => 'TESTMP01',
         'nama_mapel' => 'Testing Soft Delete Mapel',
         'jenis_mapel' => 'KBM',
     ]);
@@ -52,12 +51,11 @@ test('mata pelajaran can be soft deleted and retains relation in jadwal_pelajara
 
 test('guru can be soft deleted and retains relation in jadwal_pelajaran', function () {
     $mapel = MataPelajaran::firstOrCreate(
-        ['kode_mapel' => 'MAPELDEF'],
-        ['nama_mapel' => 'Mapel Default', 'jenis_mapel' => 'KBM']
+        ['nama_mapel' => 'Mapel Default'],
+        ['jenis_mapel' => 'KBM']
     );
 
     $guru = Guru::create([
-        'kode_guru' => 'GRTEST01',
         'nama_guru' => 'Testing Guru Soft Delete',
         'warna' => '#123456',
     ]);

@@ -23,7 +23,7 @@ class JadwalPelajaranExport implements FromView, WithTitle, WithDrawings
     public function view(): View
     {
         $kelasList = Kelas::where('tingkat', $this->tingkat)
-            ->whereNotIn('kode_kelas', ['SMP', 'MA'])
+            ->noTingkat()
             ->orderBy('nama_kelas')
             ->get();
 

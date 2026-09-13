@@ -457,7 +457,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             if (!empty($this->formData['target_kelas_ids']) && is_array($this->formData['target_kelas_ids'])) {
                 $kelasList = \App\Models\Kelas::whereIn('id', $this->formData['target_kelas_ids'])->get();
             } else {
-                $kelasListQuery = \App\Models\Kelas::whereNotIn('kode_kelas', ['SMP', 'MA']);
+                $kelasListQuery = \App\Models\Kelas::noTingkat();
                 if (in_array(strtoupper($tingkatRaw), ['SMP', 'MA'])) {
                     $kelasListQuery->where('tingkat', strtoupper($tingkatRaw));
                 }
@@ -804,7 +804,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                         $tingkatRaw = $this->filterData['tingkat'] ?? 'all';
                         $tingkat = in_array(strtoupper($tingkatRaw), ['SMP', 'MA']) ? strtoupper($tingkatRaw) : 'SMP & MA';
 
-                        $kelasListQuery = \App\Models\Kelas::whereNotIn('kode_kelas', ['SMP', 'MA']);
+                        $kelasListQuery = \App\Models\Kelas::noTingkat();
                         if (in_array(strtoupper($tingkatRaw), ['SMP', 'MA'])) {
                             $kelasListQuery->where('tingkat', strtoupper($tingkatRaw));
                         }

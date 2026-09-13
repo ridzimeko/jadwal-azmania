@@ -12,7 +12,6 @@ class Kelas extends Model
     use HasFactory, LogsActivity;
 
     protected $fillable = [
-        'kode_kelas',
         'nama_kelas',
         'tingkat',
     ];
@@ -23,6 +22,6 @@ class Kelas extends Model
 
     public function scopeNoTingkat($query)
     {
-        return $query->whereNotIn('kode_kelas', ['SMP', 'MA']);
+        return $query->whereNotIn('nama_kelas', ['Tingkat SMP', 'Tingkat MA']);
     }
 }

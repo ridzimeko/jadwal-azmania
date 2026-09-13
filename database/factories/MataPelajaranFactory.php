@@ -17,7 +17,6 @@ class MataPelajaranFactory extends Factory
     public function definition(): array
     {
         return [
-            'kode_mapel' => strtoupper($this->faker->unique()->bothify('MP###')), // contoh: MP123
             'nama_mapel' => $this->faker->randomElement([
                 'Matematika',
                 'Bahasa Indonesia',

@@ -13,7 +13,6 @@ class MataPelajaran extends Model
     use HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
-        'kode_mapel',
         'nama_mapel',
         'jenis_mapel',
     ];

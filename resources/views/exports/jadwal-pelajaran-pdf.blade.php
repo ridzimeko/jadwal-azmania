@@ -189,7 +189,7 @@
 
                             @php
                                 $isGlobal = $items->filter(function ($item) {
-                                    return in_array($item->kelas?->kode_kelas, ['SMP', 'MA']);
+                                    return in_array($item->kelas?->nama_kelas, ['Tingkat SMP', 'Tingkat MA']);
                                 });
                             @endphp
 

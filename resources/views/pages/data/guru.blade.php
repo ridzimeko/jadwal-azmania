@@ -18,7 +18,6 @@ new
 
     public array $formData = [
         'nama_guru' => '',
-        'kode_guru' => '',
         'warna' => ''
     ];
     public bool $isEdit = false;
@@ -26,8 +25,7 @@ new
     protected function rules(): array
     {
         return [
-            'formData.kode_guru' => ['required', 'string', Rule::unique('guru', 'kode_guru')->ignore($this->formData['id'] ?? null)->whereNull('deleted_at')],
-            'formData.nama_guru' => ['required', 'string', 'max:40'],
+            'formData.nama_guru' => ['required', 'string', 'max:40', Rule::unique('guru', 'nama_guru')->ignore($this->formData['id'] ?? null)->whereNull('deleted_at')],
             'formData.warna' => ['hex_color'],
         ];
     }
@@ -35,10 +33,9 @@ new
     protected function messages(): array
     {
         return [
-            'formData.kode_guru.required' => 'Kode Guru wajib diisi.',
-            'formData.kode_guru.unique' => 'Kode Guru ini sudah digunakan oleh guru lain.',
             'formData.nama_guru.required' => 'Nama guru wajib diisi.',
             'formData.nama_guru.max' => 'Nama guru tidak boleh lebih dari 40 karakter.',
+            'formData.nama_guru.unique' => 'Nama Guru ini sudah terdaftar.',
             'formData.warna.hex_color' => 'Warna harus dalam format heksadesimal.',
         ];
     }
@@ -57,7 +54,6 @@ new
         $this->isEdit = false;
         $this->formData = [
             'nama_guru' => '',
-            'kode_guru' => '',
             'warna' => '',
         ];
         Flux::modal('guru-modal')->show();
@@ -113,7 +109,6 @@ new
                         {{ $isEdit ? 'Ubah Data Guru' : 'Tambah Data Guru' }}
                     </flux:heading>
                 </div>
-                <flux:input wire:model.defer="formData.kode_guru" label="Kode Guru" placeholder="Kode Guru" />
                 <flux:input wire:model.defer="formData.nama_guru" label="Nama Guru" placeholder="Nama Guru" />
 
                 {{-- filament form --}}

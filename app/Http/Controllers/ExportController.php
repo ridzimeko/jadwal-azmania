@@ -28,7 +28,7 @@ class ExportController extends Controller
         }
 
         $kelasList = Kelas::where('tingkat', $tingkat)
-            ->whereNotIn('kode_kelas', ['SMP', 'MA'])
+            ->noTingkat()
             ->orderBy('nama_kelas')
             ->get();
 

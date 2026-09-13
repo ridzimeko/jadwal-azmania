@@ -22,7 +22,6 @@ class KelasImport implements ToModel, WithHeadingRow, WithUpserts, SkipsOnError
     public function model(array $row)
     {
         return new Kelas([
-            'kode_kelas' => $row['kode_kelas'] ?? null,
             'nama_kelas' => $row['nama_kelas'] ?? null,
             'tingkat' => strtoupper($row['tingkat'] ?? ''),
         ]);
@@ -30,6 +29,6 @@ class KelasImport implements ToModel, WithHeadingRow, WithUpserts, SkipsOnError
 
     public function uniqueBy()
     {
-        return 'kode_kelas';
+        return 'nama_kelas';
     }
 }

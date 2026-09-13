@@ -60,18 +60,16 @@ class JadwalHelper
 
         // Cek data kelas (aman walau null)
         $kelas = isset($data['kelas_id']) ? Kelas::find($data['kelas_id']) : null;
-        $kodeKelas = $kelas->kode_kelas ?? null;
+        $isTingkatUmum = in_array($kelas?->nama_kelas, ['Tingkat SMP', 'Tingkat MA']);
 
-        // Kalau bukan SMP/MA, tetap cek bentrok guru dan kelas
-        if (!in_array($kodeKelas, ['SMP', 'MA'])) {
+        // Kalau bukan Tingkat Umum (SMP/MA), tetap cek bentrok guru dan kelas
+        if (!$isTingkatUmum) {
             $query->where(function ($q) use ($data) {
                 $q->where('guru_id', $data['guru_id'])
                     ->orWhere('kelas_id', $data['kelas_id']);
             });
-        }
-
-        if (in_array($kodeKelas, ['SMP', 'MA'])) {
-            $query->whereRelation('kelas', 'tingkat', $kodeKelas);
+        } else {
+            $query->whereRelation('kelas', 'tingkat', $kelas->tingkat);
         }
 
         $bentrok = $query->get();
@@ -150,7 +148,7 @@ class JadwalHelper
 
     public static function getKelasOptions(?string $tingkat = null, bool $showAllTingkat = true)
     {
-        $options = $query = Kelas::orderByRaw("CASE kode_kelas WHEN 'SMP' THEN 1 WHEN 'MA' THEN 2 ELSE 3 END")
+        $options = $query = Kelas::orderByRaw("CASE nama_kelas WHEN 'Tingkat SMP' THEN 1 WHEN 'Tingkat MA' THEN 2 ELSE 3 END")
             ->orderBy('nama_kelas');
 
         if ($tingkat && in_array(strtoupper($tingkat), ['SMP', 'MA'])) {
@@ -158,7 +156,7 @@ class JadwalHelper
         }
 
         if (!$showAllTingkat) {
-            $query->whereNotIn('kode_kelas', ['SMP', 'MA']);
+            $query->noTingkat();
         }
 
         return $query

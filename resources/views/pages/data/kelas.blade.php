@@ -10,7 +10,7 @@ use Livewire\Component;
 new
     #[Title('Data Kelas')]
     class extends Component {
-    protected $columnDefs = [['name' => 'Kode Kelas', 'field' => 'kode_kelas'], ['name' => 'Tingkat', 'field' => 'tingkat'], ['name' => 'Kelas', 'field' => 'nama_kelas']];
+    protected $columnDefs = [['name' => 'Tingkat', 'field' => 'tingkat'], ['name' => 'Kelas', 'field' => 'nama_kelas']];
 
     public ?array $formData = null;
     public bool $isEdit = false;
@@ -18,22 +18,21 @@ new
     protected function rules(): array
     {
         return [
-            'formData.kode_kelas' => ['required', 'string', 'max:12', Rule::unique('kelas', 'kode_kelas')->ignore($this->formData['id'] ?? null)],
-            'formData.nama_kelas' => ['required', 'string', 'max:20'],
+            'formData.nama_kelas' => ['required', 'string', 'max:20', Rule::unique('kelas', 'nama_kelas')->ignore($this->formData['id'] ?? null)],
+            'formData.tingkat' => ['required', 'string', 'in:SMP,MA'],
         ];
     }
 
     protected function messages(): array
     {
         return [
-            'formData.kode_kelas.required' => 'Kode kelas wajib diisi.',
-            'formData.kode_kelas.string' => 'Kode kelas harus berupa teks.',
-            'formData.kode_kelas.max' => 'Kode kelas tidak boleh lebih dari 12 karakter.',
-            'formData.kode_kelas.unique' => 'Kode kelas sudah terdaftar, gunakan kode lain.',
-
             'formData.nama_kelas.required' => 'Nama kelas wajib diisi.',
             'formData.nama_kelas.string' => 'Nama kelas harus berupa teks.',
-            'formData.nama_kelas.max' => 'Nama kelas tidak boleh lebih dari 15 karakter.',
+            'formData.nama_kelas.max' => 'Nama kelas tidak boleh lebih dari 20 karakter.',
+            'formData.nama_kelas.unique' => 'Nama kelas sudah terdaftar, gunakan nama lain.',
+
+            'formData.tingkat.required' => 'Tingkat wajib dipilih.',
+            'formData.tingkat.in' => 'Tingkat harus salah satu dari: SMP, MA.',
         ];
     }
 
@@ -42,7 +41,6 @@ new
     {
         $this->isEdit = false;
         $this->formData = [
-            'kode_kelas' => '',
             'nama_kelas' => '',
             'tingkat' => '',
         ];
@@ -63,12 +61,14 @@ new
 
         if ($this->isEdit) {
             \App\Models\Kelas::find($this->formData['id'])->update([
-                'kode_kelas' => $this->formData['kode_kelas'],
                 'nama_kelas' => $this->formData['nama_kelas'],
                 'tingkat' => strtoupper($this->formData['tingkat']),
             ]);
         } else {
-            \App\Models\Kelas::create($this->formData);
+            \App\Models\Kelas::create([
+                'nama_kelas' => $this->formData['nama_kelas'],
+                'tingkat' => strtoupper($this->formData['tingkat']),
+            ]);
         }
 
         Notification::make()->title('Data Kelas Tersimpan')->success()->send();
@@ -102,7 +102,6 @@ new
                         {{ $isEdit ? 'Ubah Data Kelas' : 'Tambah Data Kelas' }}
                     </flux:heading>
                 </div>
-                <flux:input wire:model.defer="formData.kode_kelas" label="Kode Kelas" placeholder="Kode Kelas" />
                 <flux:field>
                     <flux:label>Tingkat</flux:label>
 
@@ -112,7 +111,7 @@ new
 
                     <x-select wire:model="formData.tingkat" :search="false" :options="$tingkatOptions"
                         placeholder="Pilih Tingkat" />
-                    <flux:error name="formData.role" />
+                    <flux:error name="formData.tingkat" />
                 </flux:field>
                 <flux:input wire:model.defer="formData.nama_kelas" label="Nama Kelas" placeholder="Nama Kelas" />
                 <div class="flex">

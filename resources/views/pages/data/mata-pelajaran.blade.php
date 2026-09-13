@@ -11,7 +11,6 @@ use Livewire\Component;
 
 new #[Title('Mata Pelajaran')] class extends Component {
     public array $formData = [
-        'kode_mapel' => '',
         'nama_mapel' => '',
         'jenis_mapel' => '',
     ];
@@ -20,8 +19,7 @@ new #[Title('Mata Pelajaran')] class extends Component {
     protected function rules(): array
     {
         return [
-            'formData.kode_mapel' => ['required', 'string', 'max:12', Rule::unique('mata_pelajaran', 'kode_mapel')->ignore($this->formData['id'] ?? null)->whereNull('deleted_at')],
-            'formData.nama_mapel' => ['required', 'string', 'max:40'],
+            'formData.nama_mapel' => ['required', 'string', 'max:40', Rule::unique('mata_pelajaran', 'nama_mapel')->ignore($this->formData['id'] ?? null)->whereNull('deleted_at')],
             'formData.jenis_mapel' => 'required|string|in:KBM,Non KBM',
         ];
     }
@@ -29,14 +27,10 @@ new #[Title('Mata Pelajaran')] class extends Component {
     protected function messages(): array
     {
         return [
-            'formData.kode_mapel.required' => 'Kode mata pelajaran wajib diisi.',
-            'formData.kode_mapel.string' => 'Kode mata pelajaran harus berupa teks.',
-            'formData.kode_mapel.max' => 'Kode mata pelajaran tidak boleh lebih dari 12 karakter.',
-            'formData.kode_mapel.unique' => 'Kode mata pelajaran sudah terdaftar, gunakan kode lain.',
-
             'formData.nama_mapel.required' => 'Nama mata pelajaran wajib diisi.',
             'formData.nama_mapel.string' => 'Nama mata pelajaran harus berupa teks.',
             'formData.nama_mapel.max' => 'Nama mata pelajaran tidak boleh lebih dari 40 karakter.',
+            'formData.nama_mapel.unique' => 'Nama mata pelajaran sudah terdaftar, gunakan nama lain.',
 
             'formData.jenis_mapel.required' => 'Jenis Mapel wajib diisi.',
             'formData.jenis_mapel.string' => 'Jenis Mapel harus berupa teks.',
@@ -49,7 +43,6 @@ new #[Title('Mata Pelajaran')] class extends Component {
     {
         $this->isEdit = false;
         $this->formData = [
-            'kode_mapel' => '',
             'nama_mapel' => '',
             'jenis_mapel' => '',
         ];
@@ -111,7 +104,6 @@ new #[Title('Mata Pelajaran')] class extends Component {
                     <flux:error name="formData.jenis_mapel" />
                 </flux:field>
 
-                <flux:input wire:model.defer="formData.kode_mapel" label="Kode Mapel" placeholder="Kode Mapel" />
                 <flux:input wire:model.defer="formData.nama_mapel" label="Nama Mapel" placeholder="Nama Mapel" />
 
                 <div class="flex">
