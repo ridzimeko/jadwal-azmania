@@ -62,7 +62,7 @@ new class extends Component {
         <div class="space-y-3">
             <div>
                 <flux:heading size="lg">
-                    Ubah Kata Sandi Admin
+                    Ubah Kata Sandi User
                 </flux:heading>
             </div>
             <flux:input wire:model.defer="formData.password" type="password" label="Kata Sandi"

@@ -8,7 +8,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new
-    #[Title('Kelola Admin')]
+    #[Title('Kelola User')]
     class extends Component {
     protected $columnDefs = [
         ['name' => 'Nama Akun', 'field' => 'nama'],
@@ -30,7 +30,7 @@ new
         $rules = [
             'formData.nama' => ['required', 'string', 'max:30'],
             'formData.username' => ['required', 'string', 'max:30', Rule::unique('users', 'username')->ignore($this->formData['id'] ?? null)],
-            'formData.role' => ['required', 'string', 'max:30', 'in:admin,superadmin'],
+            'formData.role' => ['required', 'string', 'max:30', 'in:admin,superadmin,guru'],
         ];
 
         // Tambahkan validasi password hanya jika $isEdit == false
@@ -59,7 +59,7 @@ new
 
             'formData.role.required' => 'Role wajib dipilih.',
             'formData.role.string' => 'Role harus berupa teks.',
-            'formData.role.in' => 'Role harus berupa admin atau superadmin.',
+            'formData.role.in' => 'Role harus berupa admin, superadmin, atau guru.',
         ];
     }
 
@@ -95,7 +95,7 @@ new
         }
 
         Notification::make()
-            ->title('Data Akun Admin Tersimpan')
+            ->title('Data Akun User Tersimpan')
             ->success()
             ->send();
         Flux::modal('admin-modal')->close();
@@ -105,7 +105,7 @@ new
 ?>
 
 <div class="dash-card">
-    <x-card-heading title="Data Akun Admin">
+    <x-card-heading title="Data Akun User">
         <x-slot name="action_buttons">
             <flux:button wire:click="openAddModal" icon="plus" class="!bg-primary !text-white">Tambah Data
             </flux:button>
@@ -117,35 +117,38 @@ new
 
     <livewire:pages::atur-admin._change-password />
 
-    {{-- Admin Modal --}}
+    {{-- User Modal --}}
     <flux:modal name="admin-modal" class="w-[85%] md:w-[520px]">
         <form wire:submit.prevent="save">
             <div class="space-y-3">
                 <div>
                     <flux:heading size="lg">
-                        {{ $isEdit ? 'Ubah Data Akun Admin' : 'Tambah Data Akun Admin' }}
+                        {{ $isEdit ? 'Ubah Data Akun User' : 'Tambah Data Akun User' }}
                     </flux:heading>
                 </div>
-                <flux:input wire:model.defer="formData.nama" label="Nama Admin" placeholder="Nama Admin" />
+
+                <flux:field>
+                    <flux:label>Role User</flux:label>
+
+                    @php
+                        $roleOptions = [
+                            ['label' => 'Superadmin', 'value' => 'superadmin'],
+                            ['label' => 'Admin', 'value' => 'admin'],
+                            ['label' => 'Guru', 'value' => 'guru'],
+                        ];
+                    @endphp
+
+                    <x-select name="role" wire:model="formData.role" :search="false" :options="$roleOptions"
+                        placeholder="Pilih Role User" />
+                    <flux:error name="formData.role" />
+                </flux:field>
+
+                <flux:input wire:model.defer="formData.nama" label="Nama User" placeholder="Nama User" />
                 <flux:input wire:model.defer="formData.username" label="Username" placeholder="Username" />
                 @if (!$this->isEdit)
                     <flux:input wire:model.defer="formData.password" type="password" label="Password"
                         placeholder="Password" />
                 @endif
-
-                <flux:field>
-                    <flux:label>Role Admin</flux:label>
-
-                    @php
-                        $adminOptions = collect(['admin', 'superadmin'])
-                            ->map(fn($hari) => ['label' => $hari, 'value' => $hari])
-                            ->toArray();
-                    @endphp
-
-                    <x-select name="role" wire:model="formData.role" :search="false" :options="$adminOptions"
-                        placeholder="Pilih Role Admin" />
-                    <flux:error name="formData.role" />
-                </flux:field>
 
                 <div class="flex mt-8">
                     <flux:spacer />
