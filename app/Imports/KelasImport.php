@@ -3,32 +3,41 @@
 namespace App\Imports;
 
 use App\Models\Kelas;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
-use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithUpserts;
 
-class KelasImport implements ToModel, WithHeadingRow, WithUpserts, SkipsOnError
+class KelasImport implements ToCollection, WithHeadingRow, SkipsOnError
 {
-    /**
-     * @param array $row
-     *
-     * @return \Illuminate\Database\Eloquent\Model|null
-     */
-
     use SkipsErrors;
 
-    public function model(array $row)
+    public function collection(Collection $rows)
     {
-        return new Kelas([
-            'nama_kelas' => $row['nama_kelas'] ?? null,
-            'tingkat' => strtoupper($row['tingkat'] ?? ''),
-        ]);
-    }
+        foreach ($rows as $row) {
+            // Ambil nama kelas dari berbagai kemungkinan header (nama_kelas, kelas, nama)
+            $namaKelas = trim($row['nama_kelas'] ?? $row['kelas'] ?? $row['nama'] ?? '');
+            if ($namaKelas === '') {
+                continue;
+            }
 
-    public function uniqueBy()
-    {
-        return 'nama_kelas';
+            // Abaikan kolom 'kode' atau 'kode_kelas' jika ada
+            $tingkat = strtoupper(trim($row['tingkat'] ?? ''));
+            if (!in_array($tingkat, ['SMP', 'MA'])) {
+                if (preg_match('/^(7|8|9|VII|VIII|IX)\b/i', $namaKelas) || stripos($namaKelas, 'SMP') !== false) {
+                    $tingkat = 'SMP';
+                } elseif (preg_match('/^(10|11|12|X|XI|XII)\b/i', $namaKelas) || stripos($namaKelas, 'MA') !== false || stripos($namaKelas, 'SMA') !== false) {
+                    $tingkat = 'MA';
+                } else {
+                    $tingkat = 'SMP';
+                }
+            }
+
+            Kelas::updateOrCreate(
+                ['nama_kelas' => $namaKelas],
+                ['tingkat' => $tingkat]
+            );
+        }
     }
 }
