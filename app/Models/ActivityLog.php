@@ -180,10 +180,10 @@ class ActivityLog extends Model
             return \App\Models\Kelas::find($value)?->nama_kelas ?? "Kelas #{$value}";
         }
         if ($key === 'guru_id') {
-            return \App\Models\Guru::find($value)?->nama_guru ?? "Guru #{$value}";
+            return \App\Models\Guru::withTrashed()->find($value)?->nama_guru ?? "Guru #{$value}";
         }
         if ($key === 'mata_pelajaran_id') {
-            return \App\Models\MataPelajaran::find($value)?->nama_mapel ?? "Mapel #{$value}";
+            return \App\Models\MataPelajaran::withTrashed()->find($value)?->nama_mapel ?? "Mapel #{$value}";
         }
         if ($key === 'jam_pelajaran_id') {
             $j = \App\Models\JamPelajaran::find($value);

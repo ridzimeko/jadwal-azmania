@@ -26,7 +26,7 @@ new
     protected function rules(): array
     {
         return [
-            'formData.kode_guru' => ['required', 'string', Rule::unique('guru', 'kode_guru')->ignore($this->formData['id'] ?? null)],
+            'formData.kode_guru' => ['required', 'string', Rule::unique('guru', 'kode_guru')->ignore($this->formData['id'] ?? null)->whereNull('deleted_at')],
             'formData.nama_guru' => ['required', 'string', 'max:40'],
             'formData.warna' => ['hex_color'],
         ];

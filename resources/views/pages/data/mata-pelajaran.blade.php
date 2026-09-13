@@ -20,7 +20,7 @@ new #[Title('Mata Pelajaran')] class extends Component {
     protected function rules(): array
     {
         return [
-            'formData.kode_mapel' => ['required', 'string', 'max:12', Rule::unique('mata_pelajaran', 'kode_mapel')->ignore($this->formData['id'] ?? null)],
+            'formData.kode_mapel' => ['required', 'string', 'max:12', Rule::unique('mata_pelajaran', 'kode_mapel')->ignore($this->formData['id'] ?? null)->whereNull('deleted_at')],
             'formData.nama_mapel' => ['required', 'string', 'max:40'],
             'formData.jenis_mapel' => 'required|string|in:KBM,Non KBM',
         ];

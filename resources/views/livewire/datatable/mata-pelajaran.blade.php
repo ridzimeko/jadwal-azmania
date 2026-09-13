@@ -72,7 +72,7 @@ new class extends Component implements HasActions, HasSchemas, HasTable {
                     ->icon('heroicon-o-trash') // ikon trash 🗑️
                     ->color('danger')
                     ->modalHeading('Hapus Data')
-                    ->modalDescription('Apakah anda yakin ingin menghapus mapel ini? Semua jadwal dengan mapel ini AKAN DIHAPUS!')
+                    ->modalDescription('Apakah anda yakin ingin menghapus data mata pelajaran yang dipilih?')
                     ->requiresConfirmation() // muncul modal konfirmasi
                     ->action(function ($records) {
                         $records->each->delete(); // hapus semua data yang dipilih

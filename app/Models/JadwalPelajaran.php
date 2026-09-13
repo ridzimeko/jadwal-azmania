@@ -102,12 +102,12 @@ class JadwalPelajaran extends Model
 
     public function guru()
     {
-        return $this->belongsTo(Guru::class);
+        return $this->belongsTo(Guru::class)->withTrashed();
     }
 
     public function mataPelajaran()
     {
-        return $this->belongsTo(MataPelajaran::class);
+        return $this->belongsTo(MataPelajaran::class)->withTrashed();
     }
 
     public function periode()
