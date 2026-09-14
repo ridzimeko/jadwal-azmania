@@ -15,6 +15,8 @@ class MapelImport implements ToCollection, WithHeadingRow, SkipsOnError
 
     public function collection(Collection $rows)
     {
+        $existingMapel = MataPelajaran::withTrashed()->get()->keyBy(fn($m) => strtolower(trim($m->nama_mapel)));
+
         foreach ($rows as $row) {
             // Ambil nama mapel dari berbagai kemungkinan header (mata_pelajaran, nama_mapel, mapel, nama)
             $namaMapel = trim($row['mata_pelajaran'] ?? $row['nama_mapel'] ?? $row['nama_mata_pelajaran'] ?? $row['mapel'] ?? $row['nama'] ?? '');
@@ -26,7 +28,13 @@ class MapelImport implements ToCollection, WithHeadingRow, SkipsOnError
             $rawJenis = strtolower(trim($row['jenis_mapel'] ?? $row['jenis'] ?? ''));
             $jenisMapel = in_array($rawJenis, ['non kbm', 'non_kbm', 'non-kbm', 'nonkbm']) ? 'Non KBM' : 'KBM';
 
-            $mapel = MataPelajaran::withTrashed()->firstOrNew(['nama_mapel' => $namaMapel]);
+            $key = strtolower($namaMapel);
+            $mapel = $existingMapel->get($key);
+            if (!$mapel) {
+                $mapel = new MataPelajaran(['nama_mapel' => $namaMapel]);
+                $existingMapel->put($key, $mapel);
+            }
+
             $mapel->jenis_mapel = $jenisMapel;
             if ($mapel->trashed()) {
                 $mapel->restore();

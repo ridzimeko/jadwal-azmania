@@ -62,7 +62,7 @@ class JadwalHelper
         }
 
         // Cek data kelas (aman walau null)
-        $kelas = isset($data['kelas_id']) ? Kelas::find($data['kelas_id']) : null;
+        $kelas = $data['kelas_model'] ?? (isset($data['kelas_id']) ? Kelas::find($data['kelas_id']) : null);
         $isTingkatUmum = in_array($kelas?->nama_kelas, ['Tingkat SMP', 'Tingkat MA']);
 
         // Kalau bukan Tingkat Umum (SMP/MA), tetap cek bentrok guru dan kelas

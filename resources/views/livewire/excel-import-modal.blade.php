@@ -38,14 +38,28 @@ new class extends Component {
         ]);
 
         $path = $this->file->store('uploads');
+        $this->sanitizeUploadedExcel($path);
 
-        match ($this->context) {
-            'guru' => $this->importGuru($path),
-            'jadwal' => $this->importJadwal($path),
-            'mapel' => $this->importMapel($path),
-            'kelas' => $this->importKelas($path),
-            default => throw new \Exception('Context tidak dikenal'),
-        };
+        if (class_exists(\Barryvdh\Debugbar\Facades\Debugbar::class)) {
+            \Barryvdh\Debugbar\Facades\Debugbar::disable();
+        }
+
+        switch ($this->context) {
+            case 'guru':
+                $this->importGuru($path);
+                break;
+            case 'jadwal':
+                $this->importJadwal($path);
+                break;
+            case 'mapel':
+                $this->importMapel($path);
+                break;
+            case 'kelas':
+                $this->importKelas($path);
+                break;
+            default:
+                throw new \Exception('Context tidak dikenal');
+        }
 
         $this->reset('file');
         Flux::modal($this->name)->close();
@@ -151,6 +165,33 @@ new class extends Component {
             $this->dispatch('refreshJadwalTable');
         } catch (\Throwable $th) {
             Notification::make()->title('Terjadi error saat import data')->body($th->getMessage())->danger()->persistent()->send();
+        }
+    }
+
+    private function sanitizeUploadedExcel(string $relativePath): void
+    {
+        $fullPath = \Illuminate\Support\Facades\Storage::disk('local')->path($relativePath);
+        if (!file_exists($fullPath) || !str_ends_with(strtolower($fullPath), '.xlsx')) {
+            return;
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($fullPath) === true) {
+            $hasModified = false;
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $filename = $zip->getNameIndex($i);
+                if (preg_match('#^xl/worksheets/sheet\d+\.xml$#', $filename)) {
+                    $xml = $zip->getFromIndex($i);
+                    if (str_contains($xml, '1638')) {
+                        $pattern = '#<col[^>]+1638[0-9][^>]*\\/?' . chr(62) . '#i';
+                        $xmlClean = preg_replace($pattern, '', $xml);
+                        $zip->deleteIndex($i);
+                        $zip->addFromString($filename, $xmlClean);
+                        $hasModified = true;
+                    }
+                }
+            }
+            $zip->close();
         }
     }
 }; ?>

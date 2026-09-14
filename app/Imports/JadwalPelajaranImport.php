@@ -30,16 +30,22 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFail
 
     public function collection(Collection $rows)
     {
+        // Pre-fetch all master data for fast in-memory lookup
+        $kelasList = Kelas::all()->keyBy(fn($item) => strtolower(trim($item->nama_kelas)));
+        $mapelList = MataPelajaran::all()->keyBy(fn($item) => strtolower(trim($item->nama_mapel)));
+        $guruList  = Guru::all()->keyBy(fn($item) => strtolower(trim($item->nama_guru)));
+        $jamList   = JamPelajaran::all()->keyBy('urutan');
+
         foreach ($rows as $row) {
             // cari ID berdasarkan nama
-            $kelasNama = $row['nama_kelas'] ?? $row['kelas'] ?? $row['kode_kelas'] ?? null;
-            $kelas = Kelas::where('nama_kelas', $kelasNama)->first();
+            $kelasNama = trim($row['nama_kelas'] ?? $row['kelas'] ?? $row['kode_kelas'] ?? '');
+            $kelas = $kelasNama !== '' ? ($kelasList->get(strtolower($kelasNama)) ?? Kelas::where('nama_kelas', $kelasNama)->first()) : null;
 
-            $mapelNama = $row['nama_mata_pelajaran'] ?? $row['mata_pelajaran'] ?? $row['nama_mapel'] ?? $row['kode_mata_pelajaran'] ?? null;
-            $mapel = MataPelajaran::where('nama_mapel', $mapelNama)->first();
+            $mapelNama = trim($row['nama_mata_pelajaran'] ?? $row['mata_pelajaran'] ?? $row['nama_mapel'] ?? $row['kode_mata_pelajaran'] ?? '');
+            $mapel = $mapelNama !== '' ? ($mapelList->get(strtolower($mapelNama)) ?? MataPelajaran::where('nama_mapel', $mapelNama)->first()) : null;
 
-            $guruNama = $row['nama_guru_pengajar'] ?? $row['nama_guru'] ?? $row['guru'] ?? $row['kode_guru_pengajar'] ?? null;
-            $guru  = $guruNama ? Guru::where('nama_guru', $guruNama)->first() : null;
+            $guruNama = trim($row['nama_guru_pengajar'] ?? $row['nama_guru'] ?? $row['guru'] ?? $row['kode_guru_pengajar'] ?? '');
+            $guru  = $guruNama !== '' ? ($guruList->get(strtolower($guruNama)) ?? Guru::where('nama_guru', $guruNama)->first()) : null;
 
             // skip kalau tidak ditemukan
             if (!$kelas || !$mapel) {
@@ -57,15 +63,15 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFail
             $hari = ucfirst(strtolower($row['hari']));
 
             foreach ($jamNumbers as $jamNo) {
-                // cari jam pelajaran berdasarkan urutan
-                $jamMapel = JamPelajaran::where('urutan', $jamNo)->first();
+                // cari jam pelajaran berdasarkan urutan dari memori
+                $jamMapel = $jamList->get($jamNo) ?? JamPelajaran::where('urutan', $jamNo)->first();
 
                 // jika tidak ditemukan jam tertentu maka lewati jam itu
                 if (!$jamMapel) {
                     continue;
                 }
 
-                $dataCheck = [
+                $dataDb = [
                     'kelas_id' => $kelas->id,
                     'mata_pelajaran_id' => $mapel->id,
                     'guru_id' => $guru->id ?? null,
@@ -73,6 +79,12 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFail
                     'jam_pelajaran_id' => $jamMapel->id,
                     'periode_id' => $this->periodeId,
                 ];
+
+                $dataCheck = array_merge($dataDb, [
+                    'jam_mulai' => $jamMapel->jam_mulai,
+                    'jam_selesai' => $jamMapel->jam_selesai,
+                    'kelas_model' => $kelas,
+                ]);
 
                 $checkAvailability = \App\Helpers\JadwalHelper::isAvailable($dataCheck);
                 if (!$checkAvailability['available']) {
@@ -88,13 +100,13 @@ class JadwalPelajaranImport implements ToCollection, WithHeadingRow, SkipsOnFail
                             'mata_pelajaran_id' => $mapel->id,
                             'guru_id' => $guru->id ?? null,
                             'periode_id' => $this->periodeId,
-                            'data' => $dataCheck,
+                            'data' => $dataDb,
                         ];
                     }
                 }
 
                 // update or create data
-                $jadwal = JadwalPelajaran::updateOrCreate($dataCheck);
+                $jadwal = JadwalPelajaran::updateOrCreate($dataDb);
 
                 if ($jadwal->wasRecentlyCreated || $jadwal->wasChanged()) {
                     $this->importedCount++;

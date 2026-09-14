@@ -15,6 +15,8 @@ class KelasImport implements ToCollection, WithHeadingRow, SkipsOnError
 
     public function collection(Collection $rows)
     {
+        $existingKelas = Kelas::all()->keyBy(fn($k) => strtolower(trim($k->nama_kelas)));
+
         foreach ($rows as $row) {
             // Ambil nama kelas dari berbagai kemungkinan header (nama_kelas, kelas, nama)
             $namaKelas = trim($row['nama_kelas'] ?? $row['kelas'] ?? $row['nama'] ?? '');
@@ -34,10 +36,14 @@ class KelasImport implements ToCollection, WithHeadingRow, SkipsOnError
                 }
             }
 
-            Kelas::updateOrCreate(
-                ['nama_kelas' => $namaKelas],
-                ['tingkat' => $tingkat]
-            );
+            $key = strtolower($namaKelas);
+            $kelas = $existingKelas->get($key);
+            if (!$kelas) {
+                $kelas = new Kelas(['nama_kelas' => $namaKelas]);
+                $existingKelas->put($key, $kelas);
+            }
+            $kelas->tingkat = $tingkat;
+            $kelas->save();
         }
     }
 }

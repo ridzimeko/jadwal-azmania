@@ -18,6 +18,8 @@ class GuruImport implements ToCollection, WithHeadingRow, SkipsOnFailure, SkipsO
 
     public function collection(Collection $rows)
     {
+        $existingGurus = Guru::withTrashed()->get()->keyBy(fn($g) => strtolower(trim($g->nama_guru)));
+
         foreach ($rows as $row) {
             // Ambil nama guru dari berbagai kemungkinan header (nama_guru, nama, guru)
             $namaGuru = trim($row['nama_guru'] ?? $row['nama'] ?? $row['guru'] ?? '');
@@ -31,7 +33,13 @@ class GuruImport implements ToCollection, WithHeadingRow, SkipsOnFailure, SkipsO
                 $warna = '#3b82f6';
             }
 
-            $guru = Guru::withTrashed()->firstOrNew(['nama_guru' => $namaGuru]);
+            $key = strtolower($namaGuru);
+            $guru = $existingGurus->get($key);
+            if (!$guru) {
+                $guru = new Guru(['nama_guru' => $namaGuru]);
+                $existingGurus->put($key, $guru);
+            }
+
             $guru->warna = strtolower($warna);
             if ($guru->trashed()) {
                 $guru->restore();
