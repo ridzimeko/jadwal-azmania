@@ -128,6 +128,152 @@ class JadwalHelper
         return $available;
     }
 
+    /**
+     * Cari slot jam yang tersedia di hari-hari lain untuk kelas & guru tertentu.
+     *
+     * @param array $data ['kelas_id', 'guru_id', 'periode_id', 'hari']
+     * @param int|array|null $ignoreId
+     * @param int $requiredSlotsCount Jumlah slot jam pelajaran yang dibutuhkan (misal 2 JP)
+     * @param string|null $currentHari Hari saat ini yang dikecualikan dari rekomendasi
+     * @return array
+     */
+    /**
+     * Helper untuk mencari blok jam pelajaran berurutan (consecutive) dari koleksi slot jam yang tersedia.
+     */
+    public static function findConsecutiveBlocks($available, int $requiredSlotsCount = 1): array
+    {
+        $consecutiveBlocks = [];
+        if ($requiredSlotsCount > 1 && $available->count() >= $requiredSlotsCount) {
+            $availableList = $available->values();
+            $count = $availableList->count();
+            for ($i = 0; $i <= $count - $requiredSlotsCount; $i++) {
+                $block = [];
+                $isConsecutive = true;
+                for ($j = 0; $j < $requiredSlotsCount; $j++) {
+                    $curr = $availableList[$i + $j];
+                    $block[] = $curr;
+                    if ($j > 0) {
+                        $prev = $availableList[$i + $j - 1];
+                        $prevUrutan = is_numeric($prev['urutan']) ? (int) $prev['urutan'] : null;
+                        $currUrutan = is_numeric($curr['urutan']) ? (int) $curr['urutan'] : null;
+                        if ($prevUrutan !== null && $currUrutan !== null) {
+                            if ($currUrutan !== $prevUrutan + 1) {
+                                $isConsecutive = false;
+                                break;
+                            }
+                        } else {
+                            if (substr($prev['jam_selesai'], 0, 5) !== substr($curr['jam_mulai'], 0, 5)) {
+                                $isConsecutive = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if ($isConsecutive) {
+                    $slotIds = array_map(fn($s) => (string) $s['id'], $block);
+                    $labels = array_map(fn($s) => is_numeric($s['urutan']) ? "Jam {$s['urutan']}" : $s['urutan'], $block);
+                    $consecutiveBlocks[] = [
+                        'slot_ids' => $slotIds,
+                        'label' => implode(' & ', $labels),
+                        'time' => substr($block[0]['jam_mulai'], 0, 5) . ' - ' . substr(end($block)['jam_selesai'], 0, 5),
+                    ];
+                }
+            }
+        } elseif ($requiredSlotsCount <= 1) {
+            foreach ($available as $s) {
+                $u = is_numeric($s['urutan']) ? "Jam {$s['urutan']}" : $s['urutan'];
+                $consecutiveBlocks[] = [
+                    'slot_ids' => [(string) $s['id']],
+                    'label' => $u,
+                    'time' => substr($s['jam_mulai'], 0, 5) . ' - ' . substr($s['jam_selesai'], 0, 5),
+                ];
+            }
+        }
+
+        return $consecutiveBlocks;
+    }
+
+    /**
+     * Rekomendasi slot jam pelajaran cerdas:
+     * 1. Memprioritaskan saran di hari yang ditentukan terlebih dahulu (current_day).
+     * 2. Menyajikan hari-hari lain sebagai alternatif jika slot di hari tersebut tidak mencukupi atau ingin ganti hari (other_days).
+     *
+     * @param array $data ['kelas_id', 'guru_id', 'periode_id', 'hari']
+     * @param int|array|null $ignoreId
+     * @param int $requiredSlotsCount
+     * @param string|null $currentHari
+     * @return array ['current_day' => array|null, 'other_days' => array]
+     */
+    public static function getSmartScheduleRecommendations(array $data, int|array|null $ignoreId = null, int $requiredSlotsCount = 1, ?string $currentHari = null): array
+    {
+        $currentHari = $currentHari ?? ($data['hari'] ?? null);
+
+        // 1. Prioritas Utama: Hari yang ditentukan saat ini
+        $currentDayData = null;
+        if ($currentHari) {
+            $testCurrentData = array_merge($data, ['hari' => $currentHari]);
+            $currentAvailable = static::findAvailableSlots($testCurrentData, $ignoreId);
+            $currentBlocks = static::findConsecutiveBlocks($currentAvailable, $requiredSlotsCount);
+
+            $currentDayData = [
+                'hari' => $currentHari,
+                'total_available' => $currentAvailable->count(),
+                'slots' => $currentAvailable->toArray(),
+                'consecutive_blocks' => $currentBlocks,
+                'has_match' => !empty($currentBlocks),
+            ];
+        }
+
+        // 2. Alternatif: Hari-hari lain
+        $otherDays = static::findAvailableSlotsAcrossDays($data, $ignoreId, $requiredSlotsCount, $currentHari);
+
+        return [
+            'current_day' => $currentDayData,
+            'other_days' => $otherDays,
+        ];
+    }
+
+    /**
+     * Cari slot jam yang tersedia di hari-hari lain untuk kelas & guru tertentu.
+     *
+     * @param array $data ['kelas_id', 'guru_id', 'periode_id', 'hari']
+     * @param int|array|null $ignoreId
+     * @param int $requiredSlotsCount Jumlah slot jam pelajaran yang dibutuhkan (misal 2 JP)
+     * @param string|null $currentHari Hari saat ini yang dikecualikan dari rekomendasi
+     * @return array
+     */
+    public static function findAvailableSlotsAcrossDays(array $data, int|array|null $ignoreId = null, int $requiredSlotsCount = 1, ?string $currentHari = null): array
+    {
+        $allDays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        $currentHari = $currentHari ?? ($data['hari'] ?? null);
+
+        $recommendations = [];
+
+        foreach ($allDays as $day) {
+            if ($currentHari && strcasecmp($day, $currentHari) === 0) {
+                continue;
+            }
+
+            $testData = array_merge($data, ['hari' => $day]);
+            $available = static::findAvailableSlots($testData, $ignoreId);
+
+            if ($available->isEmpty()) {
+                continue;
+            }
+
+            $consecutiveBlocks = static::findConsecutiveBlocks($available, $requiredSlotsCount);
+
+            $recommendations[] = [
+                'hari' => $day,
+                'total_available' => $available->count(),
+                'slots' => $available->toArray(),
+                'consecutive_blocks' => $consecutiveBlocks,
+            ];
+        }
+
+        return $recommendations;
+    }
+
 
     public static function getQuery($periode = null, $tingkat = null)
     {

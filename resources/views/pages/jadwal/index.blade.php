@@ -31,6 +31,8 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     public $jamPelajaranOptions;
     public $jadwalBentrokList = [];
     public $availableSlotsList = [];
+    public $currentDayRecommendations = null;
+    public $otherDaysRecommendations = [];
     public ?array $formData = [
         'hari' => '',
         'jam_mulai' => '',
@@ -112,6 +114,8 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         $this->isEdit = false;
         $this->jadwalBentrokList = [];
         $this->availableSlotsList = [];
+        $this->currentDayRecommendations = null;
+        $this->otherDaysRecommendations = [];
         $firstKelas = !empty($this->kelasOptions) ? $this->kelasOptions[0]['value'] : '';
         $this->formData = [
             'hari' => $record['hari'] ?? $this->filterData['hari'] ?? 'Senin',
@@ -131,6 +135,8 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
     {
         $this->jadwalBentrokList = [];
         $this->availableSlotsList = [];
+        $this->currentDayRecommendations = null;
+        $this->otherDaysRecommendations = [];
 
         if (!empty($record['id'])) {
             $this->isEdit = true;
@@ -174,6 +180,8 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         if (in_array($key, ['hari', 'kelas_id', 'guru_id', 'jam_pelajaran_ids'])) {
             $this->jadwalBentrokList = [];
             $this->availableSlotsList = [];
+            $this->currentDayRecommendations = null;
+            $this->otherDaysRecommendations = [];
         }
     }
 
@@ -198,9 +206,21 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
             $selectedHari = $data['hari'] ?? 'Senin';
             $availableSlots = [];
-            if (!empty($data['kelas_id']) && !empty($selectedHari)) {
-                $data['hari'] = $selectedHari;
-                $availableSlots = JadwalHelper::findAvailableSlots($data)->toArray();
+            $availableDaysSummary = [];
+            if (!empty($data['kelas_id'])) {
+                if (!empty($selectedHari)) {
+                    $data['hari'] = $selectedHari;
+                    $availableSlots = JadwalHelper::findAvailableSlots($data)->toArray();
+                }
+                $acrossDays = JadwalHelper::findAvailableSlotsAcrossDays($data, null, 1, $selectedHari);
+                foreach ($acrossDays as $dayRec) {
+                    if ($dayRec['total_available'] > 0) {
+                        $availableDaysSummary[] = [
+                            'hari' => $dayRec['hari'],
+                            'count' => $dayRec['total_available'],
+                        ];
+                    }
+                }
             }
 
             $prepared[] = array_merge($item, [
@@ -208,6 +228,7 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 'data' => $data,
                 'selected_hari' => $selectedHari,
                 'available_slots' => $availableSlots,
+                'available_days_summary' => $availableDaysSummary,
                 'selected_slot_id' => null,
             ]);
         }
@@ -232,8 +253,20 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
             $data = $this->jadwalBentrokList[$itemIndex]['data'];
             if (!empty($data['kelas_id']) && !empty($newHari)) {
                 $this->jadwalBentrokList[$itemIndex]['available_slots'] = JadwalHelper::findAvailableSlots($data)->toArray();
+                $acrossDays = JadwalHelper::findAvailableSlotsAcrossDays($data, null, 1, $newHari);
+                $summary = [];
+                foreach ($acrossDays as $dayRec) {
+                    if ($dayRec['total_available'] > 0) {
+                        $summary[] = [
+                            'hari' => $dayRec['hari'],
+                            'count' => $dayRec['total_available'],
+                        ];
+                    }
+                }
+                $this->jadwalBentrokList[$itemIndex]['available_days_summary'] = $summary;
             } else {
                 $this->jadwalBentrokList[$itemIndex]['available_slots'] = [];
+                $this->jadwalBentrokList[$itemIndex]['available_days_summary'] = [];
             }
         }
     }
@@ -621,6 +654,9 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 $this->jadwalBentrokList = $allBentrok->unique('id')->values()->toArray();
                 $checkData = array_merge($this->formData, ['periode_id' => $this->periode_id]);
                 $this->availableSlotsList = JadwalHelper::findAvailableSlots($checkData, $oldBlockIds)->toArray();
+                $smartRecs = JadwalHelper::getSmartScheduleRecommendations($checkData, $oldBlockIds, count($jamIds), $this->formData['hari'] ?? null);
+                $this->currentDayRecommendations = $smartRecs['current_day'];
+                $this->otherDaysRecommendations = $smartRecs['other_days'];
                 return;
             }
 
@@ -708,6 +744,9 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                 $this->jadwalBentrokList = $allBentrok->unique('id')->values()->toArray();
                 $checkData = array_merge($this->formData, ['periode_id' => $this->periode_id]);
                 $this->availableSlotsList = JadwalHelper::findAvailableSlots($checkData)->toArray();
+                $smartRecs = JadwalHelper::getSmartScheduleRecommendations($checkData, null, count($jamIds), $this->formData['hari'] ?? null);
+                $this->currentDayRecommendations = $smartRecs['current_day'];
+                $this->otherDaysRecommendations = $smartRecs['other_days'];
                 return;
             }
 
@@ -755,10 +794,33 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
 
         $this->jadwalBentrokList = [];
         $this->availableSlotsList = [];
+        $this->currentDayRecommendations = null;
+        $this->otherDaysRecommendations = [];
         Notification::make()->title('Jadwal Berhasil Tersimpan')->success()->send();
         Flux::modal('jadwal-modal')->close();
         $this->dispatch('refreshJadwalTable');
         $this->dispatch('reload-mapel-options');
+    }
+
+    public function applyRecommendation($hari, $slotIds)
+    {
+        $this->formData['hari'] = $hari;
+        $this->formData['jam_pelajaran_ids'] = array_map('strval', (array) $slotIds);
+        $this->jadwalBentrokList = [];
+        $this->currentDayRecommendations = null;
+        $this->otherDaysRecommendations = [];
+
+        $checkData = array_merge($this->formData, ['periode_id' => $this->periode_id, 'hari' => $hari]);
+        $oldBlockIds = null;
+        if ($this->isEdit && !empty($this->formData['id'])) {
+            $oldBlockIds = JadwalPelajaran::where('periode_id', $this->periode_id)
+                ->where('hari', $hari)
+                ->where('kelas_id', $this->formData['kelas_id'] ?? '')
+                ->where('mata_pelajaran_id', $this->formData['mata_pelajaran_id'] ?? '')
+                ->where('guru_id', $this->formData['guru_id'] ?? '')
+                ->pluck('id')->toArray();
+        }
+        $this->availableSlotsList = JadwalHelper::findAvailableSlots($checkData, $oldBlockIds)->toArray();
     }
 
     public function selectAlternativeSlot($slotId)
@@ -769,6 +831,8 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
         }
         $this->formData['jam_pelajaran_ids'] = array_values(array_unique($jamIds));
         $this->jadwalBentrokList = [];
+        $this->currentDayRecommendations = null;
+        $this->otherDaysRecommendations = [];
     }
 
     public function deleteAction(): Action
@@ -1017,6 +1081,101 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                         </div>
                     </div>
                 </div>
+
+                @php
+                    $hasCurrentDayMatch = !empty($this->currentDayRecommendations['has_match']) && !empty($this->currentDayRecommendations['consecutive_blocks']);
+                @endphp
+
+                {{-- PRIORITAS 1: Saran Jam Kosong di Hari yang Ditentukan --}}
+                @if ($this->currentDayRecommendations)
+                    @if ($hasCurrentDayMatch)
+                        <div class="bg-emerald-50/90 dark:bg-emerald-950/50 p-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800 space-y-2.5">
+                            <div class="flex items-center justify-between gap-2 flex-wrap">
+                                <div class="flex items-center gap-2 text-emerald-900 dark:text-emerald-200">
+                                    <flux:icon name="sparkles" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                    <span class="font-bold text-xs uppercase tracking-wide">🎯 Saran Utama: Jam Kosong di Hari {{ $this->currentDayRecommendations['hari'] }}</span>
+                                </div>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100">
+                                    Prioritas Hari Sama
+                                </span>
+                            </div>
+                            <div class="text-xs text-emerald-800 dark:text-emerald-300">
+                                Tetap di hari <strong>{{ $this->currentDayRecommendations['hari'] }}</strong>, tersedia slot jam kosong yang pas:
+                            </div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                @foreach (array_slice($this->currentDayRecommendations['consecutive_blocks'], 0, 3) as $block)
+                                    <button type="button"
+                                        wire:click="applyRecommendation('{{ $this->currentDayRecommendations['hari'] }}', {{ json_encode($block['slot_ids']) }})"
+                                        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                                        <flux:icon name="arrow-right" class="w-3.5 h-3.5" />
+                                        <span>Gunakan {{ $block['label'] }} ({{ $block['time'] }})</span>
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    @else
+                        <div class="bg-amber-50/70 dark:bg-amber-950/40 p-3 rounded-xl border border-amber-200 dark:border-amber-900/50 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                            <flux:icon name="information-circle" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                            <div>
+                                Slot jam pada hari <strong>{{ $this->currentDayRecommendations['hari'] }}</strong> tidak mencukupi atau sudah terisi. Silakan pilih rekomendasi alternatif di hari lain di bawah ini:
+                            </div>
+                        </div>
+                    @endif
+                @endif
+
+                {{-- PRIORITAS 2: Saran di Hari-Hari Lain --}}
+                @if (!empty($this->otherDaysRecommendations))
+                    <div class="bg-white dark:bg-gray-900 p-3.5 rounded-xl border border-gray-200 dark:border-gray-800 space-y-2.5 shadow-2xs">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                                <flux:icon name="calendar-days" class="w-4 h-4 text-primary shrink-0" />
+                                <span class="font-bold text-xs uppercase tracking-wide">
+                                    {{ $hasCurrentDayMatch ? '📅 Atau Pindah ke Hari Lain (Alternatif):' : '💡 Rekomendasi Tersedia di Hari Lain:' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            @foreach ($this->otherDaysRecommendations as $rec)
+                                <div class="bg-gray-50 dark:bg-gray-800/60 p-2.5 rounded-lg border border-gray-200/80 dark:border-gray-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="px-2 py-0.5 font-bold rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-600">
+                                            {{ $rec['hari'] }}
+                                        </span>
+                                        <span class="text-gray-600 dark:text-gray-300 font-medium">
+                                            @if (!empty($rec['consecutive_blocks']))
+                                                @php
+                                                    $bestBlock = $rec['consecutive_blocks'][0];
+                                                @endphp
+                                                {{ $bestBlock['label'] }} ({{ $bestBlock['time'] }})
+                                            @else
+                                                Tersedia {{ $rec['total_available'] }} slot jam
+                                            @endif
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
+                                        @if (!empty($rec['consecutive_blocks']))
+                                            @foreach (array_slice($rec['consecutive_blocks'], 0, 2) as $blockIdx => $block)
+                                                <button type="button"
+                                                    wire:click="applyRecommendation('{{ $rec['hari'] }}', {{ json_encode($block['slot_ids']) }})"
+                                                    class="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 text-white transition flex items-center gap-1 shadow-xs cursor-pointer">
+                                                    <flux:icon name="arrow-right" class="w-3 h-3" />
+                                                    <span>Pilih {{ $block['label'] }}</span>
+                                                </button>
+                                            @endforeach
+                                        @else
+                                            <button type="button"
+                                                wire:click="applyRecommendation('{{ $rec['hari'] }}', {{ json_encode(array_column($rec['slots'], 'id')) }})"
+                                                class="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 text-white transition flex items-center gap-1 shadow-xs cursor-pointer">
+                                                <flux:icon name="arrow-right" class="w-3 h-3" />
+                                                <span>Pilih Hari {{ $rec['hari'] }}</span>
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             @endif
 
             @if (!$isFillHorizontal)
@@ -1207,6 +1366,20 @@ new #[Title('Jadwal Pelajaran')] class extends Component implements HasActions, 
                                     </select>
                                 </div>
                             </div>
+
+                            @if (!empty($item['available_days_summary']))
+                                <div class="w-full flex items-center gap-1.5 flex-wrap text-[11px] text-gray-600 dark:text-gray-400 pt-1">
+                                    <span class="font-medium">Tersedia juga di:</span>
+                                    @foreach ($item['available_days_summary'] as $daySum)
+                                        <button type="button"
+                                            wire:click="changeHariForBentrokItem({{ $idx }}, '{{ $daySum['hari'] }}')"
+                                            class="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-medium transition flex items-center gap-1 shadow-2xs">
+                                            <span>{{ $daySum['hari'] }}</span>
+                                            <span class="text-[10px] bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100 px-1 rounded-full font-bold">{{ $daySum['count'] }}</span>
+                                        </button>
+                                    @endforeach
+                                </div>
+                            @endif
 
                             @if (!empty($item['available_slots']) && count($item['available_slots']) > 0)
                                 <div class="flex flex-wrap gap-1.5">
