@@ -27,4 +27,24 @@ class JamPelajaran extends Model
     protected $table = 'jam_pelajaran';
 
     public $timestamps = true;
+
+    public function getJamMulaiAttribute($value): ?string
+    {
+        return $value ? substr($value, 0, 5) : null;
+    }
+
+    public function getJamSelesaiAttribute($value): ?string
+    {
+        return $value ? substr($value, 0, 5) : null;
+    }
+
+    public function setJamMulaiAttribute($value): void
+    {
+        $this->attributes['jam_mulai'] = $value ? substr($value, 0, 5) : null;
+    }
+
+    public function setJamSelesaiAttribute($value): void
+    {
+        $this->attributes['jam_selesai'] = $value ? substr($value, 0, 5) : null;
+    }
 }

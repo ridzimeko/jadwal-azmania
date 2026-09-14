@@ -38,6 +38,9 @@ class JadwalHelper
             return ['available' => true, 'bentrok' => collect()];
         }
 
+        $jamMulai = substr($jamMulai, 0, 5);
+        $jamSelesai = substr($jamSelesai, 0, 5);
+
         $query = JadwalPelajaran::query()
             ->with(['guru', 'kelas', 'mataPelajaran', 'jamPelajaran'])
             ->where('hari', $data['hari'])

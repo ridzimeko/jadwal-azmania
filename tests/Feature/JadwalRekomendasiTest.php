@@ -32,12 +32,12 @@ test('JadwalHelper findAvailableSlotsAcrossDays returns available days excluding
 
     $jam1 = JamPelajaran::firstOrCreate(
         ['urutan' => '1'],
-        ['jam_mulai' => '07:15:00', 'jam_selesai' => '08:00:00', 'kategori' => 'KBM']
+        ['jam_mulai' => '07:15', 'jam_selesai' => '08:00', 'kategori' => 'KBM']
     );
 
     $jam2 = JamPelajaran::firstOrCreate(
         ['urutan' => '2'],
-        ['jam_mulai' => '08:00:00', 'jam_selesai' => '08:45:00', 'kategori' => 'KBM']
+        ['jam_mulai' => '08:00', 'jam_selesai' => '08:45', 'kategori' => 'KBM']
     );
 
     // Buat jadwal yang mengisi hari Senin jam 1 dan jam 2
@@ -114,12 +114,12 @@ test('Livewire Jadwal generates otherDaysRecommendations on bentrok and allows a
 
     $jam1 = JamPelajaran::firstOrCreate(
         ['urutan' => '1'],
-        ['jam_mulai' => '07:15:00', 'jam_selesai' => '08:00:00', 'kategori' => 'KBM']
+        ['jam_mulai' => '07:15', 'jam_selesai' => '08:00', 'kategori' => 'KBM']
     );
 
     $jam2 = JamPelajaran::firstOrCreate(
         ['urutan' => '2'],
-        ['jam_mulai' => '08:00:00', 'jam_selesai' => '08:45:00', 'kategori' => 'KBM']
+        ['jam_mulai' => '08:00', 'jam_selesai' => '08:45', 'kategori' => 'KBM']
     );
 
     // Existing schedule on Senin Jam 1
@@ -189,12 +189,12 @@ test('JadwalHelper getSmartScheduleRecommendations prioritizes current day if sl
 
     $jam1 = JamPelajaran::firstOrCreate(
         ['urutan' => '1'],
-        ['jam_mulai' => '07:15:00', 'jam_selesai' => '08:00:00', 'kategori' => 'KBM']
+        ['jam_mulai' => '07:15', 'jam_selesai' => '08:00', 'kategori' => 'KBM']
     );
 
     $jam2 = JamPelajaran::firstOrCreate(
         ['urutan' => '2'],
-        ['jam_mulai' => '08:00:00', 'jam_selesai' => '08:45:00', 'kategori' => 'KBM']
+        ['jam_mulai' => '08:00', 'jam_selesai' => '08:45', 'kategori' => 'KBM']
     );
 
     // Hari Senin Jam 1 bentrok (terisi)

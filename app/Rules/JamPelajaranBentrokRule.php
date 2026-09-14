@@ -25,12 +25,13 @@ class JamPelajaranBentrokRule implements ValidationRule
         $mulai = request()->input('jam_mulai');
         $selesai = request()->input('jam_selesai');
 
-        dd($mulai, $selesai, $this->jamId);
-        
         // Jika belum lengkap, biarkan rule tidak menolak dulu
         if (!$mulai || !$selesai) {
             return;
         }
+
+        $mulai = substr($mulai, 0, 5);
+        $selesai = substr($selesai, 0, 5);
 
 
         // Cek apakah bentrok
